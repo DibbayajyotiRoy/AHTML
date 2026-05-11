@@ -1,0 +1,32 @@
+{
+  "name": "@ahtml/next",
+  "version": "0.1.0",
+  "description": "Next.js plugin for AHTML. Adds /.well-known/ahtml.json, /ahtml/[...path] route handlers, content negotiation, ETag-based incremental fetch, MCP + OpenAPI emitters, and a per-route snapshot builder.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./handler": { "types": "./dist/handler.d.ts", "import": "./dist/handler.js" },
+    "./well-known": { "types": "./dist/well-known.d.ts", "import": "./dist/well-known.js" },
+    "./llms-txt": { "types": "./dist/llms-txt.d.ts", "import": "./dist/llms-txt.js" },
+    "./extractors": { "types": "./dist/extractors/index.d.ts", "import": "./dist/extractors/index.js" },
+    "./mcp": { "types": "./dist/mcp.d.ts", "import": "./dist/mcp.js" },
+    "./openapi": { "types": "./dist/openapi.d.ts", "import": "./dist/openapi.js" }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@ahtml/schema": "0.1.0"
+  },
+  "peerDependencies": {
+    "next": ">=14"
+  },
+  "peerDependenciesMeta": {
+    "next": { "optional": true }
+  },
+  "license": "MIT"
+}

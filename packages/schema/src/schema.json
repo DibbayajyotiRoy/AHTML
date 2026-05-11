@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ahtml.dev/schema/v0.1/snapshot.json",
+  "title": "AHTML Snapshot",
+  "description": "Canonical agent-facing representation of a web page.",
+  "type": "object",
+  "required": ["ahtml", "url", "fetched_at", "page_type", "entities", "actions"],
+  "properties": {
+    "ahtml": { "const": "0.1" },
+    "url": { "type": "string", "format": "uri" },
+    "fetched_at": { "type": "string", "format": "date-time" },
+    "ttl": { "type": "integer", "minimum": 0 },
+    "etag": { "type": "string" },
+    "page_type": {
+      "type": "string",
+      "enum": ["home", "product_detail", "product_list", "article", "document", "profile", "task_list", "task_detail", "dataset", "conversation", "checkout", "search_results", "category", "other"]
+    },
+    "policy": { "$ref": "#/$defs/Policy" },
+    "provenance": { "$ref": "#/$defs/Provenance" },
+    "entities": { "type": "array", "items": { "$ref": "#/$defs/Entity" } },
+    "actions": { "type": "array", "items": { "$ref": "#/$defs/Action" } },
+    "links": { "$ref": "#/$defs/Links" },
+    "schemas": { "type": "object", "additionalProperties": true },
+    "meta": { "type": "object", "additionalProperties": true }
+  },
+  "$defs": {
+    "Money": {
+      "type": "object",
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "type": "number" },
+        "currency": { "type": "string", "minLength": 3, "maxLength": 3 }
+      }
+    },
+    "Stock": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["in_stock", "low_stock", "out_of_stock", "preorder", "discontinued"] },
+        "quantity": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "Entity": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z_]+:[A-Za-z0-9_\\-.]+$" },
+        "type": { "enum": ["product", "document", "task", "profile", "dataset", "conversation"] },
+        "freshness": { "enum": ["live", "near_realtime", "daily", "static"] },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": true,
+      "oneOf": [
+        { "$ref": "#/$defs/Product" },
+        { "$ref": "#/$defs/Document" },
+        { "$ref": "#/$defs/Task" },
+        { "$ref": "#/$defs/Profile" },
+        { "$ref": "#/$defs/Dataset" },
+        { "$ref": "#/$defs/Conversation" }
+      ]
+    },
+    "Product": {
+      "type": "object",
+      "required": ["id", "type", "name"],
+      "properties": {
+        "type": { "const": "product" },
+        "name": { "type": "string" },
+        "brand": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "$ref": "#/$defs/Money" },
+        "list_price": { "$ref": "#/$defs/Money" },
+        "stock": { "$ref": "#/$defs/Stock" },
+        "sku": { "type": "string" },
+        "rating": {
+          "type": "object",
+          "properties": {
+            "average": { "type": "number", "minimum": 0, "maximum": 5 },
+            "count": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "Document": {
+      "type": "object",
+      "required": ["id", "type", "title"],
+      "properties": {
+        "type": { "const": "document" },
+        "title": { "type": "string" },
+        "author": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+        "published_at": { "type": "string", "format": "date-time" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "word_count": { "type": "integer", "minimum": 0 },
+        "language": { "type": "string" }
+      }
+    },
+    "Task": {
+      "type": "object",
+      "required": ["id", "type", "title", "state"],
+      "properties": {
+        "type": { "const": "task" },
+        "title": { "type": "string" },
+        "state": { "enum": ["open", "in_progress", "blocked", "done", "cancelled"] },
+        "priority": { "enum": ["low", "medium", "high", "urgent"] },
+        "assignee": { "type": "string" },
+        "due_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Profile": {
+      "type": "object",
+      "required": ["id", "type", "name", "kind"],
+      "properties": {
+        "type": { "const": "profile" },
+        "name": { "type": "string" },
+        "kind": { "enum": ["person", "organization", "bot"] }
+      }
+    },
+    "Dataset": {
+      "type": "object",
+      "required": ["id", "type", "name", "columns", "rows"],
+      "properties": {
+        "type": { "const": "dataset" },
+        "name": { "type": "string" },
+        "columns": { "type": "array" },
+        "rows": { "type": "array" }
+      }
+    },
+    "Conversation": {
+      "type": "object",
+      "required": ["id", "type", "participants", "messages"],
+      "properties": {
+        "type": { "const": "conversation" },
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "messages": { "type": "array" }
+      }
+    },
+    "Action": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "target": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+        "auth": {
+          "oneOf": [
+            { "enum": ["none", "optional", "required"] },
+            {
+              "type": "object",
+              "required": ["scheme"],
+              "properties": {
+                "scheme": { "type": "string" },
+                "scopes": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          ]
+        },
+        "cost": {
+          "type": "object",
+          "required": ["category"],
+          "properties": {
+            "amount": { "type": "number" },
+            "currency": { "type": "string" },
+            "category": { "enum": ["free", "purchase", "subscription", "rate_limited", "compute"] }
+          }
+        },
+        "reversible": {
+          "type": "object",
+          "required": ["reversible"],
+          "properties": {
+            "reversible": { "type": "boolean" },
+            "window": { "type": "string" },
+            "policy": { "type": "string" }
+          }
+        },
+        "side_effects": { "type": "array", "items": { "type": "string" } },
+        "confirmation": { "enum": ["none", "recommended", "required"] },
+        "category": { "enum": ["read", "search", "navigate", "create", "update", "delete", "transact", "send", "auth"] }
+      }
+    },
+    "Policy": {
+      "type": "object",
+      "required": ["agents_welcome"],
+      "properties": {
+        "agents_welcome": { "type": "boolean" },
+        "license": { "type": "string" },
+        "rate_limit": { "type": "string" },
+        "actions_require": { "type": "string" },
+        "contact": { "type": "string" },
+        "republish": { "enum": ["allowed", "denied", "attribution_only"] }
+      }
+    },
+    "Provenance": {
+      "type": "object",
+      "properties": {
+        "issuer": { "type": "string" },
+        "signed": { "type": "boolean" },
+        "signature": { "type": "string" },
+        "signature_alg": { "type": "string" }
+      }
+    },
+    "Links": {
+      "type": "object",
+      "properties": {
+        "self": { "type": "string" },
+        "canonical": { "type": "string" },
+        "parent": { "type": "string" },
+        "related": { "type": "array", "items": { "type": "string" } },
+        "next": { "$ref": "#/$defs/PaginationLink" },
+        "prev": { "$ref": "#/$defs/PaginationLink" }
+      }
+    },
+    "PaginationLink": {
+      "type": "object",
+      "properties": {
+        "cursor": { "type": "string" },
+        "url": { "type": "string" },
+        "expected": { "type": "integer" },
+        "total": { "type": "integer" }
+      }
+    }
+  }
+}

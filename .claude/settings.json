@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npx -y -p typescript@5.6 tsc --noEmit -p tsconfig.json)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(npx -y -p typescript@5.6 -p @types/node@22 tsc --noEmit -p tsconfig.json)"
+    ]
+  }
+}

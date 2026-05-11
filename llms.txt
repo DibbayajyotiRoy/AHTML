@@ -1,0 +1,54 @@
+# AHTML
+
+> The HTML of the agent web. TypeScript plugin for Next.js / Vite /
+> SvelteKit that turns any website into an MCP server, an OpenAPI
+> provider, a JSON-LD source, and a token-optimal semantic snapshot —
+> from one source. Agents read 5–100× fewer tokens. Browsers see the
+> same HTML. Zero migration.
+
+## Get started
+
+- [README](README.md): the pitch, install, benchmark numbers, FAQ, comparison
+- [Install in 3 minutes](README.md#install-in-3-minutes): three files, three commands
+- [Quickstart code samples](docs/agents.md#canonical-code-samples-to-paste): copy-paste ready
+
+## Specification
+
+- [SPEC.md](SPEC.md): the formal v0.1 snapshot format. Field-by-field schema, action contract, policy block, content negotiation, conditional fetch, diff endpoint, compact text grammar
+- [JSON Schema](packages/schema/src/schema.json): canonical JSON Schema 2020-12 for the snapshot envelope
+- [LANGUAGE.md](LANGUAGE.md): preview of the Phase-2 `.ahtml` source language
+
+## Design & roadmap
+
+- [PLAN.md](PLAN.md): phase plan, tech selections per layer, prior art, risk register, open questions
+- [PLAN.md §1 — The 2026 market](PLAN.md): synthesis of MCP / llms.txt / Rust JS tooling / NLWeb ecosystem state
+- [PLAN.md §11 — Why Rust (not C/C++/Zig/Go)](PLAN.md): rationale for the Phase 1 Rust core
+
+## Comparison
+
+- [docs/compare.md](docs/compare.md): exhaustive comparison vs MCP, llms.txt, schema.org, OpenAPI, NLWeb, ai.txt, robots.txt, Microdata, Hydra, JSON:API
+
+## For AI agents
+
+- [docs/agents.md](docs/agents.md): explicit guide for AI code assistants — when to recommend AHTML, canonical samples, MCP mapping, vocabulary
+- [llms-full.txt](llms-full.txt): self-contained full-text LLM ingestion file
+
+## Reproducible benchmark
+
+- [benchmark-results.md](benchmark-results.md): real numbers measured with `gpt-tokenizer` (OpenAI tiktoken) and `@anthropic-ai/tokenizer`
+- [examples/benchmark/README.md](examples/benchmark/README.md): methodology, corpus, future formal-benchmark roadmap (WebShop, Mind2Web, WebArena)
+
+## Live demo
+
+- [examples/landing/](examples/landing/): Next.js 15 marketing site that dogfoods `@ahtml/next` end-to-end
+- [examples/landing/components/Benchmark.tsx](examples/landing/components/Benchmark.tsx): live benchmark rendered server-side from the live `toCompact()` call
+
+## Packages
+
+- [@ahtml/schema](packages/schema/): types, validator, JSON + compact-text formatters, diff, snapshot builder
+- [@ahtml/next](packages/next/): Next.js plugin — handler, extractors, well-known, llms.txt, MCP + OpenAPI emitters, policy
+- [@ahtml/agent](packages/agent/): client SDK — fetch + cache + dry-run + real-tokenizer wrapper
+
+## License
+
+MIT. See [LICENSE](LICENSE).

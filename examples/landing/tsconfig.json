@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "incremental": true,
+    "isolatedModules": true,
+    "allowJs": false,
+    "noEmit": true,
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./*"],
+      "@ahtml/schema": ["../../packages/schema/dist/index.d.ts"],
+      "@ahtml/next": ["../../packages/next/dist/index.d.ts"],
+      "@ahtml/next/handler": ["../../packages/next/dist/handler.d.ts"],
+      "@ahtml/next/well-known": ["../../packages/next/dist/well-known.d.ts"],
+      "@ahtml/next/llms-txt": ["../../packages/next/dist/llms-txt.d.ts"],
+      "@ahtml/next/mcp": ["../../packages/next/dist/mcp.d.ts"],
+      "@ahtml/next/openapi": ["../../packages/next/dist/openapi.d.ts"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

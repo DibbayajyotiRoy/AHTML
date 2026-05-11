@@ -1,0 +1,33 @@
+{
+  "name": "@ahtml/agent",
+  "version": "0.1.0",
+  "description": "AHTML agent SDK — fetch snapshots, cache by ETag, run actions with dry-run support, and measure token cost using industry-standard tokenizers.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./tokens": { "types": "./dist/tokens.d.ts", "import": "./dist/tokens.js" }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@ahtml/schema": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  },
+  "peerDependencies": {
+    "gpt-tokenizer": "^3.0.0",
+    "@anthropic-ai/tokenizer": "^0.0.4"
+  },
+  "peerDependenciesMeta": {
+    "gpt-tokenizer": { "optional": true },
+    "@anthropic-ai/tokenizer": { "optional": true }
+  },
+  "keywords": ["ahtml", "agent", "mcp", "llm", "tokenizer", "crawler"],
+  "license": "MIT"
+}

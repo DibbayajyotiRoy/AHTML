@@ -1,0 +1,21 @@
+{
+  "name": "ahtml-benchmark",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Token-cost benchmark for AHTML vs raw HTML vs llms.txt. Uses gpt-tokenizer (OpenAI cl100k_base + o200k_base) and @anthropic-ai/tokenizer (Claude) — the same tokenizers OpenAI, Anthropic, and every public token-cost report use.",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "report": "tsx src/index.ts --write-report",
+    "compare-models": "tsx src/index.ts --all-models"
+  },
+  "dependencies": {
+    "@ahtml/schema": "0.1.0",
+    "gpt-tokenizer": "^3.0.1",
+    "@anthropic-ai/tokenizer": "^0.0.4"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "@types/node": "^22.0.0"
+  }
+}

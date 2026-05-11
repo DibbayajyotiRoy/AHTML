@@ -1,0 +1,68 @@
+/**
+ * @ahtml/next — Next.js plugin.
+ *
+ * Quickstart:
+ *
+ *   // next.config.js
+ *   import { withAHTML } from '@ahtml/next';
+ *   export default withAHTML({
+ *     // your existing next config
+ *   }, {
+ *     site: 'https://shop.example.com',
+ *     policy: {
+ *       agents_welcome: true,
+ *       license: 'CC-BY-4.0',
+ *       rate_limit: '100/min',
+ *       contact: 'agents@example.com',
+ *     },
+ *   });
+ *
+ *   // app/ahtml/[...path]/route.ts
+ *   import { createAHTMLRoute } from '@ahtml/next/handler';
+ *   import { buildSnapshot } from '../../lib/ahtml';
+ *   export const { GET, HEAD } = createAHTMLRoute(buildSnapshot);
+ *
+ *   // app/.well-known/ahtml.json/route.ts
+ *   import { createWellKnownRoute } from '@ahtml/next/well-known';
+ *   export const { GET } = createWellKnownRoute();
+ */
+
+import type { Policy } from '@ahtml/schema';
+
+export interface AHTMLConfig {
+  site: string;
+  policy?: Policy;
+  /** Default TTL in seconds applied to snapshots that don't set their own. */
+  default_ttl?: number;
+  /** Routes that should appear in /.well-known/ahtml.json. */
+  routes?: Array<{ path: string; page_type: string }>;
+  /** Emit MCP tools at /ahtml/mcp.json — default true. */
+  emit_mcp?: boolean;
+  /** Emit OpenAPI at /ahtml/openapi.json — default true. */
+  emit_openapi?: boolean;
+}
+
+let _config: AHTMLConfig | undefined;
+
+export function withAHTML<T extends Record<string, unknown>>(
+  nextConfig: T,
+  ahtmlConfig: AHTMLConfig,
+): T & { __ahtml: AHTMLConfig } {
+  _config = ahtmlConfig;
+  if (typeof globalThis !== 'undefined') {
+    (globalThis as { __ahtml_config?: AHTMLConfig }).__ahtml_config = ahtmlConfig;
+  }
+  return { ...nextConfig, __ahtml: ahtmlConfig };
+}
+
+export function getConfig(): AHTMLConfig {
+  if (_config) return _config;
+  const g = (globalThis as { __ahtml_config?: AHTMLConfig }).__ahtml_config;
+  if (g) return g;
+  return {
+    site: '',
+    policy: { agents_welcome: true },
+  };
+}
+
+export type { Policy };

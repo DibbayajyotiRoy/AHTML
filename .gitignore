@@ -8,3 +8,9 @@ out/
 !.env.example
 coverage/
 .turbo/
+
+# Maintainer-only — internal docs, scripts, and workflows. Public repo
+# users don't need these; they're for the project owner.
+PLAN.md
+scripts/
+examples/landing/DEPLOY.md

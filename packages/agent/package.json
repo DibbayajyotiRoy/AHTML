@@ -10,6 +10,7 @@
     "./tokens": { "types": "./dist/tokens.d.ts", "import": "./dist/tokens.js" }
   },
   "files": ["dist"],
+  "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch"

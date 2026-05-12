@@ -6,7 +6,7 @@ Thanks for your interest in AHTML.
 
 1. **Schema changes go through PRs against [`SPEC.md`](SPEC.md) and [`packages/schema/src/schema.json`](packages/schema/src/schema.json)**, with a 4-week stability window between proposal and release.
 2. **The TypeScript prototype is the reference implementation** until Phase 1 (Rust) ships. Breaking the TS implementation breaks everyone.
-3. **No new dependencies in `@ahtml/schema` without discussion.** It is intentionally zero-dependency at runtime.
+3. **No new dependencies in `@ahtmljs/schema` without discussion.** It is intentionally zero-dependency at runtime.
 
 ## Setting up locally
 
@@ -58,7 +58,7 @@ All five must pass before merging.
 | Track | Examples |
 |---|---|
 | Phase 0 polish | More extractors (Microdata, RDFa, page-metadata) |
-| Framework plugins | `@ahtml/vite`, `@ahtml/sveltekit`, `@ahtml/astro`, `@ahtml/nuxt`, `@ahtml/remix` |
+| Framework plugins | `@ahtmljs/vite`, `@ahtmljs/sveltekit`, `@ahtmljs/astro`, `@ahtmljs/nuxt`, `@ahtmljs/remix` |
 | Benchmark expansion | Adapters for WebShop / Mind2Web / WebArena |
 | Phase 1 Rust core | Start with the `format-compact` parser in chumsky |
 | Phase 2 language | Tree-sitter grammar for `.ahtml` |
@@ -69,7 +69,7 @@ All five must pass before merging.
 - Browser-only changes that break Node compatibility
 - Rebrands of MCP / OpenAPI / JSON-LD vocabulary (these are downstream emits; their contracts are theirs)
 - A new entity primitive (the six are intentionally small)
-- A new dependency in `@ahtml/schema`
+- A new dependency in `@ahtmljs/schema`
 - A new build tool
 
 ## Releasing

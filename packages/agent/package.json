@@ -1,5 +1,5 @@
 {
-  "name": "@ahtml/agent",
+  "name": "@ahtmljs/agent",
   "version": "0.1.0",
   "description": "AHTML agent SDK — fetch snapshots, cache by ETag, run actions with dry-run support, and measure token cost using industry-standard tokenizers.",
   "type": "module",
@@ -16,7 +16,7 @@
     "dev": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
-    "@ahtml/schema": "0.1.0"
+    "@ahtmljs/schema": "0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0"

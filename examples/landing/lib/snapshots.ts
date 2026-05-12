@@ -6,7 +6,7 @@
  * otherwise have to scrape from the HTML.
  */
 
-import { snapshot, computeEtag, type Snapshot } from '@ahtml/schema';
+import { snapshot, computeEtag, type Snapshot } from '@ahtmljs/schema';
 
 export const DEMO_PRODUCTS = [
   {
@@ -81,7 +81,7 @@ export function homeSnapshot(siteUrl: string): Snapshot {
         label: 'Install via npm',
         category: 'read',
         method: 'GET',
-        execute_url: 'https://npmjs.com/package/@ahtml/next',
+        execute_url: 'https://npmjs.com/package/@ahtmljs/next',
         auth: 'none',
         cost: { category: 'free' },
       },
@@ -118,7 +118,7 @@ export function homeSnapshot(siteUrl: string): Snapshot {
       related: DEMO_PRODUCTS.map((p) => `product:${p.id}`),
     })
     .meta({
-      generated_by: '@ahtml/next 0.1.0',
+      generated_by: '@ahtmljs/next 0.1.0',
     })
     .build();
   s.etag = computeEtag(s);

@@ -1,5 +1,5 @@
 /**
- * @ahtml/schema — public API.
+ * @ahtmljs/schema — public API.
  */
 export * from './types.js';
 export { SnapshotBuilder, snapshot, computeEtag } from './snapshot.js';

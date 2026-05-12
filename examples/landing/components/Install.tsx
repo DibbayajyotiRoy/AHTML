@@ -13,14 +13,14 @@ export default function Install() {
           <div className="card">
             <div className="step">Step 01</div>
             <h3>Install</h3>
-            <pre className="code-block" style={{ margin: '16px 0 0', fontSize: 13 }}><code>npm install <span className="string">@ahtml/next</span></code></pre>
+            <pre className="code-block" style={{ margin: '16px 0 0', fontSize: 13 }}><code>npm install <span className="string">@ahtmljs/next</span></code></pre>
           </div>
           <div className="card">
             <div className="step">Step 02</div>
             <h3>Wrap next.config</h3>
             <pre className="code-block" style={{ margin: '16px 0 0', fontSize: 12.5 }}>
               <code>
-                <span className="keyword">import</span> {'{ withAHTML }'} <span className="keyword">from</span> <span className="string">'@ahtml/next'</span>;{'\n\n'}
+                <span className="keyword">import</span> {'{ withAHTML }'} <span className="keyword">from</span> <span className="string">'@ahtmljs/next'</span>;{'\n\n'}
                 <span className="keyword">export default</span> <span className="at">withAHTML</span>({'{}'}, {'{'}{'\n'}
                 {'  '}site: <span className="string">'https://shop.com'</span>,{'\n'}
                 {'  '}policy: {'{ '}agents_welcome: <span className="number">true</span> {'}'},{'\n'}
@@ -35,7 +35,7 @@ export default function Install() {
               <code>
                 <span className="comment">// app/ahtml/[[...path]]/route.ts</span>{'\n'}
                 <span className="keyword">import</span> {'{ createAHTMLRoute }'} <span className="keyword">from</span>{'\n'}
-                {'  '}<span className="string">'@ahtml/next/handler'</span>;{'\n'}
+                {'  '}<span className="string">'@ahtmljs/next/handler'</span>;{'\n'}
                 <span className="keyword">import</span> {'{ buildSnapshot }'} <span className="keyword">from</span>{'\n'}
                 {'  '}<span className="string">'@/lib/ahtml'</span>;{'\n\n'}
                 <span className="keyword">export const</span> {'{ GET, HEAD }'} = {'\n'}

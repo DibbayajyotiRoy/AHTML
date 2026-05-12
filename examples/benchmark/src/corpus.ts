@@ -17,7 +17,7 @@ import {
   toJson,
   computeEtag,
   type Snapshot,
-} from '@ahtml/schema';
+} from '@ahtmljs/schema';
 
 // =====================================================================
 // Source-of-truth data

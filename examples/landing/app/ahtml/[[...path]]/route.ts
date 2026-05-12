@@ -7,9 +7,9 @@
  * by short-circuiting on the path.
  */
 
-import { createAHTMLRoute } from '@ahtml/next/handler';
-import { snapshotsToMcp } from '@ahtml/next/mcp';
-import { snapshotsToOpenApi } from '@ahtml/next/openapi';
+import { createAHTMLRoute } from '@ahtmljs/next/handler';
+import { snapshotsToMcp } from '@ahtmljs/next/mcp';
+import { snapshotsToOpenApi } from '@ahtmljs/next/openapi';
 import { allSnapshots, buildSnapshotForPath } from '@/lib/snapshots';
 import { ahtmlConfig } from '@/lib/ahtml-config';
 

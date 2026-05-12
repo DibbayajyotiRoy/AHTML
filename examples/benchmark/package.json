@@ -10,7 +10,7 @@
     "compare-models": "tsx src/index.ts --all-models"
   },
   "dependencies": {
-    "@ahtml/schema": "0.1.0",
+    "@ahtmljs/schema": "0.1.0",
     "gpt-tokenizer": "^3.0.1",
     "@anthropic-ai/tokenizer": "^0.0.4"
   },

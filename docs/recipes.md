@@ -12,8 +12,8 @@ metadata.
 
 ```ts
 // app/ahtml/[[...path]]/route.ts
-import { createAHTMLRoute } from '@ahtml/next/handler';
-import { snapshot } from '@ahtml/schema';
+import { createAHTMLRoute } from '@ahtmljs/next/handler';
+import { snapshot } from '@ahtmljs/schema';
 import { db } from '@/lib/db';
 
 export const { GET, HEAD } = createAHTMLRoute(async (segments, req) => {
@@ -150,8 +150,8 @@ explicitly violate the contract — a logged, attributable choice.
 > The shape below is the target.
 
 ```ts
-import { snapshot } from '@ahtml/schema';
-import { signSnapshot } from '@ahtml/sign'; // v0.2
+import { snapshot } from '@ahtmljs/schema';
+import { signSnapshot } from '@ahtmljs/sign'; // v0.2
 
 const snap = snapshot(url, 'product_detail').add({...}).build();
 const signed = await signSnapshot(snap, {
@@ -164,7 +164,7 @@ return signed; // snap.provenance.signed = true, signature attached
 Verification (agent side):
 
 ```ts
-import { verifySnapshot } from '@ahtml/agent/sign'; // v0.2
+import { verifySnapshot } from '@ahtmljs/agent/sign'; // v0.2
 const result = await verifySnapshot(snapshot);
 if (!result.valid) throw new Error('tampered');
 ```
@@ -183,7 +183,7 @@ The AHTML route handler is hit ONLY by agents (humans go to the HTML
 routes). Log on the handler:
 
 ```ts
-import { createAHTMLRoute } from '@ahtml/next/handler';
+import { createAHTMLRoute } from '@ahtmljs/next/handler';
 import { logAgentVisit } from '@/lib/analytics';
 
 export const { GET, HEAD } = createAHTMLRoute(async (segments, req) => {
@@ -206,7 +206,7 @@ will identify themselves via that channel.
 Client-side:
 
 ```ts
-import { AHTMLClient } from '@ahtml/agent';
+import { AHTMLClient } from '@ahtmljs/agent';
 
 const client = new AHTMLClient();
 const first = await client.fetch('https://shop.com/ahtml/products/mbp-14');
@@ -226,7 +226,7 @@ The server side is automatic — `createAHTMLRoute` handles the ETag,
 **Goal:** preview what would happen if an agent clicked the button.
 
 ```ts
-import { runAction } from '@ahtml/agent';
+import { runAction } from '@ahtmljs/agent';
 
 const snap = await client.fetch('https://shop.com/ahtml/products/mbp-14');
 const purchase = snap.actions.find((a) => a.id === 'purchase')!;
@@ -286,8 +286,8 @@ Shopify ships rich schema.org JSON-LD by default. AHTML's
 `extractFromSchemaOrg` extractor turns that into a free Level-0 snapshot.
 
 ```ts
-import { extractFromSchemaOrg } from '@ahtml/next/extractors';
-import { snapshot } from '@ahtml/schema';
+import { extractFromSchemaOrg } from '@ahtmljs/next/extractors';
+import { snapshot } from '@ahtmljs/schema';
 
 export const { GET, HEAD } = createAHTMLRoute(async (segments, req) => {
   const html = await fetch(`https://yourshopify.myshopify.com/products/${segments[1]}`).then(r => r.text());
@@ -320,7 +320,7 @@ export const { GET, HEAD } = createAHTMLRoute(async (segments, req) => {
 **Goal:** verify your snapshots are valid before shipping.
 
 ```ts
-import { validate, snapshot } from '@ahtml/schema';
+import { validate, snapshot } from '@ahtmljs/schema';
 
 const snap = buildMyProductSnapshot();
 const issues = validate(snap);

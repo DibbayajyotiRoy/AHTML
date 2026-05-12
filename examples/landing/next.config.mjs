@@ -14,13 +14,13 @@ const nextConfig = {
     const dist = (p) => path.resolve(__dirname, '../../packages', p);
     config.resolve.alias = {
       ...(config.resolve.alias ?? {}),
-      '@ahtml/schema$': dist('schema/dist/index.js'),
-      '@ahtml/next$': dist('next/dist/index.js'),
-      '@ahtml/next/handler$': dist('next/dist/handler.js'),
-      '@ahtml/next/well-known$': dist('next/dist/well-known.js'),
-      '@ahtml/next/llms-txt$': dist('next/dist/llms-txt.js'),
-      '@ahtml/next/mcp$': dist('next/dist/mcp.js'),
-      '@ahtml/next/openapi$': dist('next/dist/openapi.js'),
+      '@ahtmljs/schema$': dist('schema/dist/index.js'),
+      '@ahtmljs/next$': dist('next/dist/index.js'),
+      '@ahtmljs/next/handler$': dist('next/dist/handler.js'),
+      '@ahtmljs/next/well-known$': dist('next/dist/well-known.js'),
+      '@ahtmljs/next/llms-txt$': dist('next/dist/llms-txt.js'),
+      '@ahtmljs/next/mcp$': dist('next/dist/mcp.js'),
+      '@ahtmljs/next/openapi$': dist('next/dist/openapi.js'),
     };
     return config;
   },

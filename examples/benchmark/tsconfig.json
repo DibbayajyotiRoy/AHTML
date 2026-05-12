@@ -5,7 +5,7 @@
     "noEmit": true,
     "types": ["node"],
     "paths": {
-      "@ahtml/schema": ["../../packages/schema/src/index.ts"]
+      "@ahtmljs/schema": ["../../packages/schema/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts"]

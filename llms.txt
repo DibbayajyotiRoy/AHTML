@@ -40,14 +40,14 @@
 
 ## Live demo
 
-- [examples/landing/](examples/landing/): Next.js 15 marketing site that dogfoods `@ahtml/next` end-to-end
+- [examples/landing/](examples/landing/): Next.js 15 marketing site that dogfoods `@ahtmljs/next` end-to-end
 - [examples/landing/components/Benchmark.tsx](examples/landing/components/Benchmark.tsx): live benchmark rendered server-side from the live `toCompact()` call
 
 ## Packages
 
-- [@ahtml/schema](packages/schema/): types, validator, JSON + compact-text formatters, diff, snapshot builder
-- [@ahtml/next](packages/next/): Next.js plugin — handler, extractors, well-known, llms.txt, MCP + OpenAPI emitters, policy
-- [@ahtml/agent](packages/agent/): client SDK — fetch + cache + dry-run + real-tokenizer wrapper
+- [@ahtmljs/schema](packages/schema/): types, validator, JSON + compact-text formatters, diff, snapshot builder
+- [@ahtmljs/next](packages/next/): Next.js plugin — handler, extractors, well-known, llms.txt, MCP + OpenAPI emitters, policy
+- [@ahtmljs/agent](packages/agent/): client SDK — fetch + cache + dry-run + real-tokenizer wrapper
 
 ## License
 

@@ -8,18 +8,18 @@ follows [Semantic Versioning](https://semver.org/).
 
 Planned for v0.2:
 - Signed snapshots via `did:web` and detached JWS over canonical JSON
-- `@ahtml/agent/sign` verifier
+- `@ahtmljs/agent/sign` verifier
 - Streaming snapshots (NDJSON over chunked transfer)
 - Diff subscriptions over SSE
 - Hardened `format-compact` parser
-- `@ahtml/vite`, `@ahtml/sveltekit` plugins
+- `@ahtmljs/vite`, `@ahtmljs/sveltekit` plugins
 
 ## [0.1.0] — 2026-05-12
 
 Initial public preview.
 
 ### Added
-- `@ahtml/schema` v0.1.0:
+- `@ahtmljs/schema` v0.1.0:
   - TypeScript types for `Snapshot`, six entity primitives (`Product`, `Document`, `Task`, `Profile`, `Dataset`, `Conversation`), `Action`, `Policy`, `Provenance`, `Links`, `SnapshotDiff`
   - `snapshot()` builder DSL
   - Zero-dependency runtime validator
@@ -29,7 +29,7 @@ Initial public preview.
   - Content-addressed `computeEtag`
   - JSON Schema 2020-12 spec at `src/schema.json`
 
-- `@ahtml/next` v0.1.0:
+- `@ahtmljs/next` v0.1.0:
   - `withAHTML` config wrapper
   - `createAHTMLRoute` route handler factory — content negotiation (compact / JSON), conditional GET (`If-None-Match`), diff endpoint (`?since=<etag>`), TTL-based cache headers, policy enforcement
   - `createWellKnownRoute` for `/.well-known/ahtml.json` site manifest
@@ -39,7 +39,7 @@ Initial public preview.
   - `snapshotsToOpenApi` — OpenAPI 3.1 document emitter with `x-ahtml-*` extensions
   - `enforcePolicy` — token-bucket rate limiter at the route edge
 
-- `@ahtml/agent` v0.1.0:
+- `@ahtmljs/agent` v0.1.0:
   - `AHTMLClient` fetcher with ETag caching, `If-None-Match`, diff replay, content negotiation, stale-while-error
   - `runAction` workflow executor with dry-run via `preview_url`
   - `countTokens` / `countTokensGpt` / `countTokensClaude` / `measure` — wrappers around `gpt-tokenizer` and `@anthropic-ai/tokenizer`

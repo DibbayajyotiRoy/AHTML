@@ -70,7 +70,7 @@ declared actions. You write actions once.
 
 ### Verdict
 
-**Use both.** Install `@ahtml/next` so your website emits MCP from
+**Use both.** Install `@ahtmljs/next` so your website emits MCP from
 existing routes. MCP becomes a downstream output, not a parallel project.
 
 ---
@@ -152,7 +152,7 @@ answers (ChatGPT, Perplexity, Google AI Overviews).
 AHTML **ingests** schema.org JSON-LD as a Level-0 source:
 
 ```ts
-import { extractFromSchemaOrg } from '@ahtml/next/extractors';
+import { extractFromSchemaOrg } from '@ahtmljs/next/extractors';
 const extraction = extractFromSchemaOrg(htmlString);
 // → { source: 'schema-org', entities: [...], actions: [] }
 ```
@@ -351,8 +351,8 @@ Do you need agents to READ your site?
       │
       └─ Existing website, want it agent-readable + actable → AHTML
          │
-         ├─ Next.js / Vite / SvelteKit → @ahtml/next
-         ├─ Express / Bun / Deno → @ahtml/schema + your own routes
+         ├─ Next.js / Vite / SvelteKit → @ahtmljs/next
+         ├─ Express / Bun / Deno → @ahtmljs/schema + your own routes
          └─ Non-Node framework → wait for Phase 1 Rust core
             (in the meantime: hand-roll snapshot endpoints using SPEC.md)
 ```

@@ -22,7 +22,7 @@
  *   </article>
  */
 
-import type { Entity, Action, Product, Document, Task, Money, Stock } from '@ahtml/schema';
+import type { Entity, Action, Product, Document, Task, Money, Stock } from '@ahtmljs/schema';
 import type { Extraction } from './merge.js';
 
 export function extractFromDataAttrs(html: string): Extraction {

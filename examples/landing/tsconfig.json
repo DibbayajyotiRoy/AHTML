@@ -17,13 +17,13 @@
     "plugins": [{ "name": "next" }],
     "paths": {
       "@/*": ["./*"],
-      "@ahtml/schema": ["../../packages/schema/dist/index.d.ts"],
-      "@ahtml/next": ["../../packages/next/dist/index.d.ts"],
-      "@ahtml/next/handler": ["../../packages/next/dist/handler.d.ts"],
-      "@ahtml/next/well-known": ["../../packages/next/dist/well-known.d.ts"],
-      "@ahtml/next/llms-txt": ["../../packages/next/dist/llms-txt.d.ts"],
-      "@ahtml/next/mcp": ["../../packages/next/dist/mcp.d.ts"],
-      "@ahtml/next/openapi": ["../../packages/next/dist/openapi.d.ts"]
+      "@ahtmljs/schema": ["../../packages/schema/dist/index.d.ts"],
+      "@ahtmljs/next": ["../../packages/next/dist/index.d.ts"],
+      "@ahtmljs/next/handler": ["../../packages/next/dist/handler.d.ts"],
+      "@ahtmljs/next/well-known": ["../../packages/next/dist/well-known.d.ts"],
+      "@ahtmljs/next/llms-txt": ["../../packages/next/dist/llms-txt.d.ts"],
+      "@ahtmljs/next/mcp": ["../../packages/next/dist/mcp.d.ts"],
+      "@ahtmljs/next/openapi": ["../../packages/next/dist/openapi.d.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

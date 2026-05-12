@@ -1,10 +1,10 @@
 /**
- * @ahtml/next — Next.js plugin.
+ * @ahtmljs/next — Next.js plugin.
  *
  * Quickstart:
  *
  *   // next.config.js
- *   import { withAHTML } from '@ahtml/next';
+ *   import { withAHTML } from '@ahtmljs/next';
  *   export default withAHTML({
  *     // your existing next config
  *   }, {
@@ -18,16 +18,16 @@
  *   });
  *
  *   // app/ahtml/[...path]/route.ts
- *   import { createAHTMLRoute } from '@ahtml/next/handler';
+ *   import { createAHTMLRoute } from '@ahtmljs/next/handler';
  *   import { buildSnapshot } from '../../lib/ahtml';
  *   export const { GET, HEAD } = createAHTMLRoute(buildSnapshot);
  *
  *   // app/.well-known/ahtml.json/route.ts
- *   import { createWellKnownRoute } from '@ahtml/next/well-known';
+ *   import { createWellKnownRoute } from '@ahtmljs/next/well-known';
  *   export const { GET } = createWellKnownRoute();
  */
 
-import type { Policy } from '@ahtml/schema';
+import type { Policy } from '@ahtmljs/schema';
 
 export interface AHTMLConfig {
   site: string;

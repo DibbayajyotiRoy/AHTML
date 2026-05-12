@@ -4,7 +4,7 @@
  * Returns a list of human-readable issues. Empty array = valid.
  * For full JSON Schema validation, run schema.json through any standard
  * JSON Schema validator (ajv, etc.). This validator is intentionally lean
- * so the @ahtml/schema package has zero runtime dependencies.
+ * so the @ahtmljs/schema package has zero runtime dependencies.
  */
 
 import type { Snapshot, Entity, Action } from './types.js';

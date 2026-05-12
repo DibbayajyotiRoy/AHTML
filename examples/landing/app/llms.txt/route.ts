@@ -1,4 +1,4 @@
-import { createLlmsTxtRoute } from '@ahtml/next/llms-txt';
+import { createLlmsTxtRoute } from '@ahtmljs/next/llms-txt';
 import { ahtmlConfig } from '@/lib/ahtml-config';
 
 export const { GET } = createLlmsTxtRoute(
@@ -10,7 +10,7 @@ export const { GET } = createLlmsTxtRoute(
       {
         name: 'Get started',
         items: [
-          { title: 'Install', url: 'https://npmjs.com/package/@ahtml/next', description: 'npm install @ahtml/next' },
+          { title: 'Install', url: 'https://npmjs.com/package/@ahtmljs/next', description: 'npm install @ahtmljs/next' },
           { title: 'Quickstart', url: 'https://ahtml.dev#install', description: 'three files, three minutes' },
           { title: 'v0.1 spec', url: 'https://ahtml.dev/spec', description: 'formal schema, action contract, policy block' },
           { title: 'Plan', url: 'https://github.com/ahtml/ahtml/blob/main/PLAN.md', description: 'phases 0–3, risks, prior art' },

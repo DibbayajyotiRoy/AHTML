@@ -20,7 +20,7 @@ authoring.
 4. **Zero runtime.** Compiles to plain HTML + JSON. No `.ahtml` interpreter
    in the production app.
 5. **Same emission targets as the plugin.** A `.ahtml` file produces the
-   same outputs that `@ahtml/next` produces from data-attrs / extractors today.
+   same outputs that `@ahtmljs/next` produces from data-attrs / extractors today.
 
 ## Sketch
 
@@ -29,7 +29,7 @@ metadata, `entity` blocks, and `view` (the rendered template).
 
 ```ahtml
 // products/[id].ahtml
-import { Product } from "@ahtml/schema";
+import { Product } from "@ahtmljs/schema";
 
 page {
   url       = `/products/${params.id}`
@@ -108,14 +108,14 @@ out/
 └── ahtml/openapi/products.yaml            ← OpenAPI fragment
 ```
 
-The framework integration (`@ahtml/next-language`, `@ahtml/vite-language`)
+The framework integration (`@ahtmljs/next-language`, `@ahtmljs/vite-language`)
 wires these into the host framework's routing.
 
 ## Why a new file extension
 
 | Alternative | Why we don't take it |
 |---|---|
-| Extend JSX with `data-ahtml-*` | Already shipped as Level 1 in `@ahtml/next`. Works without a new language. But annotations get verbose for non-trivial pages — `.ahtml` is for the cases where they would. |
+| Extend JSX with `data-ahtml-*` | Already shipped as Level 1 in `@ahtmljs/next`. Works without a new language. But annotations get verbose for non-trivial pages — `.ahtml` is for the cases where they would. |
 | Use a `<script type="ahtml">` block | Splits one route across two files; loses the LSP affordances of a dedicated file type. |
 | Reuse `.tsx` with imports | Editor tooling around JSX assumes React semantics. `.ahtml` lets us own the diagnostics. |
 | Reuse Svelte's `.svelte` shape | Coupled to the Svelte compiler; we want framework neutrality. |
@@ -131,7 +131,7 @@ The minimum viable type system:
 - **Reversibility** literal — `P30D full_refund`, `no`, `yes`.
 - **Cost** literal — `1999 USD purchase`, `free`.
 - **Enum** for `state`, `priority`, `category`, etc — autocompleted by the LSP.
-- **Schema imports** from `@ahtml/schema` — `Product`, `Document`, `Task`, etc.
+- **Schema imports** from `@ahtmljs/schema` — `Product`, `Document`, `Task`, etc.
 
 ## Implementation plan
 
@@ -143,8 +143,8 @@ Per [PLAN.md](PLAN.md) §5.3:
 4. **`tree-sitter-ahtml` grammar** — for VS Code, Neovim, Helix, Zed, GitHub.
 5. **`ahtml-lsp`** — Rust + `tower-lsp`. Diagnostics, hover, completion, goto-def.
 6. **VS Code extension** — TS client around the LSP server.
-7. **Framework bindings** — `@ahtml/next-language`, `@ahtml/vite-language`,
-   `@ahtml/sveltekit-language` pick up `.ahtml` alongside `.tsx` / `.svelte`.
+7. **Framework bindings** — `@ahtmljs/next-language`, `@ahtmljs/vite-language`,
+   `@ahtmljs/sveltekit-language` pick up `.ahtml` alongside `.tsx` / `.svelte`.
 
 ## Open questions
 
@@ -166,10 +166,10 @@ These resolve during Phase 2:
 ## What you can do today
 
 The Phase-2 language is not built yet. Today, you express the same
-semantics in TypeScript using the `snapshot()` DSL from `@ahtml/schema`:
+semantics in TypeScript using the `snapshot()` DSL from `@ahtmljs/schema`:
 
 ```ts
-import { snapshot } from '@ahtml/schema';
+import { snapshot } from '@ahtmljs/schema';
 
 export function buildSnapshot(params: { id: string }, db) {
   const p = db.product(params.id);

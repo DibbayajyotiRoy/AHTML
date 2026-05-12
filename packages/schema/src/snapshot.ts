@@ -1,7 +1,7 @@
 /**
  * Snapshot builder DSL.
  *
- *   import { snapshot } from '@ahtml/schema';
+ *   import { snapshot } from '@ahtmljs/schema';
  *
  *   const snap = snapshot(req.url, 'product_detail')
  *     .ttl(300)

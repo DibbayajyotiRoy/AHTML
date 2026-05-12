@@ -2,7 +2,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import DogfoodStrip from '@/components/DogfoodStrip';
 import { DEMO_PRODUCTS, productSnapshot } from '@/lib/snapshots';
-import { toCompact } from '@ahtml/schema';
+import { toCompact } from '@ahtmljs/schema';
 import { notFound } from 'next/navigation';
 
 export function generateStaticParams() {

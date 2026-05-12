@@ -3,7 +3,7 @@
  * Lower-precedence than schema.org, but covers sites that only ship OG.
  */
 
-import type { Entity, Document, Product } from '@ahtml/schema';
+import type { Entity, Document, Product } from '@ahtmljs/schema';
 import type { Extraction } from './merge.js';
 
 export function extractFromOpenGraph(html: string): Extraction {

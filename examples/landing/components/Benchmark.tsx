@@ -1,5 +1,5 @@
 /**
- * Live benchmark — runs the @ahtml/schema serializers against the same
+ * Live benchmark — runs the @ahtmljs/schema serializers against the same
  * landing copy in four formats, counts bytes + gzip + tokens (when the
  * tokenizers are installed), renders the table.
  *
@@ -8,7 +8,7 @@
  * library actually works end-to-end.
  */
 
-import { toCompact, toJson, snapshot, computeEtag } from '@ahtml/schema';
+import { toCompact, toJson, snapshot, computeEtag } from '@ahtmljs/schema';
 import { homeSnapshot } from '@/lib/snapshots';
 import { gzipSync } from 'node:zlib';
 

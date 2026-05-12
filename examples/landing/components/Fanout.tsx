@@ -14,7 +14,7 @@ export default function Fanout() {
             │
             ▼
    ┌─────────────────────────┐
-   │     @ahtml/next         │   one plugin · zero migration
+   │     @ahtmljs/next         │   one plugin · zero migration
    └────────────┬────────────┘
                 │
    ┌────────────┼────────────┬────────────┬────────────┐

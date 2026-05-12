@@ -1,5 +1,5 @@
 {
-  "name": "@ahtml/next",
+  "name": "@ahtmljs/next",
   "version": "0.1.0",
   "description": "Next.js plugin for AHTML. Adds /.well-known/ahtml.json, /ahtml/[...path] route handlers, content negotiation, ETag-based incremental fetch, MCP + OpenAPI emitters, and a per-route snapshot builder.",
   "type": "module",
@@ -21,7 +21,7 @@
     "dev": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
-    "@ahtml/schema": "0.1.0"
+    "@ahtmljs/schema": "0.1.0"
   },
   "peerDependencies": {
     "next": ">=14"

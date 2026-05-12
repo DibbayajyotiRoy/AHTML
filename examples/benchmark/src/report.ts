@@ -90,7 +90,7 @@ export function renderReport(rows: Row[]): string {
   L.push('   schema.org JSON-LD, OpenGraph meta, inline tracking scripts, hero');
   L.push('   image references, related-product rails, comment stubs, and the');
   L.push('   typical 50+ link footer of a production site.');
-  L.push('4. **AHTML snapshots are real.** They are built with the `@ahtml/schema`');
+  L.push('4. **AHTML snapshots are real.** They are built with the `@ahtmljs/schema`');
   L.push('   `snapshot()` DSL and serialized with the package\'s exported');
   L.push('   `toCompact` / `toJson` functions — not hand-tuned for the benchmark.');
   L.push('5. **Future formal benchmark.** Adapt to WebShop (Yao 2022), Mind2Web');

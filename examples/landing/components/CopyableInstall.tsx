@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 export default function CopyableInstall() {
   const [copied, setCopied] = useState(false);
-  const cmd = 'npm install @ahtml/next';
+  const cmd = 'npm install @ahtmljs/next';
   return (
     <div className="install">
       <span className="prompt">$</span>

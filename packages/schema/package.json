@@ -1,5 +1,5 @@
 {
-  "name": "@ahtml/schema",
+  "name": "@ahtmljs/schema",
   "version": "0.1.0",
   "description": "AHTML semantic snapshot schema — types, validator, builder, and dual-format serializers (JSON + token-optimal compact text).",
   "type": "module",

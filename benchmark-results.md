@@ -90,7 +90,7 @@ contracts that llms.txt cannot express.
    schema.org JSON-LD, OpenGraph meta, inline tracking scripts, hero
    image references, related-product rails, comment stubs, and the
    typical 50+ link footer of a production site.
-4. **AHTML snapshots are real.** They are built with the `@ahtml/schema`
+4. **AHTML snapshots are real.** They are built with the `@ahtmljs/schema`
    `snapshot()` DSL and serialized with the package's exported
    `toCompact` / `toJson` functions — not hand-tuned for the benchmark.
 5. **Future formal benchmark.** Adapt to WebShop (Yao 2022), Mind2Web

@@ -18,7 +18,7 @@ import {
   applyDiff,
   type Snapshot,
   type SnapshotDiff,
-} from '@ahtml/schema';
+} from '@ahtmljs/schema';
 
 export interface FetchOptions {
   /** "compact" (default, token-optimal) or "json". */

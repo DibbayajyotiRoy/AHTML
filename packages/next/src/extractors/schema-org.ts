@@ -5,7 +5,7 @@
  * we get a free Level-0 AHTML snapshot with zero developer work.
  */
 
-import type { Entity, Product, Document } from '@ahtml/schema';
+import type { Entity, Product, Document } from '@ahtmljs/schema';
 import type { Extraction } from './merge.js';
 
 export function extractFromSchemaOrg(html: string): Extraction {

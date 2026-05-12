@@ -4,7 +4,7 @@
  * Usage in a Next.js App Router project:
  *
  *   // app/ahtml/[...path]/route.ts
- *   import { createAHTMLRoute } from '@ahtml/next/handler';
+ *   import { createAHTMLRoute } from '@ahtmljs/next/handler';
  *   import { buildSnapshotForPath } from '../../lib/ahtml';
  *   export const { GET, HEAD } = createAHTMLRoute(buildSnapshotForPath);
  *
@@ -24,7 +24,7 @@ import {
   computeEtag,
   diff,
   type Snapshot,
-} from '@ahtml/schema';
+} from '@ahtmljs/schema';
 import { getConfig, type AHTMLConfig } from './index.js';
 import { enforcePolicy } from './policy.js';
 

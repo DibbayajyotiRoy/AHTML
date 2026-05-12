@@ -7,7 +7,7 @@
  * the request handlers.
  */
 
-import type { AHTMLConfig } from '@ahtml/next';
+import type { AHTMLConfig } from '@ahtmljs/next';
 
 export const ahtmlConfig: AHTMLConfig = {
   site: process.env.SITE_URL ?? 'https://ahtml.dev',

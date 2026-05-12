@@ -3,7 +3,7 @@
  * any action endpoints declared on snapshots' actions.
  */
 
-import type { Snapshot } from '@ahtml/schema';
+import type { Snapshot } from '@ahtmljs/schema';
 
 export function snapshotsToOpenApi(opts: { title: string; baseUrl: string }, snaps: Snapshot[]): Record<string, unknown> {
   const paths: Record<string, Record<string, unknown>> = {};

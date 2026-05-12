@@ -1,4 +1,4 @@
-import type { Entity, Action } from '@ahtml/schema';
+import type { Entity, Action } from '@ahtmljs/schema';
 
 export interface Extraction {
   source: 'data-attrs' | 'schema-org' | 'opengraph' | 'route-metadata';

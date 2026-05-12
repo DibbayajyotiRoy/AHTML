@@ -6,7 +6,7 @@
  * MCP server-compatible tool surface — no separate MCP server required.
  */
 
-import type { Snapshot, Action } from '@ahtml/schema';
+import type { Snapshot, Action } from '@ahtmljs/schema';
 
 export interface McpToolDefinition {
   name: string;

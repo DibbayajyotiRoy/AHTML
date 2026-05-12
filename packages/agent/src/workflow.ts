@@ -8,7 +8,7 @@
  * applied client-side as an extra safety layer.
  */
 
-import type { Action, Snapshot } from '@ahtml/schema';
+import type { Action, Snapshot } from '@ahtmljs/schema';
 
 export interface ActionRunOptions {
   /** Override the snapshot's confirmation level. Useful when the caller

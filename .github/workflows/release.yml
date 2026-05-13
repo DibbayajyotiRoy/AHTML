@@ -1,0 +1,110 @@
+name: Release
+
+# Publishes all three packages to npm when you push a tag like v0.1.1, v0.2.0, etc.
+#
+# Setup (one-time):
+#   1. Generate a granular access token on npmjs.com:
+#      Settings → Access Tokens → Generate New Token → Granular Access Token
+#      - Name: github-actions-publish
+#      - Scope: @ahtmljs (all packages)
+#      - Permissions: Read and write
+#      - Allow bypass 2FA: ON
+#   2. Add it as a GitHub secret:
+#      Repo → Settings → Secrets and variables → Actions → New repository secret
+#      - Name: NPM_TOKEN
+#      - Secret: paste the npm_... token
+#   3. Bump versions in packages/*/package.json, commit, push.
+#   4. Tag the release: git tag v0.1.2 && git push --tags
+#   5. This workflow runs automatically and publishes.
+#
+# What you get:
+#   - All three packages published with the same version, in dependency order.
+#   - npm provenance: the npm page shows "Built and signed on GitHub Actions"
+#     with a link back to this exact workflow run. Cryptographic proof that
+#     the npm package was built from the linked GitHub commit.
+#   - A GitHub Release auto-created with notes generated from commit history.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write       # for creating GitHub releases
+  id-token: write       # required for npm provenance (sigstore attestation)
+
+jobs:
+  publish:
+    name: build + publish + provenance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Verify tag matches package version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          PKG_VER=$(node -p "require('./packages/schema/package.json').version")
+          if [ "$TAG" != "$PKG_VER" ]; then
+            echo "::error::Tag v$TAG does not match package version $PKG_VER"
+            exit 1
+          fi
+          echo "Releasing v$TAG"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build (dependency order)
+        run: |
+          npm run build -w @ahtmljs/schema
+          npm run build -w @ahtmljs/next
+          npm run build -w @ahtmljs/agent
+
+      - name: Typecheck
+        run: |
+          (cd packages/schema && npx tsc --noEmit -p tsconfig.json)
+          (cd packages/next   && npx tsc --noEmit -p tsconfig.json)
+          (cd packages/agent  && npx tsc --noEmit -p tsconfig.json)
+
+      - name: Benchmark sanity check
+        run: npm run benchmark
+
+      - name: Publish @ahtmljs/schema (with provenance)
+        run: cd packages/schema && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ahtmljs/next (with provenance)
+        run: cd packages/next && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ahtmljs/agent (with provenance)
+        run: cd packages/agent && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          name: ${{ github.ref_name }}
+          body: |
+            Published to npm:
+
+            - [`@ahtmljs/schema@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/schema/v/${{ github.ref_name }})
+            - [`@ahtmljs/next@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/next/v/${{ github.ref_name }})
+            - [`@ahtmljs/agent@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/agent/v/${{ github.ref_name }})
+
+            Each package was built from this exact commit and signed via GitHub Actions
+            ([npm provenance](https://docs.npmjs.com/generating-provenance-statements)).
+            Install: `npm install @ahtmljs/next @ahtmljs/schema`

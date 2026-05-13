@@ -1,6 +1,8 @@
 # AHTML — the HTML of the agent web
 
 [![npm version](https://img.shields.io/npm/v/@ahtmljs/next.svg?style=flat-square)](https://www.npmjs.com/package/@ahtmljs/next)
+[![CI](https://github.com/DibbayajyotiRoy/AHTML/actions/workflows/ci.yml/badge.svg)](https://github.com/DibbayajyotiRoy/AHTML/actions/workflows/ci.yml)
+[![Provenance](https://img.shields.io/badge/npm-provenance-2dba4e?style=flat-square&logo=github)](https://docs.npmjs.com/generating-provenance-statements)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![MCP compatible](https://img.shields.io/badge/MCP-compatible-7e57c2?style=flat-square)](https://modelcontextprotocol.io)
 [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-6ba539?style=flat-square)](https://spec.openapis.org/oas/v3.1.0)

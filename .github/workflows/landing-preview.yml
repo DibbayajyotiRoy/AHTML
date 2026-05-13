@@ -1,0 +1,55 @@
+name: Landing preview build
+
+# Verifies the marketing landing builds + serves on every PR.
+# Doesn't deploy — Vercel/Cloudflare handles deployment if you wire them up
+# to the repo. This is just a "doesn't fall over" check.
+
+on:
+  pull_request:
+    paths:
+      - 'examples/landing/**'
+      - 'packages/schema/**'
+      - 'packages/next/**'
+      - '.github/workflows/landing-preview.yml'
+
+concurrency:
+  group: landing-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: next build + smoke test routes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci --ignore-scripts
+
+      - name: Build workspaces
+        run: |
+          npm run build -w @ahtmljs/schema
+          npm run build -w @ahtmljs/next
+          npm run build -w @ahtmljs/agent
+
+      - name: Build the landing
+        run: cd examples/landing && npx next build
+
+      - name: Start landing + smoke-test the AHTML routes
+        run: |
+          cd examples/landing
+          ../../node_modules/.bin/next start -p 3217 &
+          NEXT_PID=$!
+          sleep 8
+          curl -sf -H "Accept: application/ahtml+text" http://127.0.0.1:3217/ahtml | head -5
+          curl -sf http://127.0.0.1:3217/.well-known/ahtml.json | head -5
+          curl -sf http://127.0.0.1:3217/llms.txt | head -5
+          curl -sf http://127.0.0.1:3217/ahtml/mcp.json | head -5
+          curl -sf http://127.0.0.1:3217/ahtml/openapi.json | head -5
+          kill $NEXT_PID
+          echo "all five live endpoints responded"

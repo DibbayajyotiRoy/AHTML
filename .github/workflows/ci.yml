@@ -50,6 +50,18 @@ jobs:
       - name: Typecheck — examples/landing
         run: cd examples/landing && npx tsc --noEmit -p tsconfig.json
 
+      - name: Unit tests — @ahtmljs/schema (49 tests)
+        run: cd packages/schema && npm test
+
+      - name: Unit tests — @ahtmljs/next (38 tests)
+        run: cd packages/next && npm test
+
+      - name: Unit tests — @ahtmljs/agent (18 tests)
+        run: cd packages/agent && npm test
+
+      - name: UX scenario tests (30 tests — token-saving, action safety, incremental crawl, MCP, zero-config)
+        run: npm run test:ux
+
       - name: Run benchmark (with real tokenizers)
         run: npm run benchmark
 

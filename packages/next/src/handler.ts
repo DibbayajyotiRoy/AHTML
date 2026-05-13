@@ -87,6 +87,14 @@ export function createAHTMLRoute(builder: SnapshotBuilder, configOverride?: AHTM
       if (prev && (prev.etag === sinceEtag || computeEtag(prev) === sinceEtag)) {
         const d = diff(prev, snap);
         cacheSet(cacheKey, snap);
+        // Optimization: when there are no changes, return 304 — saves
+        // ~150 B per page on no-change recrawls at scale.
+        if (d.changes.length === 0) {
+          return new Response(null, {
+            status: 304,
+            headers: { etag, 'cache-control': cacheControl(snap, config) },
+          });
+        }
         return new Response(JSON.stringify(d), {
           status: 200,
           headers: {

@@ -139,7 +139,7 @@ export class AHTMLClient {
 
   /** Discover a site's manifest. Returns the parsed JSON. */
   async manifest(siteOrUrl: string, opts: FetchOptions = {}): Promise<unknown> {
-    const fetcher = opts.fetch ?? globalThis.fetch;
+    const fetcher = opts.fetch ?? this.defaults.fetch ?? globalThis.fetch;
     const base = siteOrUrl.replace(/\/$/, '');
     const url = base.endsWith('/.well-known/ahtml.json')
       ? base

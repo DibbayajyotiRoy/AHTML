@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Authentication · API Reference · Acme Cloud Docs</title>
+<meta name="description" content="How to authenticate against the Acme Cloud REST API: bearer tokens, OAuth2 client credentials, signing, scopes, rotation." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Authentication — Acme Cloud Docs" />
+<meta property="og:description" content="Bearer tokens, OAuth2, signing, scopes, rotation." />
+<meta property="og:url" content="https://docs.acmecloud.example/api/auth" />
+<link rel="canonical" href="https://docs.acmecloud.example/api/auth" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"Authentication","description":"How to authenticate against the Acme Cloud REST API: bearer tokens, OAuth2 client credentials, signing, scopes, rotation.","datePublished":"2026-03-01T00:00:00Z","dateModified":"2026-05-08T10:30:00Z","author":{"@type":"Organization","name":"Acme Cloud Docs"},"keywords":"authentication, oauth2, bearer, api","inLanguage":"en","articleSection":"API Reference"}
+</script>
+<link rel="stylesheet" href="/static/docs.css" />
+</head>
+<body class="docs">
+<header class="docs-header"><div class="container">
+  <a class="brand" href="/">Acme Cloud Docs</a>
+  <nav><ul><li><a href="/guides">Guides</a></li><li><a href="/api">API Reference</a></li><li><a href="/sdk">SDKs</a></li><li><a href="/changelog">Changelog</a></li></ul></nav>
+  <input type="search" placeholder="Search docs..." />
+</div></header>
+<div class="layout">
+  <aside class="sidebar">
+    <h3>API Reference</h3>
+    <ul>
+      <li><a href="/api/overview">Overview</a></li>
+      <li class="current"><a href="/api/auth">Authentication</a></li>
+      <li><a href="/api/projects">Projects</a></li>
+      <li><a href="/api/deployments">Deployments</a></li>
+      <li><a href="/api/teams">Teams</a></li>
+      <li><a href="/api/webhooks">Webhooks</a></li>
+    </ul>
+  </aside>
+  <main class="doc">
+    <nav class="breadcrumb"><a href="/">Docs</a> / <a href="/api">API Reference</a> / Authentication</nav>
+    <h1 id="authentication">Authentication</h1>
+    <p class="lede">Acme Cloud uses two authentication schemes: <strong>bearer tokens</strong> for personal access, and <strong>OAuth2 client credentials</strong> for server-to-server. All API requests must be made over HTTPS.</p>
+    <h2 id="bearer-tokens">Bearer tokens</h2>
+    <p>Generate a personal access token at <a href="/account/tokens">acmecloud.example/account/tokens</a>. Include it on every request:</p>
+    <pre><code>curl -H "Authorization: Bearer acme_pat_..." https://api.acmecloud.example/v1/projects</code></pre>
+    <p>Tokens are scoped (read / write / admin) and expire after 90 days unless you set <code>"never"</code>.</p>
+    <h2 id="oauth2">OAuth2 client credentials</h2>
+    <p>For server-to-server workloads:</p>
+    <pre><code>curl -X POST https://auth.acmecloud.example/oauth/token \
+  -d "grant_type=client_credentials" \
+  -d "client_id=acme_cli_..." \
+  -d "client_secret=..." \
+  -d "scope=projects:read deployments:write"</code></pre>
+    <p>The response contains an <code>access_token</code> valid for 1 hour.</p>
+    <h2 id="scopes">Scopes</h2>
+    <table>
+      <thead><tr><th>Scope</th><th>Permits</th></tr></thead>
+      <tbody>
+        <tr><td><code>projects:read</code></td><td>List + read projects</td></tr>
+        <tr><td><code>projects:write</code></td><td>Create + update projects</td></tr>
+        <tr><td><code>deployments:read</code></td><td>List + read deployments</td></tr>
+        <tr><td><code>deployments:write</code></td><td>Trigger deployments</td></tr>
+        <tr><td><code>admin</code></td><td>All of the above + billing + member management</td></tr>
+      </tbody>
+    </table>
+    <h2 id="rotation">Token rotation</h2>
+    <p>We rotate API keys quarterly. You'll receive an email 30 days before any token expires.</p>
+  </main>
+</div>
+<footer class="docs-footer"><div class="container"><p>© 2026 Acme Cloud · <a href="/support">Support</a> · <a href="/status">Status</a></p></div></footer>
+</body>
+</html>

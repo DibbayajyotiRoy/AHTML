@@ -1,0 +1,22 @@
+{
+  "name": "ahtml-llm-benchmark",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "LLM comprehension benchmark — proves AHTML preserves answer accuracy while reducing token cost. Runs 20 extraction tasks against gpt-4o-mini + claude-haiku across HTML / llms.txt / AHTML.",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "mock": "tsx src/index.ts --mock",
+    "report": "tsx src/index.ts --mock --write-report",
+    "real": "tsx src/index.ts --with-llm --write-report"
+  },
+  "dependencies": {
+    "@ahtmljs/schema": "0.1.1",
+    "gpt-tokenizer": "^3.0.1",
+    "@anthropic-ai/tokenizer": "^0.0.4"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "@types/node": "^22.0.0"
+  }
+}

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Show: A real-time alternative to Postgres LISTEN/NOTIFY — Hacker Forum</title>
+<meta name="description" content="Discussion thread on a new real-time alternative to Postgres LISTEN/NOTIFY for scaling pub/sub at high QPS." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Show: A real-time alternative to Postgres LISTEN/NOTIFY" />
+<meta property="og:url" content="https://hackerforum.example/item?id=39482" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"DiscussionForumPosting","headline":"Show: A real-time alternative to Postgres LISTEN/NOTIFY","datePublished":"2026-05-13T14:23:00Z","author":{"@type":"Person","name":"jane_dev"},"inLanguage":"en","interactionStatistic":{"@type":"InteractionCounter","interactionType":"https://schema.org/CommentAction","userInteractionCount":47}}
+</script>
+</head>
+<body>
+<header class="topbar"><a href="/" class="logo">Hacker Forum</a><nav><a href="/new">New</a> · <a href="/show">Show</a> · <a href="/ask">Ask</a> · <a href="/jobs">Jobs</a></nav></header>
+<main>
+<article class="post-top">
+  <h1>Show: A real-time alternative to Postgres LISTEN/NOTIFY</h1>
+  <p class="post-meta"><a href="https://github.example/jane/listenless">github.example/jane/listenless</a> · 142 points · 47 comments · 2 hours ago · by <a href="/user?id=jane_dev">jane_dev</a></p>
+  <p class="post-body">Hey HN! After hitting the upper limit on Postgres LISTEN/NOTIFY at ~30k QPS, we built a small Rust daemon that proxies LISTEN streams through NATS. Open source, MIT, ~2k LOC. Looking for feedback on the API surface.</p>
+</article>
+<section class="comments">
+  <h2>Comments (47)</h2>
+  <ol class="comment-tree">
+    <li class="comment">
+      <p class="comment-meta"><a href="/user?id=alex">alex</a> · 1 hour ago</p>
+      <p>Curious why not use Postgres logical replication directly — it scales better and you get the schema for free.</p>
+      <ol>
+        <li class="comment reply">
+          <p class="comment-meta"><a href="/user?id=jane_dev">jane_dev</a> · 58 minutes ago</p>
+          <p>Logical replication is heavier — you have to set up publication, subscription, slots, monitor lag. Our use case is "fire-and-forget pub/sub" not "follow every row change."</p>
+        </li>
+      </ol>
+    </li>
+    <li class="comment">
+      <p class="comment-meta"><a href="/user?id=mei">mei</a> · 1 hour ago</p>
+      <p>Have you compared to Redis pub/sub? Curious what the operational tradeoff looks like.</p>
+    </li>
+    <li class="comment">
+      <p class="comment-meta"><a href="/user?id=daniel">daniel</a> · 45 minutes ago</p>
+      <p>I tried this approach with Kafka and it was a nightmare to operate. NATS sounds much lighter — appreciate you doing the work.</p>
+    </li>
+  </ol>
+</section>
+</main>
+<footer><p>© 2026 Hacker Forum · <a href="/about">About</a> · <a href="/guidelines">Guidelines</a></p></footer>
+</body>
+</html>

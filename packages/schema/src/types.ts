@@ -114,6 +114,43 @@ export interface Document extends BaseEntity {
   language?: string;
   tags?: string[];
   canonical_url?: string;
+  /**
+   * Optional retrieval-ready chunks of the document's content.
+   *
+   * Designed for RAG pipelines: each chunk has a deterministic id,
+   * byte range against `content`, optional citation anchor (matches a
+   * heading or named anchor in the source HTML), and optional embedding
+   * hints. Chunks form a singly-linked list via prev/next so retrievers
+   * can fetch neighboring context cheaply.
+   *
+   * Stable across snapshots: chunk ids are content-addressed; agents
+   * can cache embeddings keyed on id.
+   */
+  chunks?: Chunk[];
+}
+
+export interface Chunk {
+  /** Deterministic, content-addressed id. Conventionally "<document-id>#<short-hash>". */
+  id: string;
+  /** Inclusive-exclusive byte range against the parent Document's `content`. */
+  byte_range: [number, number];
+  /** Citation target in the source HTML (e.g. "#introduction"). */
+  anchor?: string;
+  /** Heading text the chunk falls under, if any. */
+  heading?: string;
+  /** Parent document id — back-reference for cache invalidation. */
+  parent: EntityId;
+  /** Previous chunk id in reading order (linked list). */
+  prev?: string;
+  /** Next chunk id in reading order. */
+  next?: string;
+  /** Optional retrieval hint. The class is informational; embedding pipelines may ignore. */
+  embed_hint?: {
+    model_class?: 'small' | 'medium' | 'large' | 'multilingual';
+    notes?: string;
+  };
+  /** Token count for this chunk if pre-computed by the publisher. */
+  tokens?: number;
 }
 
 export interface Task extends BaseEntity {

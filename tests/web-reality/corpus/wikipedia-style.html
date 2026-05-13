@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<title>Distributed hash table - Encyclopedia Mini</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="A distributed hash table (DHT) is a class of decentralized distributed system that provides a lookup service similar to a hash table." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Distributed hash table" />
+<meta property="og:description" content="Class of decentralized distributed system providing a hash-table-like lookup service." />
+<meta property="og:url" content="https://en.encmini.example/wiki/Distributed_hash_table" />
+<link rel="canonical" href="https://en.encmini.example/wiki/Distributed_hash_table" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","name":"Distributed hash table","headline":"Distributed hash table","description":"Class of decentralized distributed system providing a hash-table-like lookup service.","datePublished":"2019-08-12T00:00:00Z","dateModified":"2026-04-30T18:00:00Z","author":{"@type":"Organization","name":"Encyclopedia Mini contributors"},"inLanguage":"en","keywords":"distributed systems, peer-to-peer, hash table"}
+</script>
+<link rel="stylesheet" href="/skins/mini/base.css" />
+</head>
+<body class="mediawiki ltr">
+<header id="mini-header"><div class="container">
+  <a href="/wiki/Main_Page" class="brand">Encyclopedia Mini</a>
+  <form action="/wiki/Special:Search" method="get"><input type="search" name="search" placeholder="Search Encyclopedia Mini" /></form>
+</div></header>
+<div class="page-layout">
+  <article class="mw-parser-output">
+    <h1 class="firstHeading">Distributed hash table</h1>
+    <div class="lede">
+      <p>A <b>distributed hash table</b> (<b>DHT</b>) is a class of decentralized distributed system that provides a lookup service similar to a hash table: <i>(key, value)</i> pairs are stored in a DHT, and any participating node can efficiently retrieve the value associated with a given key.</p>
+    </div>
+    <nav class="toc"><h2>Contents</h2><ol>
+      <li><a href="#History">History</a></li>
+      <li><a href="#Properties">Properties</a></li>
+      <li><a href="#Structure">Structure</a><ol>
+        <li><a href="#Keyspace_partitioning">Keyspace partitioning</a></li>
+        <li><a href="#Overlay_network">Overlay network</a></li>
+      </ol></li>
+      <li><a href="#Examples">Examples</a></li>
+      <li><a href="#References">References</a></li>
+    </ol></nav>
+    <h2 id="History">History</h2>
+    <p>DHT research was originally motivated by peer-to-peer (P2P) systems such as Freenet, Gnutella, BitTorrent, and Napster. Most early systems used central indices, which made them vulnerable to legal and technical attack.</p>
+    <h2 id="Properties">Properties</h2>
+    <p>DHTs typically emphasize the following properties:</p>
+    <ul>
+      <li><b>Autonomy and decentralization:</b> nodes collectively form the system without any central coordination.</li>
+      <li><b>Fault tolerance:</b> the system is reliable even with nodes continuously joining, leaving, and failing.</li>
+      <li><b>Scalability:</b> the system functions efficiently with thousands or millions of nodes.</li>
+    </ul>
+    <h2 id="Structure">Structure</h2>
+    <h3 id="Keyspace_partitioning">Keyspace partitioning</h3>
+    <p>Most DHTs use some variant of <i>consistent hashing</i> or <i>rendezvous hashing</i> to map keys to nodes. The two algorithms have similar properties but rendezvous hashing handles node failures more gracefully.</p>
+    <h3 id="Overlay_network">Overlay network</h3>
+    <p>Nodes maintain a set of links to other nodes (the <i>overlay network</i>). Together, these links form a network that allows the routing of messages to the node responsible for a given key.</p>
+    <h2 id="Examples">Examples</h2>
+    <ul>
+      <li>Chord (MIT, 2001)</li>
+      <li>Kademlia (NYU, 2002) — used by BitTorrent's mainline DHT and IPFS</li>
+      <li>Pastry (Microsoft Research, 2001)</li>
+      <li>Tapestry (UC Berkeley, 2001)</li>
+    </ul>
+    <h2 id="References">References</h2>
+    <ol class="references">
+      <li>Stoica, I.; Morris, R.; et al. "Chord: A Scalable Peer-to-Peer Lookup Service" (SIGCOMM 2001).</li>
+      <li>Maymounkov, P.; Mazières, D. "Kademlia: A Peer-to-Peer Information System Based on the XOR Metric" (IPTPS 2002).</li>
+    </ol>
+  </article>
+  <aside class="infobox">
+    <h3>Quick facts</h3>
+    <table>
+      <tr><th>Type</th><td>Decentralized data structure</td></tr>
+      <tr><th>First proposed</th><td>2001</td></tr>
+      <tr><th>Common variants</th><td>Chord, Kademlia, Pastry</td></tr>
+    </table>
+  </aside>
+</div>
+<footer><p>Text is available under the Creative Commons Attribution-ShareAlike License. Encyclopedia Mini is a fictional educational corpus.</p></footer>
+</body>
+</html>

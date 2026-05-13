@@ -1,19 +1,44 @@
-# AHTML — the HTML of the agent web
+# AHTML
+
+> **RSS, but for AI agents.**
 
 [![npm version](https://img.shields.io/npm/v/@ahtmljs/next.svg?style=flat-square)](https://www.npmjs.com/package/@ahtmljs/next)
 [![CI](https://github.com/DibbayajyotiRoy/AHTML/actions/workflows/ci.yml/badge.svg)](https://github.com/DibbayajyotiRoy/AHTML/actions/workflows/ci.yml)
+[![135/135 tests](https://img.shields.io/badge/tests-135%2F135-2dba4e?style=flat-square)](TESTING.md)
 [![Provenance](https://img.shields.io/badge/npm-provenance-2dba4e?style=flat-square&logo=github)](https://docs.npmjs.com/generating-provenance-statements)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![MCP compatible](https://img.shields.io/badge/MCP-compatible-7e57c2?style=flat-square)](https://modelcontextprotocol.io)
 [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-6ba539?style=flat-square)](https://spec.openapis.org/oas/v3.1.0)
-[![JSON-LD ingest](https://img.shields.io/badge/JSON--LD-ingest-orange?style=flat-square)](https://json-ld.org/)
 [![llms.txt shim](https://img.shields.io/badge/llms.txt-shim-1b3a82?style=flat-square)](https://llmstxt.org)
+
+A machine-native endpoint that sits next to your existing HTML — token-optimal,
+action-aware, signed. Drop in a Next.js / Vite / SvelteKit plugin and your
+existing site speaks **MCP, OpenAPI, JSON-LD, and llms.txt** automatically.
+
+```bash
+npm install @ahtmljs/next @ahtmljs/schema
+```
+
+## Why agents will prefer your site
+
+- **5–7× fewer tokens** on lean HTML, **50–100× fewer** on production-bloated pages (measured live with `gpt-tokenizer` + `@anthropic-ai/tokenizer` — see [`benchmark-results.md`](benchmark-results.md))
+- **Typed action contracts** — `cost`, `reversible`, `side_effects`, `confirmation` — let agents *act safely*, not just read
+- **MCP for free** — your existing site becomes an MCP server; no parallel process, no separate auth, no migration
+- **Provenance built in** — every npm release is signed via GitHub Actions sigstore attestation, so agents can verify the package origin cryptographically
+
+## Why developers will install it
+
+- **Three files, three minutes.** [Quickstart](#install-in-3-minutes) is 8 lines of wiring across 3 route handlers
+- **Zero migration.** Browsers see the same HTML. AHTML is additive.
+- **Auto-extract from existing schema.org JSON-LD** — most Shopify / WordPress sites get a Level-0 snapshot with zero code changes
+- **Drop-in one-line discovery** for sites that won't install a plugin:
+  ```html
+  <link rel="alternate" type="application/ahtml" href="/ahtml">
+  ```
 
 > **TL;DR.** AHTML turns your existing Next.js, Vite, or SvelteKit app into an
 > **MCP server**, an **OpenAPI provider**, a **JSON-LD source**, and a
-> **token-optimal agent snapshot** — all from one plugin. Agents read **5–100×
-> fewer tokens**. Browsers see the exact same HTML they always have. Zero
-> migration.
+> **token-optimal agent snapshot** — all from one plugin.
 
 ```bash
 npm install @ahtmljs/next @ahtmljs/schema

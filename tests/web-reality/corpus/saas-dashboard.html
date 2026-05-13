@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Projects — Stitch</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Project dashboard for your team. Track tasks, assignees, due dates, and progress." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Stitch — Projects" />
+<meta name="robots" content="noindex" />
+<link rel="stylesheet" href="/static/app.css" />
+<link rel="stylesheet" href="/static/dashboard.css" />
+<script>window.__INITIAL_STATE__ = {"user":{"id":"u_847","name":"Roy","email":"roy@example.com"},"workspace":"ahtml-core"};</script>
+</head>
+<body class="theme-light layout-app">
+<header class="app-header">
+  <a class="brand" href="/">Stitch</a>
+  <input type="search" placeholder="Search projects..." />
+  <nav class="user-menu"><a href="/account">Roy</a><a href="/logout">Sign out</a></nav>
+</header>
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <h2>Workspaces</h2>
+    <ul>
+      <li class="active"><a href="/w/ahtml-core">AHTML Core</a></li>
+      <li><a href="/w/marketing">Marketing</a></li>
+      <li><a href="/w/research">Research</a></li>
+    </ul>
+    <h2>Filters</h2>
+    <ul>
+      <li><a href="?state=open">Open</a></li>
+      <li><a href="?state=in_progress">In progress</a></li>
+      <li><a href="?state=done">Done</a></li>
+      <li><a href="?priority=urgent">Urgent</a></li>
+    </ul>
+  </aside>
+  <main class="app-main">
+    <header class="page-head">
+      <h1>AHTML Core</h1>
+      <div class="actions">
+        <button class="btn-primary" data-action="new-task">New task</button>
+        <button class="btn-secondary" data-action="invite">Invite member</button>
+      </div>
+    </header>
+    <section class="kpi-row">
+      <div class="kpi"><span class="label">Open</span><span class="value">12</span></div>
+      <div class="kpi"><span class="label">In progress</span><span class="value">5</span></div>
+      <div class="kpi"><span class="label">Blocked</span><span class="value">1</span></div>
+      <div class="kpi"><span class="label">Done this week</span><span class="value">8</span></div>
+    </section>
+    <table class="task-table">
+      <thead><tr>
+        <th></th><th>Task</th><th>State</th><th>Priority</th><th>Assignee</th><th>Due</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><input type="checkbox" /></td><td><a href="/task/t-101">Lock schema for v0.2</a></td><td><span class="state state-in_progress">in progress</span></td><td><span class="p-urgent">urgent</span></td><td>Roy</td><td>2026-05-20</td>
+          <td><button data-action="assign">Assign</button><button data-action="move">Move</button><button data-action="delete" class="danger">Delete</button></td></tr>
+        <tr><td><input type="checkbox" /></td><td><a href="/task/t-102">Real-world corpus testing</a></td><td><span class="state state-in_progress">in progress</span></td><td><span class="p-high">high</span></td><td>Roy</td><td>2026-05-18</td>
+          <td><button data-action="assign">Assign</button><button data-action="move">Move</button><button data-action="delete" class="danger">Delete</button></td></tr>
+        <tr><td><input type="checkbox" /></td><td><a href="/task/t-103">Vite plugin</a></td><td><span class="state state-done">done</span></td><td><span class="p-high">high</span></td><td>Roy</td><td>2026-05-15</td>
+          <td><button data-action="assign">Assign</button><button data-action="move">Move</button><button data-action="delete" class="danger">Delete</button></td></tr>
+        <tr><td><input type="checkbox" /></td><td><a href="/task/t-104">Document.chunks primitive</a></td><td><span class="state state-open">open</span></td><td><span class="p-medium">medium</span></td><td>Roy</td><td>2026-05-22</td>
+          <td><button data-action="assign">Assign</button><button data-action="move">Move</button><button data-action="delete" class="danger">Delete</button></td></tr>
+        <tr><td><input type="checkbox" /></td><td><a href="/task/t-105">LangChain loader</a></td><td><span class="state state-open">open</span></td><td><span class="p-medium">medium</span></td><td>Roy</td><td>2026-05-25</td>
+          <td><button data-action="assign">Assign</button><button data-action="move">Move</button><button data-action="delete" class="danger">Delete</button></td></tr>
+      </tbody>
+    </table>
+  </main>
+</div>
+<script src="/static/app.js" defer></script>
+</body>
+</html>

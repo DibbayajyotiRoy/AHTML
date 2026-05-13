@@ -1,0 +1,297 @@
+/**
+ * Run the LLM comprehension benchmark.
+ *
+ *   npm run mock           → mock runner, no API calls, validates pipeline
+ *   npm run report         → mock + writes benchmark-results-llm.md
+ *   npm run real           → real OpenAI + Anthropic calls (needs API keys)
+ */
+
+import { writeFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { snapshot, toCompact, toJson } from '@ahtmljs/schema';
+import { TASKS, scoreAnswer, type Task } from './tasks.js';
+import { mockRunner, openaiRunner, anthropicRunner, SYSTEM, type Runner, type RunResult } from './runners.js';
+
+// =====================================================================
+// Fixtures — one per archetype
+// =====================================================================
+
+function productFixtures() {
+  const snap = snapshot('https://shop.example.com/products/mbp-14-m3', 'product_detail')
+    .ttl(60)
+    .add({
+      id: 'product:mbp-14-m3',
+      type: 'product',
+      name: 'MacBook Pro 14" M3',
+      brand: 'Apple',
+      description: '14-inch laptop with M3 chip, 8-core CPU, 10-core GPU, 18GB RAM, 512GB SSD.',
+      price: { amount: 1999, currency: 'USD' },
+      list_price: { amount: 2199, currency: 'USD' },
+      stock: { status: 'in_stock', quantity: 42 },
+      sku: 'MBP14-M3-512-SB',
+      rating: { average: 4.7, count: 1284 },
+    })
+    .action({
+      id: 'purchase',
+      target: 'product:mbp-14-m3',
+      category: 'transact',
+      method: 'POST',
+      execute_url: '/api/checkout',
+      auth: 'required',
+      cost: { amount: 1999, currency: 'USD', category: 'purchase' },
+      reversible: { reversible: true, window: 'P30D', policy: 'full_refund' },
+      side_effects: ['charge_card', 'email_buyer', 'decrement_stock'],
+      confirmation: 'required',
+    })
+    .build();
+
+  const html = `<!DOCTYPE html>
+<html><head><title>MacBook Pro 14" M3 — Shop</title>
+<meta property="og:type" content="product" />
+<meta property="og:title" content="MacBook Pro 14&quot; M3" />
+<meta property="og:price:amount" content="1999" />
+<meta property="og:price:currency" content="USD" />
+<script type="application/ld+json">${JSON.stringify({
+  '@context': 'https://schema.org/',
+  '@type': 'Product',
+  name: 'MacBook Pro 14" M3',
+  sku: 'MBP14-M3-512-SB',
+  brand: { '@type': 'Brand', name: 'Apple' },
+  description: '14-inch laptop with M3 chip, 8-core CPU, 10-core GPU, 18GB RAM, 512GB SSD.',
+  aggregateRating: { '@type': 'AggregateRating', ratingValue: 4.7, reviewCount: 1284 },
+  offers: { '@type': 'Offer', price: 1999, priceCurrency: 'USD', availability: 'https://schema.org/InStock' },
+})}</script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','GA_TRACKING_ID');</script>
+</head><body>
+<header class="site-header"><nav><a href="/laptops">Laptops</a><a href="/phones">Phones</a><a href="/tablets">Tablets</a><a href="/audio">Audio</a><a href="/business">Business</a></nav></header>
+<main class="pdp"><h1>MacBook Pro 14" M3</h1><p class="brand">Apple</p>
+<div class="rating"><span class="stars">★★★★☆</span><a href="#reviews">4.7 (1,284 reviews)</a></div>
+<div class="price">$1,999.00 <span class="was">$2,199.00</span></div>
+<p>14-inch laptop with M3 chip, 8-core CPU, 10-core GPU, 18GB RAM, 512GB SSD.</p>
+<div class="availability">In stock — 42 available</div>
+<form action="/api/cart/items"><button>Add to cart</button><button class="buy-now" data-confirmation="required">Buy now — $1,999 — 30-day full refund — charges card, sends email, decrements stock</button></form>
+</main>
+<footer class="site-footer"><div><h4>Shop</h4><ul><li>Laptops</li><li>Phones</li><li>Audio</li></ul></div><div><h4>Help</h4><ul><li>Returns</li><li>Support</li></ul></div></footer>
+</body></html>`;
+
+  const llmsTxt = `# Shop — MacBook Pro 14" M3
+> 14-inch laptop with M3 chip, 18GB RAM, 512GB SSD.
+
+## Product
+- Name: MacBook Pro 14" M3
+- Brand: Apple
+- Price: $1,999 (was $2,199)
+- Stock: in_stock (42)
+- SKU: MBP14-M3-512-SB
+- Rating: 4.7 (1284 reviews)
+
+## Actions
+- purchase: charges $1,999 USD, requires confirmation, 30-day full refund, side effects: charge_card, email_buyer, decrement_stock
+- add_to_cart: free
+`;
+
+  return { html, llmsTxt, compact: toCompact(snap), json: toJson(snap) };
+}
+
+function articleFixtures() {
+  const snap = snapshot('https://rumour.example.com/article/why-agents-need-ahtml', 'article')
+    .add({
+      id: 'document:why-agents-need-ahtml',
+      type: 'document',
+      title: 'Why agents need a new HTML',
+      author: 'Roy Mehta',
+      published_at: '2026-05-12T08:00:00Z',
+      summary: 'HTML optimized the web for browsers. The agent web needs a new contract.',
+      language: 'en',
+    })
+    .build();
+
+  const html = `<!DOCTYPE html><html lang="en"><head>
+<title>Why agents need a new HTML — Rumour</title>
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-05-12T08:00:00Z" />
+<meta property="article:author" content="Roy Mehta" />
+<script type="application/ld+json">${JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'NewsArticle',
+  headline: 'Why agents need a new HTML',
+  author: { '@type': 'Person', name: 'Roy Mehta' },
+  datePublished: '2026-05-12T08:00:00Z',
+  inLanguage: 'en',
+  description: 'HTML optimized the web for browsers. The agent web needs a new contract.',
+})}</script></head><body>
+<article><h1>Why agents need a new HTML</h1>
+<p class="byline">By Roy Mehta · May 12, 2026</p>
+<p>The web that browsers see and the web that agents see are two different things. Browsers see pixels. Agents see tokens.</p>
+</article></body></html>`;
+
+  const llmsTxt = `# Why agents need a new HTML
+> Author: Roy Mehta. Published 2026-05-12. Language: en.
+
+HTML optimized the web for browsers. The agent web needs a new contract.
+`;
+
+  return { html, llmsTxt, compact: toCompact(snap), json: toJson(snap) };
+}
+
+function dashboardFixtures() {
+  const tasks: Array<{ id: string; title: string; state: 'open' | 'in_progress' | 'blocked' | 'done'; priority: 'low' | 'medium' | 'high' | 'urgent' }> = [
+    { id: 't-1', title: 'Lock schema', state: 'in_progress', priority: 'urgent' },
+    { id: 't-2', title: 'Real-world corpus', state: 'in_progress', priority: 'high' },
+    { id: 't-3', title: 'Vite plugin', state: 'open', priority: 'high' },
+    { id: 't-4', title: 'LangChain loader', state: 'open', priority: 'medium' },
+    { id: 't-5', title: 'Landing page', state: 'done', priority: 'low' },
+  ];
+  const b = snapshot('https://stitch.example/w/core', 'task_list').ttl(15);
+  for (const t of tasks) b.add({ id: `task:${t.id}`, type: 'task', title: t.title, state: t.state, priority: t.priority });
+  const snap = b
+    .action({ id: 'create_task', category: 'create', method: 'POST', execute_url: '/api/tasks', auth: 'required', cost: { category: 'free' } })
+    .action({ id: 'delete_task', category: 'delete', method: 'DELETE', execute_url: '/api/tasks/{id}', auth: 'required', cost: { category: 'free' }, reversible: { reversible: true, window: 'P7D' }, side_effects: ['delete_record'], confirmation: 'required' })
+    .build();
+
+  const html = `<!DOCTYPE html><html><head><title>Tasks</title></head><body>
+<header><nav>Workspaces | Filters | Views</nav></header>
+<main><h1>AHTML Core</h1>
+<table><thead><tr><th>Task</th><th>State</th><th>Priority</th></tr></thead><tbody>
+${tasks.map((t) => `<tr><td>${t.title}</td><td>${t.state}</td><td>${t.priority}</td></tr>`).join('\n')}
+</tbody></table>
+<button data-action="new-task">Create task</button>
+<button data-action="delete-task" data-confirmation="required" class="danger">Delete task</button>
+</main></body></html>`;
+
+  const llmsTxt = `# AHTML Core — Tasks
+${tasks.map((t) => `- [${t.state}] ${t.title} (${t.priority})`).join('\n')}
+
+## Actions
+- create_task: free
+- delete_task: requires confirmation, 7-day restore window
+`;
+
+  return { html, llmsTxt, compact: toCompact(snap), json: toJson(snap) };
+}
+
+// =====================================================================
+// Main runner
+// =====================================================================
+
+async function runAll(opts: { mock: boolean; withLLM: boolean }): Promise<RunResult[]> {
+  const fixtures = {
+    product: productFixtures(),
+    article: articleFixtures(),
+    dashboard: dashboardFixtures(),
+  };
+
+  const runners: Runner[] = [];
+  if (opts.mock || !opts.withLLM) runners.push(mockRunner);
+  if (opts.withLLM) {
+    if (process.env.OPENAI_API_KEY) runners.push(openaiRunner);
+    if (process.env.ANTHROPIC_API_KEY) runners.push(anthropicRunner);
+    if (runners.length === 0) {
+      console.error('--with-llm requested but no OPENAI_API_KEY or ANTHROPIC_API_KEY in env. Aborting.');
+      process.exit(1);
+    }
+  }
+
+  const formats = ['HTML', 'llms.txt', 'AHTML compact', 'AHTML JSON'] as const;
+  const results: RunResult[] = [];
+
+  for (const task of TASKS) {
+    const fixture = fixtures[task.archetype];
+    const contents: Record<typeof formats[number], string> = {
+      'HTML': fixture.html,
+      'llms.txt': fixture.llmsTxt,
+      'AHTML compact': fixture.compact,
+      'AHTML JSON': fixture.json,
+    };
+    for (const format of formats) {
+      for (const runner of runners) {
+        try {
+          const { answer, tokens_input, tokens_output, cost_usd, latency_ms } = await runner.ask(SYSTEM, task.prompt, contents[format]);
+          const correct = scoreAnswer(task, answer);
+          results.push({ task, format, model: runner.name, answer, tokens_input, tokens_output, cost_usd, latency_ms, correct });
+        } catch (err) {
+          console.error(`  ✗ ${task.id} / ${format} / ${runner.name}: ${(err as Error).message}`);
+        }
+      }
+    }
+  }
+  return results;
+}
+
+function renderReport(results: RunResult[]): string {
+  const L: string[] = [];
+  L.push('# AHTML LLM comprehension benchmark — results');
+  L.push('');
+  L.push(`Generated: ${new Date().toISOString()}  |  ${results.length} runs across ${new Set(results.map((r) => r.task.id)).size} tasks`);
+  L.push('');
+  L.push('## Aggregate by format');
+  L.push('');
+  L.push('| Format | Median tokens in | Total tokens | Total cost | Accuracy |');
+  L.push('| --- | ---: | ---: | ---: | ---: |');
+  const byFormat = new Map<string, RunResult[]>();
+  for (const r of results) {
+    const k = r.format;
+    if (!byFormat.has(k)) byFormat.set(k, []);
+    byFormat.get(k)!.push(r);
+  }
+  for (const [format, rs] of byFormat) {
+    const sorted = [...rs].sort((a, b) => a.tokens_input - b.tokens_input);
+    const median = sorted[Math.floor(sorted.length / 2)]!.tokens_input;
+    const total = rs.reduce((sum, r) => sum + r.tokens_input + r.tokens_output, 0);
+    const cost = rs.reduce((sum, r) => sum + r.cost_usd, 0);
+    const accuracy = rs.filter((r) => r.correct).length / rs.length;
+    L.push(`| ${format} | ${median.toLocaleString()} | ${total.toLocaleString()} | $${cost.toFixed(4)} | ${(accuracy * 100).toFixed(0)}% |`);
+  }
+  L.push('');
+  L.push('## Per-task pass/fail by format');
+  L.push('');
+  const formats = [...new Set(results.map((r) => r.format))];
+  L.push('| Task | ' + formats.join(' | ') + ' |');
+  L.push('| --- |' + formats.map(() => ' :---: |').join(''));
+  const taskIds = [...new Set(results.map((r) => r.task.id))];
+  for (const tid of taskIds) {
+    const row = [tid];
+    for (const f of formats) {
+      const r = results.find((r) => r.task.id === tid && r.format === f);
+      row.push(r ? (r.correct ? '✓' : '✗') : '–');
+    }
+    L.push('| ' + row.join(' | ') + ' |');
+  }
+  L.push('');
+  L.push('## Methodology');
+  L.push('');
+  L.push('- Tokenizers: `gpt-tokenizer` (OpenAI tiktoken) and `@anthropic-ai/tokenizer` (Claude). No char/4 approximations.');
+  L.push('- Mock mode uses regex heuristics on each format to simulate LLM extraction.');
+  L.push('- Real mode calls OpenAI gpt-4o-mini and Anthropic claude-haiku-4.5 at temperature=0.');
+  L.push('- Pricing per 1M tokens (2026): gpt-4o-mini $0.15 in / $0.60 out; claude-haiku $1.00 in / $5.00 out.');
+  L.push('- Ground truth defined in `src/tasks.ts`.');
+  L.push('');
+  return L.join('\n');
+}
+
+async function main() {
+  const args = new Set(process.argv.slice(2));
+  const opts = {
+    mock: args.has('--mock') || !args.has('--with-llm'),
+    withLLM: args.has('--with-llm'),
+  };
+  const writeReport = args.has('--write-report');
+
+  console.log(`Mode: ${opts.withLLM ? 'real LLM' : 'mock'}`);
+  const results = await runAll(opts);
+  const md = renderReport(results);
+  process.stdout.write(md);
+
+  if (writeReport) {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const out = resolve(here, '../../..', 'benchmark-results-llm.md');
+    writeFileSync(out, md);
+    process.stderr.write(`\n📄 wrote ${out}\n`);
+  }
+}
+
+main().catch((err) => {
+  process.stderr.write(`benchmark failed: ${err instanceof Error ? err.stack : String(err)}\n`);
+  process.exit(1);
+});

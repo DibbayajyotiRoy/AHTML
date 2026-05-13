@@ -1,0 +1,48 @@
+{
+  "name": "@ahtmljs/vite",
+  "version": "0.1.0",
+  "description": "Vite plugin for AHTML. Wires the AHTML route handler into any Vite-based app (SvelteKit, SolidStart, Astro, vanilla Vite) so your existing site emits MCP, OpenAPI, JSON-LD, llms.txt, and a token-optimal agent snapshot.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+  },
+  "files": ["dist", "README.md"],
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "tsx --test src/__tests__/*.test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DibbayajyotiRoy/AHTML.git",
+    "directory": "packages/vite"
+  },
+  "homepage": "https://github.com/DibbayajyotiRoy/AHTML#readme",
+  "bugs": {
+    "url": "https://github.com/DibbayajyotiRoy/AHTML/issues",
+    "email": "rdibbayajyoti@gmail.com"
+  },
+  "author": {
+    "name": "Dibbayajyoti Roy",
+    "email": "rdibbayajyoti@gmail.com",
+    "url": "https://github.com/DibbayajyotiRoy"
+  },
+  "keywords": [
+    "ahtml", "vite", "plugin", "agent", "agent-web", "ai", "llm",
+    "mcp", "model-context-protocol", "llms-txt", "openapi",
+    "json-ld", "semantic-web", "sveltekit", "solidstart", "astro"
+  ],
+  "dependencies": {
+    "@ahtmljs/schema": "0.1.1"
+  },
+  "peerDependencies": {
+    "vite": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "vite": { "optional": true }
+  },
+  "license": "MIT"
+}

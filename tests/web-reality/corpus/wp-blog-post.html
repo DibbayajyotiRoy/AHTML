@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="generator" content="WordPress 6.5" />
+<title>How I cut our build pipeline from 14 minutes to 90 seconds — Code Diary</title>
+<meta name="description" content="A walkthrough of how a 14-minute CI pipeline got compressed down to 90 seconds by caching node_modules, parallelizing tests, and pre-warming the Docker layer." />
+<link rel="canonical" href="https://codediary.example/2026/05/build-pipeline-14min-to-90s/" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="How I cut our build pipeline from 14 minutes to 90 seconds" />
+<meta property="og:description" content="A walkthrough of how a 14-minute CI pipeline got compressed down to 90 seconds." />
+<meta property="og:url" content="https://codediary.example/2026/05/build-pipeline-14min-to-90s/" />
+<meta property="og:site_name" content="Code Diary" />
+<meta property="article:published_time" content="2026-05-10T12:00:00+00:00" />
+<meta property="article:modified_time" content="2026-05-11T08:30:00+00:00" />
+<meta property="article:author" content="Alex Chen" />
+<meta property="og:image" content="https://codediary.example/wp-content/uploads/2026/05/cover.jpg" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://codediary.example/2026/05/build-pipeline-14min-to-90s/","headline":"How I cut our build pipeline from 14 minutes to 90 seconds","datePublished":"2026-05-10T12:00:00+00:00","dateModified":"2026-05-11T08:30:00+00:00","author":{"@type":"Person","name":"Alex Chen","url":"https://codediary.example/author/alex"},"publisher":{"@type":"Organization","name":"Code Diary","logo":{"@type":"ImageObject","url":"https://codediary.example/wp-content/uploads/logo.png"}},"description":"A walkthrough of how a 14-minute CI pipeline got compressed down to 90 seconds.","image":["https://codediary.example/wp-content/uploads/2026/05/cover.jpg"],"inLanguage":"en-US"}
+</script>
+<link rel="stylesheet" href="https://codediary.example/wp-content/themes/diary/style.css" />
+</head>
+<body class="post-template-default single single-post postid-2841">
+<header class="site-header"><div class="wrap">
+  <a class="brand" href="https://codediary.example/">Code Diary</a>
+  <nav><ul><li><a href="/category/devops">DevOps</a></li><li><a href="/category/web">Web</a></li><li><a href="/category/databases">Databases</a></li><li><a href="/about">About</a></li></ul></nav>
+</div></header>
+<main class="content">
+<article class="post-2841 post type-post status-publish format-standard hentry">
+  <header class="entry-header">
+    <h1 class="entry-title">How I cut our build pipeline from 14 minutes to 90 seconds</h1>
+    <p class="entry-meta">
+      <span>By <a href="/author/alex">Alex Chen</a></span> ·
+      <time datetime="2026-05-10T12:00:00+00:00">May 10, 2026</time> ·
+      <span>8 min read</span>
+    </p>
+  </header>
+  <div class="entry-content">
+    <p>Our continuous integration was the slowest part of shipping. Every PR took 14 minutes to go from push to "ready to merge." Across 60+ engineers, that was burning a day a week in waiting time.</p>
+    <h2 id="diagnosis">Diagnosis</h2>
+    <p>I broke the pipeline into measurable stages. <code>node_modules</code> install was 6m20s. Test execution was 4m. Docker build was 3m. Linting was 30s.</p>
+    <h2 id="cache-node-modules">1. Cache <code>node_modules</code> properly</h2>
+    <p>Cache hit rate went from 30% to 94% after we keyed the cache on the package-lock.json hash <em>only</em> (not the branch).</p>
+    <h2 id="parallel-tests">2. Parallelize tests</h2>
+    <p>Sharded the test suite into 4 parallel jobs. Each job runs ~25% of the tests. Total wall-clock for the test stage dropped from 4m to 1m10s.</p>
+    <h2 id="docker-cache">3. Pre-warm the Docker layer cache</h2>
+    <p>We pre-built and pushed a base layer with all our system deps as a nightly. PR builds reuse this layer.</p>
+    <h2 id="results">Results</h2>
+    <p>14m → 90s. Engineer wait-time per week: -22%. Mean time to deploy: -41%.</p>
+  </div>
+  <footer class="entry-footer">
+    <p>Tags: <a href="/tag/ci">ci</a>, <a href="/tag/docker">docker</a>, <a href="/tag/performance">performance</a></p>
+  </footer>
+</article>
+<section class="comments">
+  <h2>3 comments</h2>
+  <ol>
+    <li><strong>Priya</strong> · May 11: "Did you also try pnpm? We saw a 3x install speedup."</li>
+    <li><strong>Daniel</strong> · May 11: "The 94% cache hit rate is the unlock here."</li>
+    <li><strong>Mei</strong> · May 12: "We did the same with Bazel. Different tradeoff but similar result."</li>
+  </ol>
+</section>
+</main>
+<aside class="sidebar">
+  <section><h3>Recent posts</h3><ul><li><a href="/2026/05/postgres-explain-deep-dive/">A Postgres EXPLAIN deep dive</a></li><li><a href="/2026/04/why-we-left-elasticsearch/">Why we left Elasticsearch</a></li></ul></section>
+</aside>
+<footer class="site-footer"><p>© 2026 Code Diary · <a href="/feed">RSS</a></p></footer>
+</body>
+</html>

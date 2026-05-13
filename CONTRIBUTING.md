@@ -11,7 +11,7 @@ Thanks for your interest in AHTML.
 ## Setting up locally
 
 ```bash
-git clone https://github.com/ahtml/ahtml
+git clone https://github.com/DibbayajyotiRoy/AHTML
 cd ahtml
 npm install
 npm run build --workspaces --if-present   # builds dist/ for schema + next + agent

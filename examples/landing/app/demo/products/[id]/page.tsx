@@ -14,7 +14,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const product = DEMO_PRODUCTS.find((p) => p.id === id);
   if (!product) notFound();
 
-  const snap = productSnapshot('https://ahtml.dev', product.id)!;
+  const snap = productSnapshot('https://github.com/DibbayajyotiRoy/AHTML', product.id)!;
   const compact = toCompact(snap);
 
   return (

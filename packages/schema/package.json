@@ -1,7 +1,7 @@
 {
   "name": "@ahtmljs/schema",
-  "version": "0.1.0",
-  "description": "AHTML semantic snapshot schema — types, validator, builder, and dual-format serializers (JSON + token-optimal compact text).",
+  "version": "0.1.1",
+  "description": "AHTML semantic snapshot schema — types, validator, builder, and dual-format serializers (JSON + token-optimal compact text). The agent-readable contract layer for the web.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,12 +12,41 @@
     },
     "./schema.json": "./src/schema.json"
   },
-  "files": ["dist", "src/schema.json"],
+  "files": ["dist", "src/schema.json", "README.md"],
   "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch"
   },
-  "keywords": ["ahtml", "agent", "semantic-web", "ai", "llm", "crawler", "mcp"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DibbayajyotiRoy/AHTML.git",
+    "directory": "packages/schema"
+  },
+  "homepage": "https://github.com/DibbayajyotiRoy/AHTML#readme",
+  "bugs": {
+    "url": "https://github.com/DibbayajyotiRoy/AHTML/issues",
+    "email": "rdibbayajyoti@gmail.com"
+  },
+  "author": {
+    "name": "Dibbayajyoti Roy",
+    "email": "rdibbayajyoti@gmail.com",
+    "url": "https://github.com/DibbayajyotiRoy"
+  },
+  "keywords": [
+    "ahtml",
+    "agent",
+    "agent-web",
+    "semantic-web",
+    "ai",
+    "llm",
+    "crawler",
+    "mcp",
+    "model-context-protocol",
+    "llms-txt",
+    "json-ld",
+    "schema",
+    "openapi"
+  ],
   "license": "MIT"
 }

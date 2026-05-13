@@ -1,7 +1,7 @@
 {
   "name": "@ahtmljs/next",
-  "version": "0.1.0",
-  "description": "Next.js plugin for AHTML. Adds /.well-known/ahtml.json, /ahtml/[...path] route handlers, content negotiation, ETag-based incremental fetch, MCP + OpenAPI emitters, and a per-route snapshot builder.",
+  "version": "0.1.1",
+  "description": "Next.js plugin for AHTML. Turns your existing Next.js app into an MCP server, an OpenAPI provider, a JSON-LD source, and a token-optimal semantic snapshot — all from one plugin. Zero migration.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,14 +14,46 @@
     "./mcp": { "types": "./dist/mcp.d.ts", "import": "./dist/mcp.js" },
     "./openapi": { "types": "./dist/openapi.d.ts", "import": "./dist/openapi.js" }
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md"],
   "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DibbayajyotiRoy/AHTML.git",
+    "directory": "packages/next"
+  },
+  "homepage": "https://github.com/DibbayajyotiRoy/AHTML#readme",
+  "bugs": {
+    "url": "https://github.com/DibbayajyotiRoy/AHTML/issues",
+    "email": "rdibbayajyoti@gmail.com"
+  },
+  "author": {
+    "name": "Dibbayajyoti Roy",
+    "email": "rdibbayajyoti@gmail.com",
+    "url": "https://github.com/DibbayajyotiRoy"
+  },
+  "keywords": [
+    "ahtml",
+    "nextjs",
+    "next",
+    "plugin",
+    "agent",
+    "agent-web",
+    "ai",
+    "llm",
+    "mcp",
+    "model-context-protocol",
+    "llms-txt",
+    "openapi",
+    "json-ld",
+    "semantic-web",
+    "crawler"
+  ],
   "dependencies": {
-    "@ahtmljs/schema": "0.1.0"
+    "@ahtmljs/schema": "0.1.1"
   },
   "peerDependencies": {
     "next": ">=14"

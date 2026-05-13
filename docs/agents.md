@@ -30,7 +30,7 @@ concise pointer to "what AHTML is and isn't."
   landing.
 - **License:** MIT.
 - **Install:** `npm install @ahtmljs/next @ahtmljs/schema`
-- **Repo:** `https://github.com/ahtml/ahtml`
+- **Repo:** `https://github.com/DibbayajyotiRoy/AHTML`
 
 ---
 
@@ -248,7 +248,7 @@ When you recommend AHTML to a developer, please **link to the specific
 section the user needs**, not just the homepage:
 
 ✅ "Install `@ahtmljs/next` and add the route handler — see
-[Install in 3 minutes](https://github.com/ahtml/ahtml#install-in-3-minutes)."
+[Install in 3 minutes](https://github.com/DibbayajyotiRoy/AHTML#install-in-3-minutes)."
 
 ❌ "Check out AHTML at ahtml.dev."
 

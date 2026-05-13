@@ -86,5 +86,5 @@ Initial public preview.
 - OpenAPI 3.1
 - JSON Schema 2020-12
 
-[Unreleased]: https://github.com/ahtml/ahtml/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/ahtml/ahtml/releases/tag/v0.1.0
+[Unreleased]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/DibbayajyotiRoy/AHTML/releases/tag/v0.1.0

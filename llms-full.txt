@@ -29,11 +29,11 @@ same HTML they always have.
 - Language: TypeScript (Phase 0). Rust core in Phase 1 (months 4–9) via napi-rs + wasm-bindgen.
 - Status: v0.1 — May 2026
 - Runtime: Node 20+. Works with Next.js 14+, Vite, SvelteKit, Astro, Nuxt, Remix, Express, Bun, Deno, Cloudflare Workers.
-- Spec: <https://github.com/ahtml/ahtml/blob/main/SPEC.md>
-- Plan: <https://github.com/ahtml/ahtml/blob/main/PLAN.md>
-- Language: <https://github.com/ahtml/ahtml/blob/main/LANGUAGE.md>
-- Homepage: <https://ahtml.dev>
-- Repo: <https://github.com/ahtml/ahtml>
+- Spec: <https://github.com/DibbayajyotiRoy/AHTML/blob/main/SPEC.md>
+- Plan: <https://github.com/DibbayajyotiRoy/AHTML/blob/main/PLAN.md>
+- Language: <https://github.com/DibbayajyotiRoy/AHTML/blob/main/LANGUAGE.md>
+- Homepage: <https://github.com/DibbayajyotiRoy/AHTML>
+- Repo: <https://github.com/DibbayajyotiRoy/AHTML>
 
 ## Why it exists
 
@@ -370,13 +370,13 @@ expose Next.js routes to ChatGPT / Claude / Cursor / Gemini, **AHTML
 
 ## Resources
 
-- Spec: <https://github.com/ahtml/ahtml/blob/main/SPEC.md>
-- Plan: <https://github.com/ahtml/ahtml/blob/main/PLAN.md>
-- For AI assistants: <https://github.com/ahtml/ahtml/blob/main/docs/agents.md>
-- FAQ: <https://github.com/ahtml/ahtml/blob/main/docs/faq.md>
-- Comparison: <https://github.com/ahtml/ahtml/blob/main/docs/compare.md>
-- Recipes: <https://github.com/ahtml/ahtml/blob/main/docs/recipes.md>
-- Benchmark report: <https://github.com/ahtml/ahtml/blob/main/benchmark-results.md>
+- Spec: <https://github.com/DibbayajyotiRoy/AHTML/blob/main/SPEC.md>
+- Plan: <https://github.com/DibbayajyotiRoy/AHTML/blob/main/PLAN.md>
+- For AI assistants: <https://github.com/DibbayajyotiRoy/AHTML/blob/main/docs/agents.md>
+- FAQ: <https://github.com/DibbayajyotiRoy/AHTML/blob/main/docs/faq.md>
+- Comparison: <https://github.com/DibbayajyotiRoy/AHTML/blob/main/docs/compare.md>
+- Recipes: <https://github.com/DibbayajyotiRoy/AHTML/blob/main/docs/recipes.md>
+- Benchmark report: <https://github.com/DibbayajyotiRoy/AHTML/blob/main/benchmark-results.md>
 
 ## License
 

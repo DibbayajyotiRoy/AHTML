@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   title: 'AHTML — the HTML of the agent web',
   description:
     'Write your page once. AHTML emits MCP, OpenAPI, JSON-LD, llms.txt, and a 100× cheaper semantic snapshot — from your existing Next.js, Vite, or SvelteKit app. Zero migration.',
-  metadataBase: new URL('https://ahtml.dev'),
+  metadataBase: new URL('https://github.com/DibbayajyotiRoy/AHTML'),
   authors: [{ name: 'Roy Mehta' }],
   openGraph: {
     title: 'AHTML — the HTML of the agent web',

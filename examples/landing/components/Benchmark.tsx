@@ -60,7 +60,7 @@ function llmsTxtFor(): string {
     '- View v0.1 spec: free',
     '',
     '## Resources',
-    '- GitHub: https://github.com/ahtml/ahtml',
+    '- GitHub: https://github.com/DibbayajyotiRoy/AHTML',
     '- Spec: /spec',
     '- Plan: /plan',
     '',
@@ -77,7 +77,7 @@ function htmlMockBytes(): number {
 }
 
 export default async function Benchmark() {
-  const snap = homeSnapshot('https://ahtml.dev');
+  const snap = homeSnapshot('https://github.com/DibbayajyotiRoy/AHTML');
   const compact = toCompact(snap);
   const json = toJson(snap);
   const llms = llmsTxtFor();
@@ -169,7 +169,7 @@ export default async function Benchmark() {
         <p className="legalish" style={{ marginTop: 16 }}>
           Reproduce in 60 seconds:{' '}
           <code className="inline">
-            git clone github.com/ahtml/ahtml && cd ahtml/examples/benchmark && npm install && npm run start
+            git clone github.com/DibbayajyotiRoy/AHTML && cd ahtml/examples/benchmark && npm install && npm run start
           </code>
           . If <code className="inline">gpt-tokenizer</code> or{' '}
           <code className="inline">@anthropic-ai/tokenizer</code> is not installed, the

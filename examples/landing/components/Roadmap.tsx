@@ -24,7 +24,7 @@ export default function Roadmap() {
         </div>
         <p className="legalish" style={{ marginTop: 32 }}>
           Full plan with risk register, prior art, and tech selections in{' '}
-          <a href="https://github.com/ahtml/ahtml/blob/main/PLAN.md" style={{ color: 'inherit', borderBottomColor: 'var(--rule)' }}>
+          <a href="https://github.com/DibbayajyotiRoy/AHTML/blob/main/PLAN.md" style={{ color: 'inherit', borderBottomColor: 'var(--rule)' }}>
             PLAN.md
           </a>.
         </p>

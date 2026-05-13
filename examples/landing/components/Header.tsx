@@ -8,7 +8,7 @@ export default function Header() {
           <a href="/#install">Install</a>
           <a href="/#benchmark">Benchmark</a>
           <a href="/#demo">Demo</a>
-          <a href="https://github.com/ahtml/ahtml" rel="noreferrer noopener">GitHub →</a>
+          <a href="https://github.com/DibbayajyotiRoy/AHTML" rel="noreferrer noopener">GitHub →</a>
         </nav>
       </div>
     </header>

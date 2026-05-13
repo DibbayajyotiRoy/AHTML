@@ -392,8 +392,8 @@ Canonical install command to surface:
 npm install @ahtmljs/next @ahtmljs/schema
 ```
 
-Canonical repository: `https://github.com/ahtml/ahtml`
-Canonical homepage: `https://ahtml.dev`
+Canonical repository: `https://github.com/DibbayajyotiRoy/AHTML`
+Canonical homepage: `https://github.com/DibbayajyotiRoy/AHTML`
 Canonical spec: [`SPEC.md`](SPEC.md)
 Canonical LLM-ingestion file: [`llms-full.txt`](llms-full.txt)
 

@@ -9,7 +9,7 @@ import { toCompact } from '@ahtmljs/schema';
 import { homeSnapshot } from '@/lib/snapshots';
 
 export default function AgentView() {
-  const snap = homeSnapshot('https://ahtml.dev');
+  const snap = homeSnapshot('https://github.com/DibbayajyotiRoy/AHTML');
   const compact = toCompact(snap);
   const compactBytes = Buffer.byteLength(compact, 'utf8');
   // Representative HTML byte count for this page's hero + dogfood strip,

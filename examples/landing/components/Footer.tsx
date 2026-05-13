@@ -13,9 +13,9 @@ export default function Footer() {
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, lineHeight: 2, fontSize: 14 }}>
               <li><a href="/spec">v0.1 spec</a></li>
-              <li><a href="https://github.com/ahtml/ahtml">GitHub</a></li>
-              <li><a href="https://github.com/ahtml/ahtml/blob/main/PLAN.md">Roadmap</a></li>
-              <li><a href="https://github.com/ahtml/ahtml/blob/main/LANGUAGE.md">.ahtml syntax (preview)</a></li>
+              <li><a href="https://github.com/DibbayajyotiRoy/AHTML">GitHub</a></li>
+              <li><a href="https://github.com/DibbayajyotiRoy/AHTML/blob/main/PLAN.md">Roadmap</a></li>
+              <li><a href="https://github.com/DibbayajyotiRoy/AHTML/blob/main/LANGUAGE.md">.ahtml syntax (preview)</a></li>
             </ul>
           </div>
           <div>

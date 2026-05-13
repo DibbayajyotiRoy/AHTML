@@ -1,7 +1,7 @@
 {
   "name": "@ahtmljs/agent",
-  "version": "0.1.0",
-  "description": "AHTML agent SDK — fetch snapshots, cache by ETag, run actions with dry-run support, and measure token cost using industry-standard tokenizers.",
+  "version": "0.1.1",
+  "description": "AHTML agent SDK — fetch snapshots from any AHTML-emitting site, cache by ETag, run actions with dry-run support, and measure token cost using the industry-standard tokenizers.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -9,14 +9,43 @@
     ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
     "./tokens": { "types": "./dist/tokens.d.ts", "import": "./dist/tokens.js" }
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md"],
   "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DibbayajyotiRoy/AHTML.git",
+    "directory": "packages/agent"
+  },
+  "homepage": "https://github.com/DibbayajyotiRoy/AHTML#readme",
+  "bugs": {
+    "url": "https://github.com/DibbayajyotiRoy/AHTML/issues",
+    "email": "rdibbayajyoti@gmail.com"
+  },
+  "author": {
+    "name": "Dibbayajyoti Roy",
+    "email": "rdibbayajyoti@gmail.com",
+    "url": "https://github.com/DibbayajyotiRoy"
+  },
+  "keywords": [
+    "ahtml",
+    "agent",
+    "agent-web",
+    "ai",
+    "llm",
+    "client",
+    "sdk",
+    "tokenizer",
+    "tiktoken",
+    "mcp",
+    "model-context-protocol",
+    "crawler"
+  ],
   "dependencies": {
-    "@ahtmljs/schema": "0.1.0"
+    "@ahtmljs/schema": "0.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0"
@@ -29,6 +58,5 @@
     "gpt-tokenizer": { "optional": true },
     "@anthropic-ai/tokenizer": { "optional": true }
   },
-  "keywords": ["ahtml", "agent", "mcp", "llm", "tokenizer", "crawler"],
   "license": "MIT"
 }

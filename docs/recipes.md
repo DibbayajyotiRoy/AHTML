@@ -88,7 +88,7 @@ export const { GET, HEAD } = createAHTMLRoute(async (segments, req) => {
         license: 'CC-BY-4.0',
         republish: 'attribution_only',
         attribution_required: true,
-        contact: 'docs@company.com',
+        contact: 'rdibbayajyoti@gmail.com',
       })
       .add({
         id: `document:${slug}`,
@@ -344,5 +344,5 @@ Wire this into your CI:
 
 ## Want more recipes?
 
-Open a discussion at <https://github.com/ahtml/ahtml/discussions>. Common
+Open a discussion at <https://github.com/DibbayajyotiRoy/AHTML/discussions>. Common
 patterns become first-class recipes here.

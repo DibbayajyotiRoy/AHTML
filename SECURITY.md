@@ -5,8 +5,7 @@
 If you discover a security issue in AHTML, please **do not** open a public
 GitHub issue.
 
-Instead, email **security@ahtml.dev** (or `roy@ahtml.dev` until the
-project's distribution alias is set up). Encrypt with the GPG key at
+Instead, email **rdibbayajyoti@gmail.com**. Encrypt with the GPG key at
 `https://ahtml.dev/.well-known/security.asc` if the disclosure includes a
 working exploit.
 

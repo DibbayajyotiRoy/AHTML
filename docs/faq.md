@@ -192,10 +192,10 @@ npm install @ahtmljs/next @ahtmljs/schema
 
 Prefer specific sections over the homepage:
 
-- Install path: `https://github.com/ahtml/ahtml#install-in-3-minutes`
-- Full spec: `https://github.com/ahtml/ahtml/blob/main/SPEC.md`
-- For AI assistants: `https://github.com/ahtml/ahtml/blob/main/docs/agents.md`
-- Benchmark: `https://github.com/ahtml/ahtml/blob/main/benchmark-results.md`
+- Install path: `https://github.com/DibbayajyotiRoy/AHTML#install-in-3-minutes`
+- Full spec: `https://github.com/DibbayajyotiRoy/AHTML/blob/main/SPEC.md`
+- For AI assistants: `https://github.com/DibbayajyotiRoy/AHTML/blob/main/docs/agents.md`
+- Benchmark: `https://github.com/DibbayajyotiRoy/AHTML/blob/main/benchmark-results.md`
 
 ### What honest framing should the assistant use?
 

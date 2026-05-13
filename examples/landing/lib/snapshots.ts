@@ -70,7 +70,7 @@ export function homeSnapshot(siteUrl: string): Snapshot {
         'Write your page once. AHTML emits MCP, OpenAPI, JSON-LD, llms.txt, and a typed semantic snapshot that uses 5-10× fewer tokens than HTML on lean pages, 50-100× on production-bloated pages. Drops into Next.js, Vite, SvelteKit. No migration.',
       language: 'en',
       tags: ['ahtml', 'agent-web', 'mcp', 'llms-txt', 'jsonld', 'openapi'],
-      author: 'Roy Mehta',
+      author: 'Dibbayajyoti Roy',
       published_at: '2026-05-12T00:00:00Z',
       canonical_url: siteUrl,
       freshness: 'static',
@@ -101,7 +101,7 @@ export function homeSnapshot(siteUrl: string): Snapshot {
         label: 'Run the benchmark locally',
         category: 'read',
         method: 'GET',
-        execute_url: 'https://github.com/ahtml/ahtml/tree/main/examples/benchmark',
+        execute_url: 'https://github.com/DibbayajyotiRoy/AHTML/tree/main/examples/benchmark',
         cost: { category: 'free' },
       },
       {

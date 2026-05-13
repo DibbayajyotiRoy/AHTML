@@ -10,14 +10,14 @@
 import type { AHTMLConfig } from '@ahtmljs/next';
 
 export const ahtmlConfig: AHTMLConfig = {
-  site: process.env.SITE_URL ?? 'https://ahtml.dev',
+  site: process.env.SITE_URL ?? 'https://github.com/DibbayajyotiRoy/AHTML',
   default_ttl: 600,
   policy: {
     agents_welcome: true,
     license: 'MIT',
     rate_limit: '300/min',
-    contact: 'roy@ahtml.dev',
-    terms_url: 'https://ahtml.dev/legal',
+    contact: 'rdibbayajyoti@gmail.com',
+    terms_url: 'https://github.com/DibbayajyotiRoy/AHTML#license',
     republish: 'attribution_only',
     caching: { allowed: true, ttl: 600 },
   },

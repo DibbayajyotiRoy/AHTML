@@ -11,8 +11,9 @@
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present && npm run test:ux",
     "test:unit": "npm run test --workspaces --if-present",
-    "test:ux": "tsx --test \"tests/ux/**/*.test.ts\"",
-    "test:web-reality": "tsx --test \"tests/web-reality/__tests__/*.test.ts\"",
+    "test:ux": "tsx --test tests/ux/*.test.ts",
+    "test:web-reality": "tsx --test tests/web-reality/__tests__/*.test.ts",
+    "benchmark:llm": "bash scripts/run-llm-benchmark.sh",
     "benchmark": "npm run start --workspace examples/benchmark",
     "demo": "npm run dev --workspace examples/landing"
   },

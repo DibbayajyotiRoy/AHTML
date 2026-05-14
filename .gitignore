@@ -4,7 +4,9 @@ dist/
 out/
 *.log
 .DS_Store
-.env*
+.env
+.env.local
+.env.*.local
 !.env.example
 coverage/
 .turbo/

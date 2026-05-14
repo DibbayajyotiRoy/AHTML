@@ -11,7 +11,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { snapshot, toCompact, toJson } from '@ahtmljs/schema';
 import { TASKS, scoreAnswer, type Task } from './tasks.js';
-import { mockRunner, openaiRunner, anthropicRunner, SYSTEM, type Runner, type RunResult } from './runners.js';
+import { mockRunner, openaiRunner, anthropicRunner, geminiRunner, groqRunner, SYSTEM, type Runner, type RunResult } from './runners.js';
 
 // =====================================================================
 // Fixtures — one per archetype
@@ -185,10 +185,14 @@ async function runAll(opts: { mock: boolean; withLLM: boolean }): Promise<RunRes
   const runners: Runner[] = [];
   if (opts.mock || !opts.withLLM) runners.push(mockRunner);
   if (opts.withLLM) {
-    if (process.env.OPENAI_API_KEY) runners.push(openaiRunner);
-    if (process.env.ANTHROPIC_API_KEY) runners.push(anthropicRunner);
+    if (process.env.OPENAI_API_KEY) { runners.push(openaiRunner); console.error('  + OpenAI gpt-4o-mini'); }
+    if (process.env.ANTHROPIC_API_KEY) { runners.push(anthropicRunner); console.error('  + Anthropic claude-haiku-4.5'); }
+    if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) { runners.push(geminiRunner); console.error('  + Google gemini-2.5-flash'); }
+    if (process.env.GROQ_API_KEY) { runners.push(groqRunner); console.error('  + Groq llama-3.3-70b-versatile'); }
     if (runners.length === 0) {
-      console.error('--with-llm requested but no OPENAI_API_KEY or ANTHROPIC_API_KEY in env. Aborting.');
+      console.error('--with-llm requested but no API keys found in env. Set at least one of:');
+      console.error('  OPENAI_API_KEY  ANTHROPIC_API_KEY  GEMINI_API_KEY  GROQ_API_KEY');
+      console.error('Or run scripts/run-llm-benchmark.sh which loads .env automatically.');
       process.exit(1);
     }
   }
@@ -263,9 +267,20 @@ function renderReport(results: RunResult[]): string {
   L.push('');
   L.push('- Tokenizers: `gpt-tokenizer` (OpenAI tiktoken) and `@anthropic-ai/tokenizer` (Claude). No char/4 approximations.');
   L.push('- Mock mode uses regex heuristics on each format to simulate LLM extraction.');
-  L.push('- Real mode calls OpenAI gpt-4o-mini and Anthropic claude-haiku-4.5 at temperature=0.');
-  L.push('- Pricing per 1M tokens (2026): gpt-4o-mini $0.15 in / $0.60 out; claude-haiku $1.00 in / $5.00 out.');
+  L.push('- Real mode calls four providers at temperature=0, max_tokens=64:');
+  L.push('  - **OpenAI** gpt-4o-mini  (env `OPENAI_API_KEY`)');
+  L.push('  - **Anthropic** claude-haiku-4.5  (env `ANTHROPIC_API_KEY`)');
+  L.push('  - **Google** gemini-2.5-flash  (env `GEMINI_API_KEY`)');
+  L.push('  - **Groq** llama-3.3-70b-versatile  (env `GROQ_API_KEY`)');
+  L.push('- Pricing per 1M tokens (May 2026):');
+  L.push('  | Model | input | output |');
+  L.push('  | --- | ---: | ---: |');
+  L.push('  | gpt-4o-mini | $0.15 | $0.60 |');
+  L.push('  | gemini-2.5-flash | $0.075 | $0.30 |');
+  L.push('  | llama-3.3-70b (Groq) | $0.59 | $0.79 |');
+  L.push('  | claude-haiku-4.5 | $1.00 | $5.00 |');
   L.push('- Ground truth defined in `src/tasks.ts`.');
+  L.push('- Run with `bash scripts/run-llm-benchmark.sh` — auto-detects which keys are in `.env`.');
   L.push('');
   return L.join('\n');
 }

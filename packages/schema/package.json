@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/schema",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "AHTML semantic snapshot schema — types, validator, builder, and dual-format serializers (JSON + token-optimal compact text). The agent-readable contract layer for the web.",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,8 +12,14 @@
     },
     "./schema.json": "./src/schema.json"
   },
-  "files": ["dist", "src/schema.json", "README.md"],
-  "publishConfig": { "access": "public" },
+  "files": [
+    "dist",
+    "src/schema.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",

@@ -19,9 +19,50 @@ existing site speaks **MCP, OpenAPI, JSON-LD, and llms.txt** automatically.
 npm install @ahtmljs/next @ahtmljs/schema
 ```
 
+## 📊 How well does an AI read it?
+
+We asked an AI **20 questions** about the same page — given in 4 different
+formats. Here's what happened:
+
+| Format you give the AI | Tokens used | Right answers |
+|---|---:|---:|
+| Plain HTML | 684 | 91% |
+| llms.txt | 227 | 89% |
+| **AHTML compact** | **338** | **95%** |
+| **AHTML JSON** | **365** | **100%** ✓ |
+
+> **AHTML JSON: every answer right.**
+> **AHTML compact: ~50% fewer tokens than HTML — and still more accurate.**
+
+Plain HTML is bigger *and* gives wrong answers more often. AHTML wins on
+both axes: less to read, and easier to get right.
+
+<details>
+<summary><sub><i>How we measured this — open for details</i></sub></summary>
+<sub>
+
+- **The AI**: real API calls to a mix of `gpt-4o-mini` (OpenAI), `claude-haiku-4.5` (Anthropic), `gemini-2.5-flash` (Google), and `llama-3.3-70b` (Groq). Each runs at temperature=0 for repeatability.
+- **The 20 questions**: things an AI agent actually wants to know — *what's the price? is it in stock? what's the SKU? what's the return window? does buying need user confirmation? who wrote this article? when?* Full list in [`examples/llm-benchmark/src/tasks.ts`](examples/llm-benchmark/src/tasks.ts).
+- **Tokens counted with the real tools** OpenAI and Anthropic use internally: `gpt-tokenizer` (their official tiktoken in JS) and `@anthropic-ai/tokenizer`. No `text.length / 4` guessing.
+- **Cost** comes from each provider's own usage reports × their public prices.
+- **Run it yourself** (`~$0.10–0.50` total):
+  ```bash
+  git clone https://github.com/DibbayajyotiRoy/AHTML
+  cd AHTML
+  cp .env.example .env       # add any of: OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, GROQ_API_KEY
+  bash scripts/run-llm-benchmark.sh
+  ```
+- A second **token-only benchmark** (no LLM calls — just byte/token measurement across 9 real-world HTML samples — Shopify, news, blog, Wikipedia, GitHub, docs, dashboard, etc.) shows **median 10.6× compression, up to 28× on a dashboard**.
+
+Full numbers: [`benchmark-results-llm.md`](benchmark-results-llm.md) · Source: [`examples/llm-benchmark/`](examples/llm-benchmark/).
+
+</sub>
+</details>
+
 ## Why agents will prefer your site
 
-- **5–7× fewer tokens** on lean HTML, **50–100× fewer** on production-bloated pages (measured live with `gpt-tokenizer` + `@anthropic-ai/tokenizer` — see [`benchmark-results.md`](benchmark-results.md))
+- **100% answer accuracy on AHTML JSON vs 91% on raw HTML** — measured with real LLM API calls against 20 fact-extraction tasks. See [Real LLM benchmark](#-real-llm-benchmark-results) below.
+- **5–7× fewer tokens** on lean HTML, **50–100× fewer** on production-bloated pages (measured with `gpt-tokenizer` + `@anthropic-ai/tokenizer` — see [`benchmark-results.md`](benchmark-results.md))
 - **Typed action contracts** — `cost`, `reversible`, `side_effects`, `confirmation` — let agents *act safely*, not just read
 - **MCP for free** — your existing site becomes an MCP server; no parallel process, no separate auth, no migration
 - **Provenance built in** — every npm release is signed via GitHub Actions sigstore attestation, so agents can verify the package origin cryptographically
@@ -229,12 +270,11 @@ compete with any of them.
 
 See [docs/compare.md](docs/compare.md) for the exhaustive comparison.
 
-## Honest benchmark
+## Token-only benchmark (no LLM calls)
 
-Measured live with **`gpt-tokenizer`** (OpenAI's tiktoken — `cl100k_base` and
-`o200k_base` encodings) and **`@anthropic-ai/tokenizer`** (Anthropic's
-official Claude tokenizer). Reproducible via `npm run benchmark`. Full report
-in [`benchmark-results.md`](benchmark-results.md).
+Pure token measurement across three archetypes — proves the *size*
+claim independently of any LLM. See the [top-of-README LLM benchmark](#-how-well-does-an-ai-read-it) for the *accuracy* claim.
+
 
 | Archetype | Raw HTML | llms.txt | AHTML compact | AHTML JSON | × fewer tokens |
 |---|---:|---:|---:|---:|---:|
@@ -245,7 +285,7 @@ in [`benchmark-results.md`](benchmark-results.md).
 llms.txt is more compact than AHTML compact in some cases — because it's
 **unstructured markdown** that throws away the typed action contracts. The
 AHTML differentiator is not raw bytes — it's the **typed action surface that
-llms.txt and schema.org both lack**:
+llms.txt and schema.org both lack** (plus the *higher accuracy* shown above):
 
 | Capability | HTML | llms.txt | schema.org | AHTML |
 |---|:---:|:---:|:---:|:---:|

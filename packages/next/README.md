@@ -19,6 +19,34 @@ same HTML they always have.
 npm install @ahtmljs/next @ahtmljs/schema
 ```
 
+## 📊 How well does an AI read it?
+
+We asked an AI **20 questions** about the same page — given in 4 different formats:
+
+| Format you give the AI | Tokens used | Right answers |
+|---|---:|---:|
+| Plain HTML | 684 | 91% |
+| llms.txt | 227 | 89% |
+| **AHTML compact** | **338** | **95%** |
+| **AHTML JSON** | **365** | **100%** ✓ |
+
+> **AHTML JSON: every answer right.** AHTML compact: ~50% fewer tokens than HTML — and still more accurate.
+
+<details>
+<summary><sub><i>How we measured this — open for details</i></sub></summary>
+<sub>
+
+- Real API calls to **gpt-4o-mini, claude-haiku-4.5, gemini-2.5-flash, llama-3.3-70b** at temperature=0.
+- 20 hand-graded questions an AI agent actually wants to know: *price, in stock?, SKU, return window, confirmation needed?, author, publication date,* etc.
+- Tokens counted with the official OpenAI + Anthropic tokenizers (`gpt-tokenizer`, `@anthropic-ai/tokenizer`). No `text.length/4` guessing.
+- Cost from real provider usage × public prices.
+- Reproduce: `git clone https://github.com/DibbayajyotiRoy/AHTML && cp .env.example .env && bash scripts/run-llm-benchmark.sh`
+
+[Full report](https://github.com/DibbayajyotiRoy/AHTML/blob/main/benchmark-results-llm.md) · [Source](https://github.com/DibbayajyotiRoy/AHTML/tree/main/examples/llm-benchmark)
+
+</sub>
+</details>
+
 ## Quickstart — three minutes, three files
 
 ### 1. Declare snapshots
@@ -92,24 +120,6 @@ export const { GET } = createLlmsTxtRoute();
 | `/.well-known/ahtml.json` | Discovery manifest | Any AHTML-aware agent |
 | `/llms.txt` | Markdown | IDE agents (Cursor, Continue, Cline) |
 
-## Honest benchmark
-
-Measured live with `gpt-tokenizer` (OpenAI's tiktoken) and
-`@anthropic-ai/tokenizer` (Anthropic's official). Same source, four
-serializations:
-
-| Archetype | Raw HTML | AHTML compact | × fewer tokens |
-|---|---:|---:|---:|
-| Product detail | 4,269 | 581 | **7.3×** |
-| News article | 2,662 | 521 | **5.1×** |
-| SaaS dashboard | 3,328 | 741 | **4.5×** |
-
-These are on lean (~10–15 KB) HTML. Real production HTML
-(200–500 KB Shopify product pages) compresses 50–100× because the
-snapshot stays near-constant while HTML scales with chrome.
-
-Reproduce: clone [the repo](https://github.com/DibbayajyotiRoy/AHTML) and
-`npm run benchmark`.
 
 ## Documentation
 

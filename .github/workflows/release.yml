@@ -1,6 +1,6 @@
 name: Release
 
-# Publishes all three packages to npm when you push a tag like v0.1.1, v0.2.0, etc.
+# Publishes all five packages to npm when you push a tag like v0.1.1, v0.2.0, etc.
 #
 # Setup (one-time):
 #   1. Generate a granular access token on npmjs.com:
@@ -18,7 +18,7 @@ name: Release
 #   5. This workflow runs automatically and publishes.
 #
 # What you get:
-#   - All three packages published with the same version, in dependency order.
+#   - All five packages published with the same version, in dependency order.
 #   - npm provenance: the npm page shows "Built and signed on GitHub Actions"
 #     with a link back to this exact workflow run. Cryptographic proof that
 #     the npm package was built from the linked GitHub commit.
@@ -68,12 +68,16 @@ jobs:
           npm run build -w @ahtmljs/schema
           npm run build -w @ahtmljs/next
           npm run build -w @ahtmljs/agent
+          npm run build -w @ahtmljs/vite
+          npm run build -w @ahtmljs/langchain
 
       - name: Typecheck
         run: |
-          (cd packages/schema && npx tsc --noEmit -p tsconfig.json)
-          (cd packages/next   && npx tsc --noEmit -p tsconfig.json)
-          (cd packages/agent  && npx tsc --noEmit -p tsconfig.json)
+          (cd packages/schema    && npx tsc --noEmit -p tsconfig.json)
+          (cd packages/next      && npx tsc --noEmit -p tsconfig.json)
+          (cd packages/agent     && npx tsc --noEmit -p tsconfig.json)
+          (cd packages/vite      && npx tsc --noEmit -p tsconfig.json)
+          (cd packages/langchain && npx tsc --noEmit -p tsconfig.json)
 
       - name: Benchmark sanity check
         run: npm run benchmark
@@ -93,6 +97,16 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Publish @ahtmljs/vite (with provenance)
+        run: cd packages/vite && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ahtmljs/langchain (with provenance)
+        run: cd packages/langchain && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -104,6 +118,8 @@ jobs:
             - [`@ahtmljs/schema@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/schema/v/${{ github.ref_name }})
             - [`@ahtmljs/next@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/next/v/${{ github.ref_name }})
             - [`@ahtmljs/agent@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/agent/v/${{ github.ref_name }})
+            - [`@ahtmljs/vite@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/vite/v/${{ github.ref_name }})
+            - [`@ahtmljs/langchain@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/langchain/v/${{ github.ref_name }})
 
             Each package was built from this exact commit and signed via GitHub Actions
             ([npm provenance](https://docs.npmjs.com/generating-provenance-statements)).

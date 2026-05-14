@@ -1,15 +1,23 @@
 {
   "name": "@ahtmljs/langchain",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "LangChain.js document loader for AHTML. Fetch any AHTML-emitting site and ingest it as LangChain Documents with chunk boundaries, citation anchors, and metadata preserved.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
-  "files": ["dist", "README.md"],
-  "publishConfig": { "access": "public" },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
@@ -31,18 +39,29 @@
     "url": "https://github.com/DibbayajyotiRoy"
   },
   "keywords": [
-    "ahtml", "langchain", "langchain-loader", "document-loader",
-    "rag", "agent", "agent-web", "ai", "llm", "vector-db", "embeddings"
+    "ahtml",
+    "langchain",
+    "langchain-loader",
+    "document-loader",
+    "rag",
+    "agent",
+    "agent-web",
+    "ai",
+    "llm",
+    "vector-db",
+    "embeddings"
   ],
   "dependencies": {
-    "@ahtmljs/schema": "0.1.1",
-    "@ahtmljs/agent": "0.1.1"
+    "@ahtmljs/schema": "0.2.0",
+    "@ahtmljs/agent": "0.2.0"
   },
   "peerDependencies": {
     "@langchain/core": ">=0.3"
   },
   "peerDependenciesMeta": {
-    "@langchain/core": { "optional": true }
+    "@langchain/core": {
+      "optional": true
+    }
   },
   "license": "MIT"
 }

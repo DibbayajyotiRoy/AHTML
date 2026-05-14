@@ -8,6 +8,34 @@ structural diff, and snapshot builder DSL for **[AHTML](https://github.com/Dibba
 npm install @ahtmljs/schema
 ```
 
+## 📊 How well does an AI read it?
+
+We asked an AI **20 questions** about the same page — given in 4 different formats:
+
+| Format you give the AI | Tokens used | Right answers |
+|---|---:|---:|
+| Plain HTML | 684 | 91% |
+| llms.txt | 227 | 89% |
+| **AHTML compact** | **338** | **95%** |
+| **AHTML JSON** | **365** | **100%** ✓ |
+
+> **AHTML JSON: every answer right.** AHTML compact: ~50% fewer tokens than HTML — and still more accurate.
+
+<details>
+<summary><sub><i>How we measured this — open for details</i></sub></summary>
+<sub>
+
+- Real API calls to **gpt-4o-mini, claude-haiku-4.5, gemini-2.5-flash, llama-3.3-70b** at temperature=0.
+- 20 hand-graded questions an AI agent actually wants to know: *price, in stock?, SKU, return window, confirmation needed?, author, publication date,* etc.
+- Tokens counted with the official OpenAI + Anthropic tokenizers (`gpt-tokenizer`, `@anthropic-ai/tokenizer`). No `text.length/4` guessing.
+- Cost from real provider usage × public prices.
+- Reproduce: `git clone https://github.com/DibbayajyotiRoy/AHTML && cp .env.example .env && bash scripts/run-llm-benchmark.sh`
+
+[Full report](https://github.com/DibbayajyotiRoy/AHTML/blob/main/benchmark-results-llm.md) · [Source](https://github.com/DibbayajyotiRoy/AHTML/tree/main/examples/llm-benchmark)
+
+</sub>
+</details>
+
 ## What this package gives you
 
 - **TypeScript types** for `Snapshot`, six entity primitives (`Product`,

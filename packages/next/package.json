@@ -1,21 +1,47 @@
 {
   "name": "@ahtmljs/next",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Next.js plugin for AHTML. Turns your existing Next.js app into an MCP server, an OpenAPI provider, a JSON-LD source, and a token-optimal semantic snapshot — all from one plugin. Zero migration.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./handler": { "types": "./dist/handler.d.ts", "import": "./dist/handler.js" },
-    "./well-known": { "types": "./dist/well-known.d.ts", "import": "./dist/well-known.js" },
-    "./llms-txt": { "types": "./dist/llms-txt.d.ts", "import": "./dist/llms-txt.js" },
-    "./extractors": { "types": "./dist/extractors/index.d.ts", "import": "./dist/extractors/index.js" },
-    "./mcp": { "types": "./dist/mcp.d.ts", "import": "./dist/mcp.js" },
-    "./openapi": { "types": "./dist/openapi.d.ts", "import": "./dist/openapi.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./handler": {
+      "types": "./dist/handler.d.ts",
+      "import": "./dist/handler.js"
+    },
+    "./well-known": {
+      "types": "./dist/well-known.d.ts",
+      "import": "./dist/well-known.js"
+    },
+    "./llms-txt": {
+      "types": "./dist/llms-txt.d.ts",
+      "import": "./dist/llms-txt.js"
+    },
+    "./extractors": {
+      "types": "./dist/extractors/index.d.ts",
+      "import": "./dist/extractors/index.js"
+    },
+    "./mcp": {
+      "types": "./dist/mcp.d.ts",
+      "import": "./dist/mcp.js"
+    },
+    "./openapi": {
+      "types": "./dist/openapi.d.ts",
+      "import": "./dist/openapi.js"
+    }
   },
-  "files": ["dist", "README.md"],
-  "publishConfig": { "access": "public" },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
@@ -54,13 +80,15 @@
     "crawler"
   ],
   "dependencies": {
-    "@ahtmljs/schema": "0.1.1"
+    "@ahtmljs/schema": "0.2.0"
   },
   "peerDependencies": {
     "next": ">=14"
   },
   "peerDependenciesMeta": {
-    "next": { "optional": true }
+    "next": {
+      "optional": true
+    }
   },
   "license": "MIT"
 }

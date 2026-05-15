@@ -13,8 +13,10 @@
   "dependencies": {
     "@ahtmljs/next": "^0.2.0",
     "@ahtmljs/schema": "^0.2.0",
+    "@anthropic-ai/tokenizer": "^0.0.4",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "gpt-tokenizer": "^3.4.0",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

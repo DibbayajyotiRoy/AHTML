@@ -251,17 +251,17 @@ code.inline {
   margin-right: 2px;
 }
 
-/* Desktop / mobile-only visibility */
-.desktop-only { display: table; width: 100%; }
-.mobile-only { display: none; }
+/* Desktop / mobile-only visibility — use !important so they win
+   against component-level display rules regardless of source order. */
+.desktop-only { display: table !important; width: 100%; }
+.mobile-only { display: none !important; }
 @media (max-width: 720px) {
-  .desktop-only { display: none; }
-  .mobile-only { display: block; }
+  .desktop-only { display: none !important; }
+  .mobile-only { display: flex !important; }
 }
 
 /* Mobile comparison — feature cards with quad value cells */
 .mobile-comparison {
-  display: flex;
   flex-direction: column;
   gap: 14px;
   margin: 24px 0 8px;
@@ -348,7 +348,6 @@ code.inline {
 
 /* Mobile benchmark — stat cards with proportional bars */
 .bench-cards {
-  display: flex;
   flex-direction: column;
   gap: 14px;
   margin: 32px 0 8px;

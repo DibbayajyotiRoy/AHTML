@@ -243,6 +243,27 @@ code.inline {
 }
 .bench-table td.num { text-align: right; font-feature-settings: 'tnum' 1; }
 .bench-table tr.win td { color: var(--accent); font-weight: 600; }
+.bench-table tr.win-best td { font-weight: 700; }
+.bench-table tr.win-best td:first-child::before {
+  content: '★ ';
+  color: var(--accent);
+  font-weight: 700;
+  margin-right: 2px;
+}
+
+/* Benchmark section — bigger, easier to read at a glance */
+#benchmark .bench-table { font-size: 17px; margin-top: 40px; }
+#benchmark .bench-table th { font-size: 13px; padding: 14px 16px; }
+#benchmark .bench-table td { padding: 18px 16px; }
+#benchmark .bench-table tr.win td { font-size: 18px; }
+#benchmark .bench-table tr.win-best td { font-size: 19px; }
+@media (max-width: 800px) {
+  #benchmark .bench-table { font-size: 14px; display: block; overflow-x: auto; }
+  #benchmark .bench-table th { font-size: 11px; padding: 10px 10px; }
+  #benchmark .bench-table td { padding: 12px 10px; }
+  #benchmark .bench-table tr.win td { font-size: 15px; }
+  #benchmark .bench-table tr.win-best td { font-size: 16px; }
+}
 
 .grid {
   display: grid;
@@ -285,6 +306,37 @@ code.inline {
   overflow-x: auto;
   border-radius: 4px;
 }
+@media (max-width: 800px) {
+  .fanout { padding: 20px 16px; font-size: 11px; line-height: 1.55; }
+}
+
+.fanout-figure {
+  margin: 0;
+  padding: 0;
+  background: var(--code-bg);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.fanout-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.fanout-figure figcaption {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  padding: 12px 20px;
+  border-top: 1px solid var(--rule);
+  background: var(--paper-2);
+  text-align: center;
+}
+@media (prefers-color-scheme: dark) {
+  .fanout-figure { border-color: var(--code-rule); }
+  .fanout-figure figcaption { border-top-color: var(--code-rule); }
+}
 
 /* Header */
 .site-header {
@@ -309,9 +361,14 @@ code.inline {
   font-style: italic;
   color: var(--ink);
 }
-.site-header nav { display: flex; gap: 22px; font-family: var(--font-mono); font-size: 13px; }
+.site-header nav { display: flex; gap: 22px; font-family: var(--font-mono); font-size: 13px; flex-wrap: wrap; justify-content: flex-end; }
 .site-header nav a { color: var(--ink-2); }
 .site-header nav a:hover { color: var(--accent); }
+@media (max-width: 760px) {
+  .site-header .container { flex-wrap: wrap; gap: 8px 16px; }
+  .site-header nav { gap: 6px 14px; font-size: 12px; }
+  .site-header nav a.secondary { display: none; }
+}
 
 /* Footer */
 .site-footer {
@@ -414,10 +471,41 @@ code.inline {
 .agent-view h2 { color: var(--code-fg); }
 .agent-view .eyebrow { color: color-mix(in oklab, var(--code-fg) 50%, transparent); }
 .agent-view .lede { color: color-mix(in oklab, var(--code-fg) 75%, transparent); }
+.agent-view .snapshot-shell {
+  border-top: 1px solid var(--code-rule);
+  border-bottom: 1px solid var(--code-rule);
+  margin-top: 32px;
+}
+.agent-view .snapshot-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 0 0;
+}
+.agent-view .snapshot-toggle {
+  background: transparent;
+  color: color-mix(in oklab, var(--code-fg) 60%, transparent);
+  border: 1px solid var(--code-rule);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.agent-view .snapshot-toggle:hover {
+  color: var(--code-fg);
+  border-color: color-mix(in oklab, var(--code-fg) 40%, transparent);
+}
+.agent-view .snapshot-toggle[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 50%, transparent);
+}
 .agent-view pre.snapshot {
   background: transparent;
   color: var(--code-fg);
-  padding: 32px 0;
+  padding: 24px 0 32px;
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.7;
@@ -425,8 +513,15 @@ code.inline {
   white-space: pre;
   overflow-x: auto;
   border: 0;
-  border-top: 1px solid var(--code-rule);
-  border-bottom: 1px solid var(--code-rule);
+}
+.agent-view pre.snapshot.wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow-x: hidden;
+}
+@media (max-width: 800px) {
+  .agent-view pre.snapshot { font-size: 12px; line-height: 1.65; }
 }
 .agent-view pre.snapshot .at { color: #94b3ff; }
 .agent-view pre.snapshot .bracket { color: #d6bbff; }

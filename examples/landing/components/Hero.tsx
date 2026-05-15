@@ -16,10 +16,11 @@ export default function Hero() {
         </p>
         <CopyableInstall />
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <a className="btn" href="#install">How it works</a>
+          <a className="btn" href="#install">Install in 3 minutes</a>
+          <a className="btn ghost" href="/tools/agent-readiness">Score your site (free)</a>
           <a className="btn ghost" href="#benchmark">See the benchmark</a>
           <a className="btn ghost" href="/ahtml" style={{ fontFamily: 'var(--font-mono)' }}>
-            View this page's AHTML →
+            View this page&apos;s AHTML →
           </a>
         </div>
       </div>

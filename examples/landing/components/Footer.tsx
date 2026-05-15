@@ -1,3 +1,18 @@
+const colHead: React.CSSProperties = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: 12,
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  marginBottom: 14,
+};
+const colList: React.CSSProperties = {
+  listStyle: 'none',
+  padding: 0,
+  margin: 0,
+  lineHeight: 2,
+  fontSize: 14,
+};
+
 export default function Footer() {
   return (
     <footer className="site-footer">
@@ -6,39 +21,53 @@ export default function Footer() {
           <div>
             <div className="mark">ahtml</div>
             <p style={{ marginTop: 12, fontSize: 14, opacity: 0.75 }}>The HTML of the agent web.</p>
+            <p style={{ marginTop: 12, fontSize: 13, opacity: 0.6 }}>
+              <a href="/about">About</a> · <a href="/contact">Contact</a> · <a href="/privacy">Privacy</a> · <a href="/security">Security</a>
+            </p>
           </div>
+
           <div>
-            <h4 style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>
-              Project
-            </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, lineHeight: 2, fontSize: 14 }}>
+            <h4 style={colHead}>Product</h4>
+            <ul style={colList}>
+              <li><a href="/#install">Install</a></li>
+              <li><a href="/#benchmark">Benchmark</a></li>
+              <li><a href="/#demo">Live demo</a></li>
+              <li><a href="/tools/agent-readiness">Score your site</a></li>
               <li><a href="/spec">v0.1 spec</a></li>
-              <li><a href="https://github.com/DibbayajyotiRoy/AHTML">GitHub</a></li>
-              <li><a href="https://github.com/DibbayajyotiRoy/AHTML/blob/main/PLAN.md">Roadmap</a></li>
-              <li><a href="https://github.com/DibbayajyotiRoy/AHTML/blob/main/LANGUAGE.md">.ahtml syntax (preview)</a></li>
             </ul>
           </div>
+
           <div>
-            <h4 style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>
-              Agent endpoints
-            </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, lineHeight: 2, fontSize: 14, fontFamily: 'var(--font-mono)' }}>
+            <h4 style={colHead}>Integrations</h4>
+            <ul style={colList}>
+              <li><a href="/integrations/next">Next.js</a></li>
+              <li><a href="/integrations/vite">Vite</a></li>
+              <li><a href="/integrations/sveltekit">SvelteKit</a></li>
+              <li><a href="/integrations/astro">Astro</a></li>
+              <li><a href="/integrations/remix">Remix / RR7</a></li>
+            </ul>
+            <h4 style={{ ...colHead, marginTop: 24 }}>Compare</h4>
+            <ul style={colList}>
+              <li><a href="/vs/llms-txt">vs llms.txt</a></li>
+              <li><a href="/vs/firecrawl">vs Firecrawl</a></li>
+              <li><a href="/vs/schema-org">vs schema.org</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 style={colHead}>Agent endpoints</h4>
+            <ul style={{ ...colList, fontFamily: 'var(--font-mono)' }}>
               <li><a href="/.well-known/ahtml.json">/.well-known/ahtml.json</a></li>
               <li><a href="/ahtml">/ahtml</a></li>
               <li><a href="/ahtml/mcp.json">/ahtml/mcp.json</a></li>
               <li><a href="/ahtml/openapi.json">/ahtml/openapi.json</a></li>
               <li><a href="/llms.txt">/llms.txt</a></li>
             </ul>
-          </div>
-          <div>
-            <h4 style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>
-              Adjacent
-            </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, lineHeight: 2, fontSize: 14 }}>
-              <li><a href="https://modelcontextprotocol.io">Model Context Protocol</a></li>
-              <li><a href="https://llmstxt.org">llms.txt</a></li>
-              <li><a href="https://schema.org">schema.org</a></li>
-              <li><a href="https://spec.openapis.org">OpenAPI</a></li>
+            <h4 style={{ ...colHead, marginTop: 24 }}>Project</h4>
+            <ul style={colList}>
+              <li><a href="https://github.com/DibbayajyotiRoy/AHTML" rel="noopener noreferrer">GitHub</a></li>
+              <li><a href="https://github.com/DibbayajyotiRoy/AHTML/blob/main/PLAN.md" rel="noopener noreferrer">Roadmap</a></li>
+              <li><a href="https://github.com/DibbayajyotiRoy/AHTML/blob/main/CHANGELOG.md" rel="noopener noreferrer">Changelog</a></li>
             </ul>
           </div>
         </div>

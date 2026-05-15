@@ -7,6 +7,7 @@
 
 import { toCompact } from '@ahtmljs/schema';
 import { homeSnapshot } from '@/lib/snapshots';
+import SnapshotPre from './SnapshotPre';
 
 export default function AgentView() {
   const snap = homeSnapshot('https://github.com/DibbayajyotiRoy/AHTML');
@@ -29,9 +30,7 @@ export default function AgentView() {
           <code className="inline" style={inlineCodeStyle}>toCompact()</code> in{' '}
           <code className="inline" style={inlineCodeStyle}>@ahtmljs/schema</code>.
         </p>
-        <pre className="snapshot" aria-label="AHTML compact snapshot of this page">
-          {highlight(compact)}
-        </pre>
+        <SnapshotPre compact={compact} />
         <div className="compare">
           <div>
             <h4>This page as HTML</h4>
@@ -62,18 +61,3 @@ const inlineCodeStyle = {
   borderColor: 'rgba(255,255,255,0.2)',
   color: 'inherit' as const,
 };
-
-function highlight(s: string): React.ReactNode {
-  const lines = s.split('\n');
-  return lines.map((line, i) => {
-    let cls = '';
-    if (line.startsWith('@')) cls = 'at';
-    else if (line.startsWith('[') || line.startsWith('(action)')) cls = 'bracket';
-    return (
-      <span key={i} className={cls}>
-        {line}
-        {'\n'}
-      </span>
-    );
-  });
-}

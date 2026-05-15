@@ -14,7 +14,12 @@ export default function CTA() {
         <div style={{ display: 'inline-block' }}>
           <CopyableInstall />
         </div>
-        <div style={{ marginTop: 12, fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-3)' }}>
+        <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <a className="btn ghost" href="/tools/agent-readiness">Score your site first</a>
+          <a className="btn ghost" href="/vs/llms-txt">Compare to llms.txt</a>
+          <a className="btn ghost" href="/integrations/next">Next.js guide</a>
+        </div>
+        <div style={{ marginTop: 16, fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-3)' }}>
           MIT licensed · zero migration · v0.1 May 2026
         </div>
       </div>

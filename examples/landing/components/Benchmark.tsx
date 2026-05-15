@@ -137,13 +137,14 @@ export default async function Benchmark() {
           </thead>
           <tbody>
             {rows.map((r, i) => {
-              const isWin = r.format === 'AHTML compact';
+              const isOurs = r.format.startsWith('AHTML');
+              const isBest = r.format === 'AHTML compact';
               const ratio =
                 baseline.tokens_o200k && r.tokens_o200k
                   ? baseline.tokens_o200k / r.tokens_o200k
                   : undefined;
               return (
-                <tr key={i} className={isWin ? 'win' : ''}>
+                <tr key={i} className={`${isOurs ? 'win' : ''} ${isBest ? 'win-best' : ''}`.trim()}>
                   <td>{r.format}</td>
                   <td className="num">{r.bytes.toLocaleString()}</td>
                   <td className="num">{r.bytes_gzip.toLocaleString()}</td>

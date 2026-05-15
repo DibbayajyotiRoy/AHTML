@@ -4,10 +4,11 @@ export default function Header() {
       <div className="container">
         <a href="/" className="brand">ahtml</a>
         <nav>
-          <a href="/spec">Spec</a>
-          <a href="/#install">Install</a>
-          <a href="/#benchmark">Benchmark</a>
-          <a href="/#demo">Demo</a>
+          <a href="/#install" className="secondary">Install</a>
+          <a href="/#benchmark" className="secondary">Benchmark</a>
+          <a href="/integrations/next" className="secondary">Integrations</a>
+          <a href="/vs/llms-txt" className="secondary">Compare</a>
+          <a href="/tools/agent-readiness">Score your site</a>
           <a href="https://github.com/DibbayajyotiRoy/AHTML" rel="noreferrer noopener">GitHub →</a>
         </nav>
       </div>

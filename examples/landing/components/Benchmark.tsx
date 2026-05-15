@@ -124,7 +124,8 @@ export default async function Benchmark() {
           No <code className="inline">text.length / 4</code> guesswork.
         </p>
 
-        <table className="bench-table">
+        {/* Desktop: full table */}
+        <table className="bench-table desktop-only">
           <thead>
             <tr>
               <th>Format</th>
@@ -166,6 +167,72 @@ export default async function Benchmark() {
             })}
           </tbody>
         </table>
+
+        {/* Mobile: visual stat cards with proportional token bars */}
+        <div className="bench-cards mobile-only" role="list" aria-label="Benchmark results">
+          {rows.map((r, i) => {
+            const isOurs = r.format.startsWith('AHTML');
+            const isBest = r.format === 'AHTML compact';
+            const maxTokens = Math.max(
+              ...rows.map((x) => x.tokens_o200k ?? 0),
+            );
+            const pct =
+              r.tokens_o200k && maxTokens
+                ? Math.max(2, (r.tokens_o200k / maxTokens) * 100)
+                : 0;
+            const ratio =
+              baseline.tokens_o200k && r.tokens_o200k
+                ? baseline.tokens_o200k / r.tokens_o200k
+                : undefined;
+            return (
+              <div
+                key={i}
+                role="listitem"
+                className={`bench-card ${isOurs ? 'ours' : ''} ${isBest ? 'best' : ''}`}
+              >
+                <div className="bench-card-head">
+                  <div className="bench-card-title">
+                    {isBest && <span aria-hidden className="bench-star">★ </span>}
+                    {r.format}
+                  </div>
+                  {ratio && ratio > 1 && (
+                    <div className="bench-card-ratio">
+                      {ratio >= 10 ? `${ratio.toFixed(0)}×` : `${ratio.toFixed(1)}×`}
+                      <span className="bench-card-ratio-label"> smaller</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bench-bar-wrap" aria-hidden>
+                  <div className="bench-bar" style={{ width: `${pct}%` }} />
+                </div>
+
+                <div className="bench-stats">
+                  <div className="bench-stat">
+                    <div className="bench-stat-num">
+                      {r.tokens_o200k != null ? r.tokens_o200k.toLocaleString() : '—'}
+                    </div>
+                    <div className="bench-stat-lbl">o200k tokens</div>
+                  </div>
+                  <div className="bench-stat">
+                    <div className="bench-stat-num">
+                      {r.tokens_claude != null ? r.tokens_claude.toLocaleString() : '—'}
+                    </div>
+                    <div className="bench-stat-lbl">Claude tokens</div>
+                  </div>
+                  <div className="bench-stat">
+                    <div className="bench-stat-num">{r.bytes.toLocaleString()}</div>
+                    <div className="bench-stat-lbl">bytes</div>
+                  </div>
+                  <div className="bench-stat">
+                    <div className="bench-stat-num">{r.bytes_gzip.toLocaleString()}</div>
+                    <div className="bench-stat-lbl">bytes gzip</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
         <p className="legalish" style={{ marginTop: 16 }}>
           Reproduce in 60 seconds:{' '}

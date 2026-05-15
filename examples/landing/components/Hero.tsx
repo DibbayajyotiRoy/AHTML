@@ -15,13 +15,19 @@ export default function Hero() {
           always have. Agents see typed entities, typed actions, signed provenance.
         </p>
         <CopyableInstall />
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <a className="btn" href="#install">Install in 3 minutes</a>
-          <a className="btn ghost" href="/tools/agent-readiness">Score your site (free)</a>
-          <a className="btn ghost" href="#benchmark">See the benchmark</a>
-          <a className="btn ghost" href="/ahtml" style={{ fontFamily: 'var(--font-mono)' }}>
-            View this page&apos;s AHTML →
+        <div className="hero-cta">
+          <a className="btn btn-primary" href="#install">
+            <span>Install in 3 minutes</span>
+            <span className="btn-arrow" aria-hidden>→</span>
           </a>
+          <a className="btn btn-secondary" href="/tools/agent-readiness">
+            Score your site <span className="muted">— free</span>
+          </a>
+          <div className="hero-cta-tertiary">
+            <a href="#benchmark">See the benchmark</a>
+            <span aria-hidden> · </span>
+            <a href="/ahtml" className="mono">View this page&apos;s AHTML →</a>
+          </div>
         </div>
       </div>
     </section>

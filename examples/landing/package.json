@@ -5,6 +5,7 @@
   "description": "ahtml.dev — the marketing landing page. Built with Next.js. Dogfoods @ahtmljs/next on every route: /.well-known/ahtml.json, /ahtml/*, /llms.txt, MCP, OpenAPI.",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "npm --prefix ../.. run build --workspace=@ahtmljs/schema --workspace=@ahtmljs/next",
     "build": "next build",
     "start": "next start",
     "type-check": "tsc --noEmit"

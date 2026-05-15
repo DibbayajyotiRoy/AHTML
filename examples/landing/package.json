@@ -10,8 +10,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@ahtmljs/schema": "0.1.0",
-    "@ahtmljs/next": "0.1.0",
+    "@ahtmljs/schema": "^0.2.0",
+    "@ahtmljs/next": "^0.2.0",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

@@ -42,8 +42,13 @@ We asked an AI **20 questions** about the same page — given in 4 different for
   `Document`, `Task`, `Profile`, `Dataset`, `Conversation`), `Action`,
   `Policy`, `Provenance`, `Links`, `SnapshotDiff`.
 - **`snapshot()` builder DSL** — fluent API to compose a typed snapshot.
-- **Zero-dependency runtime validator** that returns a list of structured
-  issues with `path` + `severity`.
+- **Zero-dependency runtime validator** (`validate`) that returns a list of
+  structured issues with `path` + `severity`.
+- **`lint(s)` snapshot quality linter** — best-practice checks *beyond*
+  validity: a priced product with no stock, a product-detail page with no
+  actions, an action with `charge_card` side effects but no required
+  confirmation, a truncated dataset with no `next` link, a dangling action
+  target. Every finding has a stable `rule` id you can suppress in CI.
 - **Two serializations**:
   - `toJson(s)` / `fromJson(text)` — canonical JSON, deterministic, signable.
   - `toCompact(s)` / `fromCompact(text)` — token-optimal text, round-trips losslessly.
@@ -54,7 +59,7 @@ We asked an AI **20 questions** about the same page — given in 4 different for
 ## Quickstart
 
 ```ts
-import { snapshot, toCompact, toJson, validate } from '@ahtmljs/schema';
+import { snapshot, toCompact, toJson, validate, lint } from '@ahtmljs/schema';
 
 const snap = snapshot('https://shop.com/products/mbp-14', 'product_detail')
   .ttl(60)
@@ -84,6 +89,11 @@ console.log(toJson(snap));      // canonical JSON — sign-able
 
 const issues = validate(snap);
 if (issues.some((i) => i.severity === 'error')) throw new Error('invalid');
+
+// validate() = "is it legal?" — lint() = "is it actually useful to an agent?"
+for (const w of lint(snap)) {
+  console.warn(`[${w.rule}] ${w.path}: ${w.message}`);
+}
 ```
 
 ## What is AHTML?

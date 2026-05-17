@@ -27,8 +27,12 @@
       "name": "ahtml-landing",
       "version": "0.1.0",
       "dependencies": {
-        "@ahtmljs/next": "0.1.0",
-        "@ahtmljs/schema": "0.1.0",
+        "@ahtmljs/next": "^0.2.0",
+        "@ahtmljs/schema": "^0.2.0",
+        "@anthropic-ai/tokenizer": "^0.0.4",
+        "@vercel/analytics": "^2.0.1",
+        "@vercel/speed-insights": "^2.0.0",
+        "gpt-tokenizer": "^3.4.0",
         "next": "^15.1.0",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
@@ -55,7 +59,7 @@
     },
     "packages/agent": {
       "name": "@ahtmljs/agent",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@ahtmljs/schema": "0.2.0",
       },
@@ -73,7 +77,7 @@
     },
     "packages/langchain": {
       "name": "@ahtmljs/langchain",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@ahtmljs/agent": "0.2.0",
         "@ahtmljs/schema": "0.2.0",
@@ -87,7 +91,7 @@
     },
     "packages/next": {
       "name": "@ahtmljs/next",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@ahtmljs/schema": "0.2.0",
       },
@@ -100,11 +104,11 @@
     },
     "packages/schema": {
       "name": "@ahtmljs/schema",
-      "version": "0.2.0",
+      "version": "0.3.0",
     },
     "packages/vite": {
       "name": "@ahtmljs/vite",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@ahtmljs/schema": "0.2.0",
       },
@@ -259,6 +263,10 @@
 
     "@types/react-dom": ["@types/react-dom@19.2.3", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ=="],
 
+    "@vercel/analytics": ["@vercel/analytics@2.0.1", "", { "peerDependencies": { "@remix-run/react": "^2", "@sveltejs/kit": "^1 || ^2", "next": ">= 13", "nuxt": ">= 3", "react": "^18 || ^19 || ^19.0.0-rc", "svelte": ">= 4", "vue": "^3", "vue-router": "^4" }, "optionalPeers": ["@remix-run/react", "@sveltejs/kit", "next", "nuxt", "react", "svelte", "vue", "vue-router"] }, "sha512-MTQG6V9qQrt1tsDeF+2Uoo5aPjqbVPys1xvnIftXSJYG2SrwXRHnqEvVoYID7BTruDz4lCd2Z7rM1BdkUehk2g=="],
+
+    "@vercel/speed-insights": ["@vercel/speed-insights@2.0.0", "", { "peerDependencies": { "@sveltejs/kit": "^1 || ^2", "next": ">= 13", "nuxt": ">= 3", "react": "^18 || ^19 || ^19.0.0-rc", "svelte": ">= 4", "vue": "^3", "vue-router": "^4" }, "optionalPeers": ["@sveltejs/kit", "next", "nuxt", "react", "svelte", "vue", "vue-router"] }, "sha512-jwkNcrTeafWxjmWq4AHBaptSqZiJkYU5adLC9QBSqeim0GcqDMgN5Ievh8OG1rJ6W3A4l1oiP7qr9CWxGuzu3w=="],
+
     "ahtml-benchmark": ["ahtml-benchmark@workspace:examples/benchmark"],
 
     "ahtml-landing": ["ahtml-landing@workspace:examples/landing"],
@@ -319,9 +327,9 @@
 
     "ahtml-benchmark/@ahtmljs/schema": ["@ahtmljs/schema@0.1.0", "", {}, "sha512-V3HHMa687wuYsGuAE2kPCgGHcMEujlTqZxqxGi6yDKxRxa/Bw03RbGQjZCEDgRMZE75U//kVbCMkCSMWne0S2Q=="],
 
-    "ahtml-landing/@ahtmljs/next": ["@ahtmljs/next@0.1.0", "", { "dependencies": { "@ahtmljs/schema": "0.1.0" }, "peerDependencies": { "next": ">=14" } }, "sha512-hOCk005YBK+r0QU7Mv+/28MJrQmzYnJSJG6HGFWNBisqIxzBGNPZKObdE0/eo5urDtpzZvzFaKmQhEOaK3Zx3g=="],
+    "ahtml-landing/@ahtmljs/next": ["@ahtmljs/next@0.2.0", "", { "dependencies": { "@ahtmljs/schema": "0.2.0" }, "peerDependencies": { "next": ">=14" }, "optionalPeers": ["next"] }, "sha512-RlgFbVeewxhBVjOw8TdsmgYPHWB/22iZjF0W6R8aFwuTIdftRZEDh2Rwig2JMjC0P8QcdzYhD5gaK8qoV/I2MQ=="],
 
-    "ahtml-landing/@ahtmljs/schema": ["@ahtmljs/schema@0.1.0", "", {}, "sha512-V3HHMa687wuYsGuAE2kPCgGHcMEujlTqZxqxGi6yDKxRxa/Bw03RbGQjZCEDgRMZE75U//kVbCMkCSMWne0S2Q=="],
+    "ahtml-landing/@ahtmljs/schema": ["@ahtmljs/schema@0.2.0", "", {}, "sha512-2LZtbFhyTJlPl7jeAVIAutLiMsfk88toGIKcjAzlOqVv9kC0v4XjJPlnYGvtgJMPC2DVwb0LMHKMAfz0aXSV0Q=="],
 
     "ahtml-llm-benchmark/@ahtmljs/schema": ["@ahtmljs/schema@0.1.1", "", {}, "sha512-fXNo4PJ7EB/GjWE4wjgAPrAS7SM1gx+oNIlpWr7mTY5rV1tiHHm87POU1oSW26kWe71Y0412H86Qq/OMKdeXXg=="],
 

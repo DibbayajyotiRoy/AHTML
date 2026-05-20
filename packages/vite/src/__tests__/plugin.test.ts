@@ -135,4 +135,28 @@ describe('@ahtmljs/vite plugin', () => {
     await handler(r.req, r.res, () => { nextCalled = true; });
     assert.equal(nextCalled, true);
   });
+
+  test('/ahtml/openapi.json emits an OpenAPI 3.1 document (regression: v0.4.0)', async () => {
+    const handler = registerPlugin({ site: 'https://x.com', buildSnapshot: builder });
+    // Warm the cache so the OpenAPI emitter has something to describe.
+    await handler(makeReqRes('/ahtml/p').req, makeReqRes('/ahtml/p').res, () => {});
+    const warm = makeReqRes('/ahtml/p');
+    await handler(warm.req, warm.res, () => {});
+    const r = makeReqRes('/ahtml/openapi.json');
+    await handler(r.req, r.res, () => {});
+    assert.equal(r.res.statusCode, 200);
+    assert.match(r.headers['content-type'] ?? '', /application\/json/);
+    const doc = JSON.parse(r.body) as { openapi: string; info: { version: string } };
+    assert.equal(doc.openapi, '3.1.0');
+    assert.equal(doc.info.version, '1.0.0');
+  });
+
+  test('honors Accept q-values (regression: v0.4.0)', async () => {
+    const handler = registerPlugin({ site: 'https://x.com', buildSnapshot: builder });
+    const r = makeReqRes('/ahtml/p', {
+      headers: { accept: 'application/ahtml+text;q=0.1, application/ahtml+json;q=0.9' },
+    });
+    await handler(r.req, r.res, () => {});
+    assert.match(r.headers['content-type'] ?? '', /application\/ahtml\+json/);
+  });
 });

@@ -136,16 +136,24 @@ async function ahtmlRoute(
     return;
   }
 
-  // Special endpoints: /ahtml/mcp.json and /ahtml/openapi.json (lazy emit)
+  // Special endpoints: /ahtml/mcp.json and /ahtml/openapi.json (lazy emit
+  // from the snapshot cache; cold cache produces empty tools/paths — call a
+  // /ahtml/<page> first to warm it).
   if (segments.length === 1 && segments[0] === 'mcp.json' && config.emit_mcp !== false) {
-    // Minimal MCP shape — collect from cached snapshots
     const tools: unknown[] = [];
     for (const snap of cache.values()) {
       for (const action of snap.actions) {
+        // Strip raw $refs — the schema component they reference may not exist
+        // on the consuming end, and bare $refs produce invalid MCP. Same
+        // policy as @ahtmljs/next's mcp emitter.
+        const inputSchema =
+          action.input && '$ref' in action.input
+            ? { type: 'object' }
+            : action.input ?? { type: 'object', properties: {} };
         tools.push({
           name: `${snap.page_type}.${action.id}`,
           description: action.label ?? action.category ?? action.id,
-          inputSchema: action.input ?? { type: 'object' },
+          inputSchema,
           annotations: {
             auth: action.auth, cost: action.cost, reversible: action.reversible,
             side_effects: action.side_effects, confirmation: action.confirmation,
@@ -157,6 +165,13 @@ async function ahtmlRoute(
     res.statusCode = 200;
     res.setHeader('content-type', 'application/json');
     res.end(JSON.stringify({ schema_version: '0.1', server: { name: config.site, url: config.site }, tools }, null, 2));
+    return;
+  }
+  if (segments.length === 1 && segments[0] === 'openapi.json' && config.emit_openapi !== false) {
+    const doc = mkOpenApiDoc(config, cache);
+    res.statusCode = 200;
+    res.setHeader('content-type', 'application/json');
+    res.end(JSON.stringify(doc, null, 2));
     return;
   }
 
@@ -297,11 +312,100 @@ function cacheControl(snap: Snapshot, config: AHTMLViteConfig): string {
   return `public, max-age=${ttl}, must-revalidate`;
 }
 
+/**
+ * Minimal OpenAPI 3.1 emission for the vite plugin. Lives here rather than
+ * importing @ahtmljs/next because vite shouldn't depend on the Next adapter;
+ * the duplication will be removed once the shared framework-neutral helpers
+ * land in @ahtmljs/schema.
+ */
+function mkOpenApiDoc(
+  config: AHTMLViteConfig,
+  cache: Map<string, Snapshot>,
+): Record<string, unknown> {
+  const baseUrl = config.site.replace(/\/$/, '');
+  const paths: Record<string, Record<string, unknown>> = {};
+  const securitySchemes: Record<string, unknown> = {};
+
+  for (const snap of cache.values()) {
+    const p = snap.url.replace(baseUrl, '') || '/';
+    paths['/ahtml' + p] = {
+      get: {
+        summary: `AHTML snapshot of ${p}`,
+        responses: {
+          '200': {
+            description: 'snapshot',
+            content: {
+              'application/ahtml+text': { schema: { type: 'string' } },
+              'application/ahtml+json': { schema: { $ref: '#/components/schemas/Snapshot' } },
+            },
+          },
+          '304': { description: 'not modified' },
+        },
+      },
+    };
+
+    for (const a of snap.actions) {
+      if (!a.execute_url) continue;
+      const verb = (a.method ?? 'post').toLowerCase();
+      const op: Record<string, unknown> = {
+        summary: a.label ?? a.id,
+        operationId: a.id,
+        responses: { '200': { description: 'success' } },
+      };
+      if (a.input) op.requestBody = { content: { 'application/json': { schema: a.input } } };
+      if (a.auth && a.auth !== 'none') {
+        if (typeof a.auth === 'string') {
+          securitySchemes.bearer ??= { type: 'http', scheme: 'bearer' };
+          op.security = [{ bearer: [] }];
+        } else {
+          securitySchemes[a.auth.scheme] ??= { type: 'http', scheme: a.auth.scheme };
+          op.security = [{ [a.auth.scheme]: a.auth.scopes ?? [] }];
+        }
+      }
+      (paths[a.execute_url] ??= {})[verb] = op;
+    }
+  }
+
+  return {
+    openapi: '3.1.0',
+    info: { title: config.site, version: '1.0.0' },
+    servers: [{ url: baseUrl }],
+    paths,
+    components: {
+      schemas: {
+        Snapshot: { $ref: 'https://raw.githubusercontent.com/DibbayajyotiRoy/AHTML/main/packages/schema/src/schema.json' },
+      },
+      ...(Object.keys(securitySchemes).length > 0 && { securitySchemes }),
+    },
+  };
+}
+
+/**
+ * RFC 7231 q-value aware Accept parsing. Mirror of next/handler.ts#chooseFormat;
+ * the two will be unified into @ahtmljs/schema once we extract the shared
+ * framework-neutral helpers (tracked: issue #29 in v0.4 audit).
+ */
 function pickFormat(accept: string): 'json' | 'compact' {
-  if (/application\/ahtml\+json/.test(accept)) return 'json';
-  if (/application\/ahtml\+text/.test(accept)) return 'compact';
-  if (/application\/json/.test(accept) && !/text/.test(accept)) return 'json';
-  return 'compact';
+  if (!accept) return 'compact';
+  let bestJson = -1;
+  let bestCompact = -1;
+  for (const raw of accept.split(',')) {
+    const parts = raw.trim().split(';').map((p) => p.trim());
+    const type = (parts.shift() ?? '').toLowerCase();
+    if (!type) continue;
+    let q = 1;
+    for (const p of parts) {
+      const m = p.match(/^q=([0-9]*\.?[0-9]+)$/i);
+      if (m) q = Math.max(0, Math.min(1, parseFloat(m[1]!)));
+    }
+    if (type === 'application/ahtml+json' || type === 'application/json') {
+      if (q > bestJson) bestJson = q;
+    } else if (type === 'application/ahtml+text' || type === 'text/plain') {
+      if (q > bestCompact) bestCompact = q;
+    }
+  }
+  if (bestJson < 0 && bestCompact < 0) return 'compact';
+  return bestJson >= bestCompact ? 'json' : 'compact';
 }
 
 export type { Snapshot, Policy } from '@ahtmljs/schema';

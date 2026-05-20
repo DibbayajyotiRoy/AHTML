@@ -115,6 +115,26 @@ describe('createAHTMLRoute', () => {
     );
     assert.match(res.headers.get('content-type') ?? '', /application\/ahtml\+text/);
   });
+
+  test('honors q-values when Accept lists both formats (regression: v0.4.0)', async () => {
+    const { GET } = createAHTMLRoute(builder, config);
+    // Compact preferred over JSON.
+    const r1 = await GET(
+      new Request('https://test.example.com/ahtml/p', {
+        headers: { accept: 'application/ahtml+json;q=0.1, application/ahtml+text;q=0.9' },
+      }),
+      makeCtx('p'),
+    );
+    assert.match(r1.headers.get('content-type') ?? '', /application\/ahtml\+text/);
+    // JSON preferred over compact.
+    const r2 = await GET(
+      new Request('https://test.example.com/ahtml/p', {
+        headers: { accept: 'application/ahtml+text;q=0.1, application/ahtml+json;q=0.9' },
+      }),
+      makeCtx('p'),
+    );
+    assert.match(r2.headers.get('content-type') ?? '', /application\/ahtml\+json/);
+  });
 });
 
 describe('policy enforcement', () => {

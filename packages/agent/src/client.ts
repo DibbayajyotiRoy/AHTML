@@ -16,6 +16,7 @@ import {
   fromCompact,
   fromJson,
   applyDiff,
+  validate,
   type Snapshot,
   type SnapshotDiff,
 } from '@ahtmljs/schema';
@@ -70,10 +71,7 @@ export class AHTMLClient {
     if (cached && !o.noCache) {
       const diffUrl = url + (url.includes('?') ? '&' : '?') + 'since=' + encodeURIComponent(cached.etag ?? '');
       const res = await fetcher(diffUrl, {
-        headers: {
-          'accept': 'application/ahtml-diff+json, ' + accept,
-          ...(o.agent && { 'user-agent': o.agent }),
-        },
+        headers: requestHeaders('application/ahtml-diff+json, ' + accept, o),
       }).catch((err) => failOrStale(err, cached, o));
 
       if (res instanceof Response) {
@@ -97,9 +95,8 @@ export class AHTMLClient {
     }
 
     // 3) Conditional or fresh GET.
-    const headers: Record<string, string> = { accept };
+    const headers = requestHeaders(accept, o);
     if (cached?.etag && !o.noCache) headers['if-none-match'] = cached.etag;
-    if (o.agent) headers['user-agent'] = o.agent;
 
     let res: Response;
     try {
@@ -127,6 +124,16 @@ export class AHTMLClient {
     const snapshot = ct.includes('application/ahtml+json')
       ? fromJson(body)
       : fromCompact(body);
+    // Reject structurally-invalid snapshots BEFORE they enter our cache.
+    // A bad server response should never poison subsequent reads.
+    const issues = validate(snapshot);
+    const errors = issues.filter((i) => i.severity === 'error');
+    if (errors.length) {
+      throw new AHTMLError(
+        502,
+        `server returned an invalid AHTML snapshot: ${errors.slice(0, 3).map((e) => `${e.path}: ${e.message}`).join('; ')}`,
+      );
+    }
     const etag = res.headers.get('etag') ?? undefined;
     this.cache.set(url, { snapshot, fetchedAt: Date.now(), etag });
     return snapshot;
@@ -155,6 +162,16 @@ export class AHTMLError extends Error {
     super(`AHTML ${status}: ${message}`);
     this.name = 'AHTMLError';
   }
+}
+
+/** Build outbound headers honoring agent identity + bearer auth. */
+function requestHeaders(accept: string, o: FetchOptions): Record<string, string> {
+  const h: Record<string, string> = { accept };
+  if (o.agent) h['user-agent'] = o.agent;
+  // `bearer` was documented but not wired until v0.4.0 — auth-gated content
+  // depends on this header reaching the origin.
+  if (o.bearer) h['authorization'] = `Bearer ${o.bearer}`;
+  return h;
 }
 
 function isFresh(cached: CachedSnapshot): boolean {

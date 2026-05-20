@@ -163,6 +163,31 @@ describe('AHTMLClient', () => {
     assert.match(f.calls[0]!.url, /\/.well-known\/ahtml\.json$/);
   });
 
+  test('sends Authorization: Bearer <token> when bearer is set (regression: v0.4.0)', async () => {
+    const snap = snapshot('https://x.com', 'home').build();
+    snap.etag = computeEtag(snap);
+    const f = makeMockFetch(() => new Response(toCompact(snap), {
+      headers: { 'content-type': 'application/ahtml+text', etag: snap.etag! },
+    }));
+    const client = new AHTMLClient({ fetch: f });
+    await client.fetch('https://x.com', { bearer: 'tok-abc' });
+    const hdrs = f.calls[0]!.init!.headers as Record<string, string>;
+    assert.equal(hdrs.authorization, 'Bearer tok-abc');
+  });
+
+  test('rejects an invalid snapshot from the server (does not cache it)', async () => {
+    // Server returns junk that parses but fails structural validation
+    // (missing required url/fetched_at).
+    const f = makeMockFetch(() => new Response('{"ahtml":"0.1"}', {
+      headers: { 'content-type': 'application/ahtml+json' },
+    }));
+    const client = new AHTMLClient({ fetch: f });
+    await assert.rejects(
+      () => client.fetch('https://x.com'),
+      /invalid AHTML snapshot/,
+    );
+  });
+
   test('invalidate(url) drops a single cached entry', async () => {
     const snap = snapshot('https://x.com', 'home').ttl(60).build();
     snap.etag = computeEtag(snap);

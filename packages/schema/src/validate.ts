@@ -109,7 +109,7 @@ export function validate(snap: unknown): Issue[] {
   return issues;
 }
 
-function validateEntity(e: Entity | unknown, path: string): Issue[] {
+export function validateEntity(e: Entity | unknown, path = ''): Issue[] {
   const issues: Issue[] = [];
   if (typeof e !== 'object' || e === null) {
     issues.push({ path, message: 'entity must be an object', severity: 'error' });
@@ -155,7 +155,7 @@ function validateEntity(e: Entity | unknown, path: string): Issue[] {
   return issues;
 }
 
-function validateAction(a: Action | unknown, path: string): Issue[] {
+export function validateAction(a: Action | unknown, path = ''): Issue[] {
   const issues: Issue[] = [];
   if (typeof a !== 'object' || a === null) {
     issues.push({ path, message: 'action must be an object', severity: 'error' });

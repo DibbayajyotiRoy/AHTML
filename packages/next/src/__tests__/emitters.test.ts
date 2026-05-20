@@ -90,6 +90,54 @@ describe('snapshotsToOpenApi', () => {
     assert.ok(Array.isArray(post.security));
     assert.ok(post.security![0]!.bearer !== undefined);
   });
+
+  test('honors info.version when supplied (regression: v0.4.0)', () => {
+    const doc = snapshotsToOpenApi(
+      { title: 'shop', baseUrl: 'https://shop.com', version: '3.14.0' },
+      fixtureSnaps,
+    ) as { info: { version: string } };
+    assert.equal(doc.info.version, '3.14.0');
+  });
+
+  test('defaults info.version to 1.0.0, not the AHTML schema version (regression: v0.4.0)', () => {
+    const doc = snapshotsToOpenApi({ title: 'shop', baseUrl: 'https://shop.com' }, fixtureSnaps) as { info: { version: string } };
+    assert.notEqual(doc.info.version, '0.1');
+    assert.equal(doc.info.version, '1.0.0');
+  });
+
+  test('uses the declared auth scheme (oauth2 with scopes) — not always bearer (regression: v0.4.0)', () => {
+    const snaps = [
+      snapshot('https://shop.com/x', 'product_detail')
+        .add({ id: 'product:x', type: 'product', name: 'X' })
+        .action({
+          id: 'order',
+          execute_url: '/api/order',
+          method: 'POST',
+          auth: { scheme: 'oauth2', scopes: ['orders.write', 'profile.read'] },
+        })
+        .build(),
+    ];
+    const doc = snapshotsToOpenApi({ title: 'shop', baseUrl: 'https://shop.com' }, snaps) as {
+      paths: Record<string, Record<string, { security?: Array<Record<string, string[]>> }>>;
+      components: { securitySchemes?: Record<string, { type: string }> };
+    };
+    const post = doc.paths['/api/order']!.post!;
+    assert.deepEqual(post.security, [{ oauth2: ['orders.write', 'profile.read'] }]);
+    assert.equal(doc.components.securitySchemes?.oauth2?.type, 'oauth2');
+    assert.equal(doc.components.securitySchemes?.bearer, undefined);
+  });
+
+  test('omits security entirely when auth is "none" or missing (regression: v0.4.0)', () => {
+    const snaps = [
+      snapshot('https://shop.com', 'home')
+        .action({ id: 'view', execute_url: '/api/view', method: 'GET' })
+        .build(),
+    ];
+    const doc = snapshotsToOpenApi({ title: 'shop', baseUrl: 'https://shop.com' }, snaps) as {
+      paths: Record<string, Record<string, { security?: unknown }>>;
+    };
+    assert.equal(doc.paths['/api/view']!.get!.security, undefined);
+  });
 });
 
 describe('buildManifest (/.well-known/ahtml.json)', () => {

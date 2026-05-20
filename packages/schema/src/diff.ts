@@ -13,6 +13,15 @@
 
 import type { Snapshot, SnapshotDiff, DiffChange, Entity, Action } from './types.js';
 import { computeEtag } from './snapshot.js';
+import { validateEntity, validateAction } from './validate.js';
+
+/** Thrown by applyDiff when a server-supplied change is structurally invalid. */
+export class InvalidDiffError extends Error {
+  constructor(public op: DiffChange['op'], public reasons: string[]) {
+    super(`invalid diff change (${op}): ${reasons.join('; ')}`);
+    this.name = 'InvalidDiffError';
+  }
+}
 
 export function diff(prev: Snapshot, next: Snapshot): SnapshotDiff {
   const changes: DiffChange[] = [];
@@ -65,15 +74,37 @@ function sameJson(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+function errorsOnly(issues: { severity: string; message: string; path: string }[]): string[] {
+  return issues.filter((i) => i.severity === 'error').map((i) => `${i.path}: ${i.message}`);
+}
+
 export function applyDiff(prev: Snapshot, d: SnapshotDiff): Snapshot {
   const entities = new Map<string, Entity>(prev.entities.map((e) => [e.id, e]));
   const actions = new Map<string, Action>(prev.actions.map((a) => [a.id, a]));
   for (const c of d.changes) {
     switch (c.op) {
-      case 'add': entities.set(c.entity.id, c.entity); break;
+      case 'add': {
+        const errs = errorsOnly(validateEntity(c.entity, 'entity'));
+        if (errs.length) throw new InvalidDiffError(c.op, errs);
+        entities.set(c.entity.id, c.entity);
+        break;
+      }
       case 'remove': entities.delete(c.id); break;
-      case 'update': entities.set(c.id, c.patch as unknown as Entity); break;
-      case 'add_action': actions.set(c.action.id, c.action); break;
+      case 'update': {
+        // Replace-style update: patch must be a complete, valid Entity.
+        // We intentionally don't merge fields — a partial server patch would
+        // create unverifiable hybrid state.
+        const errs = errorsOnly(validateEntity(c.patch as unknown as Entity, 'patch'));
+        if (errs.length) throw new InvalidDiffError(c.op, errs);
+        entities.set(c.id, c.patch as unknown as Entity);
+        break;
+      }
+      case 'add_action': {
+        const errs = errorsOnly(validateAction(c.action, 'action'));
+        if (errs.length) throw new InvalidDiffError(c.op, errs);
+        actions.set(c.action.id, c.action);
+        break;
+      }
       case 'remove_action': actions.delete(c.id); break;
     }
   }

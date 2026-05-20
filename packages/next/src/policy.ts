@@ -76,7 +76,9 @@ function consume(key: string, limit: { tokens: number; windowMs: number }): bool
     b = { tokens: limit.tokens, last: now };
     buckets.set(key, b);
   }
-  const elapsed = now - b.last;
+  // Clamp non-negative to survive clock skew (NTP corrections, VM time-warps).
+  // Negative elapsed would push refill negative and starve the bucket.
+  const elapsed = Math.max(0, now - b.last);
   const refill = (elapsed / limit.windowMs) * limit.tokens;
   b.tokens = Math.min(limit.tokens, b.tokens + refill);
   b.last = now;

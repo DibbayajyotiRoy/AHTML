@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { diff, applyDiff } from '../diff.js';
+import { diff, applyDiff, InvalidDiffError } from '../diff.js';
 import { snapshot, computeEtag } from '../snapshot.js';
 import type { Snapshot } from '../types.js';
 
@@ -105,5 +105,31 @@ describe('applyDiff()', () => {
     next.etag = computeEtag(next);
     const restored = applyDiff(prev, diff(prev, next));
     assert.equal(restored.etag, next.etag);
+  });
+
+  test('rejects a malformed update patch (regression: v0.4.0)', () => {
+    const prev = snapshot('https://x.com', 'product_detail')
+      .add({ id: 'product:p1', type: 'product', name: 'A' })
+      .build();
+    // A patch with an unknown entity type — should be refused, not cached.
+    const badDiff = {
+      ahtml: '0.1' as const,
+      url: 'https://x.com',
+      changes: [
+        { op: 'update' as const, id: 'product:p1', patch: { id: 'product:p1', type: 'mystery' as 'product', name: 'X' } },
+      ],
+    };
+    assert.throws(() => applyDiff(prev, badDiff), InvalidDiffError);
+  });
+
+  test('rejects a malformed add_action (regression: v0.4.0)', () => {
+    const prev = snapshot('https://x.com', 'product_detail').build();
+    const badDiff = {
+      ahtml: '0.1' as const,
+      url: 'https://x.com',
+      // Missing required action.id
+      changes: [{ op: 'add_action' as const, action: { id: '' } }],
+    };
+    assert.throws(() => applyDiff(prev, badDiff), InvalidDiffError);
   });
 });

@@ -5,7 +5,8 @@ import AgentView from '@/components/AgentView';
 import Problem from '@/components/Problem';
 import Fanout from '@/components/Fanout';
 import Benchmark from '@/components/Benchmark';
-import Install from '@/components/Install';
+import Packages from '@/components/Packages';
+import Quickstart from '@/components/Quickstart';
 import Features from '@/components/Features';
 import Comparison from '@/components/Comparison';
 import DemoStrip from '@/components/DemoStrip';
@@ -23,7 +24,8 @@ export default function Page() {
       <Problem />
       <Fanout />
       <Benchmark />
-      <Install />
+      <Packages />
+      <Quickstart />
       <Features />
       <Comparison />
       <DemoStrip />

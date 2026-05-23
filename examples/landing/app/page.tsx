@@ -13,6 +13,7 @@ import DemoStrip from '@/components/DemoStrip';
 import Roadmap from '@/components/Roadmap';
 import CTA from '@/components/CTA';
 import Footer from '@/components/Footer';
+import MadeByBadge from '@/components/MadeByBadge';
 
 export default function Page() {
   return (
@@ -32,6 +33,7 @@ export default function Page() {
       <Roadmap />
       <CTA />
       <Footer />
+      <MadeByBadge />
     </>
   );
 }

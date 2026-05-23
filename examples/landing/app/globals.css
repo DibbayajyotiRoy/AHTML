@@ -1081,3 +1081,106 @@ code.inline {
 @media (max-width: 800px) {
   .qs-grid.grid.cols-3 { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   Made-by badge — sticky bottom-right pill linking to portfolio.
+   ============================================================ */
+.made-by-badge {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 10px 14px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1;
+  text-decoration: none;
+  box-shadow:
+    0 1px 2px rgba(14, 16, 24, 0.06),
+    0 6px 24px rgba(14, 16, 24, 0.08);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+  /* override the global underline-on-anchor rule */
+  border-bottom: 1px solid var(--rule);
+}
+.made-by-badge:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 2px rgba(14, 16, 24, 0.08),
+    0 12px 32px rgba(193, 74, 42, 0.18);
+}
+.made-by-badge:hover .made-by-badge-name { color: var(--accent); }
+.made-by-badge:hover .made-by-badge-arrow {
+  color: var(--accent);
+  transform: translate(2px, -2px);
+}
+.made-by-badge:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.made-by-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 50%, transparent);
+  animation: made-by-pulse 2.4s ease-out infinite;
+  flex-shrink: 0;
+}
+@keyframes made-by-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 55%, transparent); }
+  70%  { box-shadow: 0 0 0 9px color-mix(in oklab, var(--accent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .made-by-badge-dot { animation: none; }
+  .made-by-badge { transition: none; }
+}
+
+.made-by-badge-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+.made-by-badge-prefix {
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+.made-by-badge-name {
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: 0;
+  transition: color 0.18s ease;
+}
+.made-by-badge-arrow {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-3);
+  transition: transform 0.18s ease, color 0.18s ease;
+  display: inline-block;
+}
+
+@media (max-width: 540px) {
+  .made-by-badge {
+    bottom: 14px;
+    right: 14px;
+    padding: 8px 12px 8px 11px;
+    font-size: 11.5px;
+    gap: 8px;
+  }
+  .made-by-badge-prefix { display: none; }
+}

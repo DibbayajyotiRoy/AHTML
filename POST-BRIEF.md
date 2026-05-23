@@ -1,6 +1,6 @@
 # AHTML — Post-Release Product Brief
 
-**Released:** 2026-05-20 · **Latest:** v0.4.0 · **Project:** [DibbayajyotiRoy/AHTML](https://github.com/DibbayajyotiRoy/AHTML)
+**Released:** 2026-05-24 · **Latest:** v0.5.0 · **Project:** [DibbayajyotiRoy/AHTML](https://github.com/DibbayajyotiRoy/AHTML)
 
 > RSS, but for AI agents — a machine-native endpoint that sits next to your existing HTML.
 
@@ -95,37 +95,107 @@ Eight verified bugs from the internal audit, all additive (no breaking API):
 
 **197 tests passing**, 14 `test.todo()` entries pinned as the v0.5.0 roadmap.
 
+### v0.5.0 — Lossless round-trip *(2026-05-24)*
+
+The fourteen `test.todo()` entries from v0.4 are now passing assertions.
+The SPEC.md claim — "Both serializations are lossless round-trips of the
+same structure" — is finally true.
+
+Every field that `toCompact()` writes survives `fromCompact()`:
+
+- **Product**: `description`, `category`, `list_price`, `attributes` (typed
+  scalars: string / number / boolean), `images` (URL-only inline *and*
+  rich form with `alt` / `width` / `height`), `variants` with full metadata
+- **Document**: `author` (single or array), `summary`, `content`
+  (multi-line block scalar), `tags`, `chunks` (byte ranges, anchors,
+  headings, prev/next links, embed hints), `language`, `word_count`,
+  `reading_time`
+- **Task**: `priority`, `due_at`, `labels`, `description`
+- **Profile**: `email`, `homepage`, `handle`, `bio`, `avatar` (URL-only
+  *and* rich `Asset` form), `verified`, `attributes`
+- **Dataset entities** — `parseEntity` used to return `null`; entire
+  entity type was silently lost. Now fully restored.
+- **Conversation entities** — same. `messages`, `participants`,
+  `message_count_total`, `title` all round-trip.
+- **Action**: `category`, `execute_url`, `preview_url`, `rate_limit`,
+  `input`, `output`, `auth` in object form (`{ scheme, scopes }`),
+  `target` in array form (multi-target)
+- **Top-level**: `@links` (self / canonical / parent / next / prev /
+  related), `@schemas` (JSON Schema registry), `@meta` (booleans, null,
+  arrays, objects in addition to numbers), `@policy` (`caching`,
+  `actions_require`, `terms_url`, `attribution_required`, `republish`),
+  `@provenance` with typed `signed`
+
+#### Behind the scenes
+
+- The parser's flat `Record<string, string>` body model has been replaced
+  with a structured `Body` that separates scalar lines, block scalars
+  (`key: |` → multi-line text), nested lists (`key:` → `- item`), and
+  nested sub-bodies (attribute maps).
+- A 1,000-iteration property fuzz test (`buildRandom(seed)` →
+  `toCompact` → `fromCompact` → structural equality) and a 200-iteration
+  idempotent re-emit test now guard against silent regressions. The
+  property test caught one real bug during implementation — action
+  `execute_url` was gaining a phantom `method: POST` field on round-trip
+  when the original had no method. Fixed.
+
+#### Compatibility
+
+Fully additive. v0.4 wire output still parses cleanly (the legacy
+`execute: METHOD url` form is detected and preserved). No public API
+removed or renamed.
+
+**216 tests passing**, **zero `test.todo()` entries remaining**.
+
 ---
 
-## What's next — the v0.5.0 worklist
+## What's next — the v0.6.0 worklist
 
-The audit produced a verified, prioritized backlog. v0.5.0 is the **lossless compact round-trip** release: every field that `toCompact()` writes must round-trip through `fromCompact()`. Right now 14 fields silently drop.
+v0.6.0 is **the error story** release — the one we'll lead the README
+with. Typed errors become AHTML's identity.
 
-Locked in via `test.todo()` in [`roundtrip.test.ts`](packages/schema/src/__tests__/roundtrip.test.ts):
+Locked in `PLAN-NEXT-5.md`:
 
-- Product `description / category / list_price / attributes / images / variants`
-- Document `author / summary / content / tags / chunks / language / word_count`
-- Task `priority / due_at / labels / description`
-- Profile `email / homepage / handle / bio / avatar / verified / attributes`
-- **Dataset entities** (currently `parseEntity` returns null — fully lost)
-- **Conversation entities** (same)
-- Action `category / execute_url / preview_url / rate_limit / input / output`
-- Action `auth` in object form (`{ scheme, scopes }`)
-- Action `target` in array form (multi-target actions)
-- `links` block (self / canonical / parent / next / prev / related)
-- `schemas` block (per-snapshot JSON Schema registry)
-- `meta` block with non-numeric values
-- Policy `caching / actions_require / terms_url / attribution_required / republish`
+- **Unified `AHTMLError` taxonomy** with stable `code` discriminator (
+  `SCHEMA_INVALID`, `DIFF_INVALID`, `COMPACT_PARSE`, `JSON_PARSE`,
+  `ETAG_MISMATCH`, `NETWORK`, `HTTP_STATUS`, `AUTH_REQUIRED`,
+  `POLICY_DENIED`, `RATE_LIMITED`, `TIMEOUT`, `CACHE_POISONED`),
+  actionable `hint` field, ES2022 `cause` chaining — re-exported from
+  `@ahtmljs/schema` and used across every package.
+- **Client-side retry + timeout** in `AHTMLClient` with `Retry-After`
+  honoring and configurable backoff.
+- **Request coalescing** — parallel `fetchSnapshot(url)` calls for the
+  same URL become one HTTP request. On by default.
+- **`onEvent` logging hook** — structured observability for
+  `request` / `cache_hit` / `cache_miss` / `diff_applied` / `error` /
+  `retry` / `coalesced`. No `console.log` inside the library.
+- **`docs/errors.md`** — every code documented with an example `catch`
+  block. The error message is the doc.
 
-When v0.5.0 lands, the SPEC.md claim "Both serializations are lossless round-trips of the same structure" becomes true.
+Performance budget: error construction < 50 µs, 100 parallel coalesced
+fetches → exactly 1 network call.
 
-## After that — v1.0.0
+## After that — v0.7.0 → 1.0.0
 
-- **Detached JWS over canonical JSON.** Signed snapshots, verifiable provenance — the v0.2 promise from `PLAN.md` becomes shippable infrastructure.
-- **CJS dual-publish.** Removes the ESM-only constraint that excludes older Node / Electron / certain bundlers.
-- **`gzip` / `br` content-encoding.** The "compact format is small" claim becomes "compact format is small *and* compressed."
-- **Streaming response bodies.** Edge-runtime friendly for large datasets.
-- **Architectural consolidation.** Today, `@ahtmljs/next` and `@ahtmljs/vite` each carry their own copies of the well-known manifest, MCP, and OpenAPI emitters. The plan is to extract the framework-neutral helpers into `@ahtmljs/schema` so there's one canonical implementation that every adapter shares.
+Sequenced per `PLAN-NEXT-5.md`. Each release ships an enforceable
+performance budget so the benchmarks become a contract, not marketing.
+
+- **v0.7.0 — Scalability.** NDJSON streaming snapshots
+  (`AsyncIterable<Entity>`), `gzip` + `br` content-encoding, edge-runtime
+  story (Cloudflare Workers, Vercel Edge), pluggable `KvStore` for cache
+  and rate-limiter backends (Upstash / Cloudflare KV via `@ahtmljs/kv`).
+  Budget: 10,000-entity dataset under a 50 MB memory ceiling.
+- **v0.8.0 — Trust.** Detached JWS over canonical JSON for signed
+  snapshots, plus emitter consolidation: `@ahtmljs/next` and
+  `@ahtmljs/vite` collapse their duplicated well-known / MCP / OpenAPI
+  emitters into shared `@ahtmljs/schema/emit/*` subpaths.
+- **v0.9.0 → 1.0.0-rc.** Production observability via OpenTelemetry,
+  a single new adapter (`@ahtmljs/hono` — covers Bun / Deno / Cloudflare
+  Workers), `npx @ahtmljs/cli doctor` as an external auditor, CJS
+  dual-publish, Node 18 support. Tag `1.0.0-rc.1` after baking.
+
+After `1.0.0`, AHTML commits to API stability for the 1.x line —
+breaking changes go through a deprecation window.
 
 ## Phase 2 — Rust core *(per `PLAN.md`)*
 

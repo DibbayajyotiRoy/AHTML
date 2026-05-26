@@ -14,12 +14,34 @@
 import type { Snapshot, SnapshotDiff, DiffChange, Entity, Action } from './types.js';
 import { computeEtag } from './snapshot.js';
 import { validateEntity, validateAction } from './validate.js';
+import { AHTMLError, DEFAULT_HINTS } from './errors.js';
 
-/** Thrown by applyDiff when a server-supplied change is structurally invalid. */
-export class InvalidDiffError extends Error {
-  constructor(public op: DiffChange['op'], public reasons: string[]) {
-    super(`invalid diff change (${op}): ${reasons.join('; ')}`);
+/**
+ * Thrown by `applyDiff()` when a server-supplied change is structurally
+ * invalid.
+ *
+ * Since v0.6.0 this is a subclass of `AHTMLError` with `code: 'DIFF_INVALID'`,
+ * so `instanceof InvalidDiffError`, `instanceof AHTMLError`, and
+ * `AHTMLError.is(e, 'DIFF_INVALID')` all work. Prefer the last form in new
+ * code — it's stable across packages.
+ */
+export class InvalidDiffError extends AHTMLError {
+  /** Kept for back-compat with v0.4–v0.5 callers. */
+  readonly op: DiffChange['op'];
+  /** Kept for back-compat with v0.4–v0.5 callers. */
+  readonly reasons: string[];
+
+  constructor(op: DiffChange['op'], reasons: string[]) {
+    super({
+      code: 'DIFF_INVALID',
+      message: `invalid diff change (${op}): ${reasons.join('; ')}`,
+      hint: DEFAULT_HINTS.DIFF_INVALID,
+      context: op,
+      cause: reasons,
+    });
     this.name = 'InvalidDiffError';
+    this.op = op;
+    this.reasons = reasons;
   }
 }
 

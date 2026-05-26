@@ -8,6 +8,10 @@
  *   - On second fetch sends If-None-Match; 304 reuses cached body.
  *   - Optional diff mode sends ?since=<etag>; reconstructs snapshot via applyDiff.
  *   - Respects the site's TTL when deciding to skip the network entirely.
+ *   - v0.6.0: typed `AHTMLError` for every failure mode, opt-in retry with
+ *     backoff + Retry-After honoring, configurable timeout (AbortController),
+ *     in-flight request coalescing (parallel `fetch(url)` calls dedupe to
+ *     one network request), and an `onEvent` hook for structured logging.
  *
  * No network library — uses the global fetch (Node 20+, modern browsers).
  */
@@ -17,9 +21,27 @@ import {
   fromJson,
   applyDiff,
   validate,
+  AHTMLError,
+  DEFAULT_HINTS,
+  type AHTMLErrorCode,
   type Snapshot,
   type SnapshotDiff,
 } from '@ahtmljs/schema';
+
+export interface RetryPolicy {
+  /** Max attempts including the first try. 0 or 1 disables retries. */
+  attempts?: number;
+  /** Codes that are eligible for retry. Defaults to NETWORK / TIMEOUT / RATE_LIMITED / 5xx HTTP_STATUS. */
+  on?: AHTMLErrorCode[];
+  /** Base delay in milliseconds (exponential: base * 2^attempt). */
+  baseDelayMs?: number;
+  /** Cap on per-attempt delay. */
+  maxDelayMs?: number;
+  /** When the server returns Retry-After, use it verbatim instead of the computed backoff. */
+  respectRetryAfter?: boolean;
+  /** Add up to ±25% jitter to each delay to avoid retry storms. */
+  jitter?: boolean;
+}
 
 export interface FetchOptions {
   /** "compact" (default, token-optimal) or "json". */
@@ -34,6 +56,12 @@ export interface FetchOptions {
   bearer?: string;
   /** Custom fetch override (testing). */
   fetch?: typeof fetch;
+  /** Per-request timeout in ms. Default: client-level `timeout` (or `30_000`). */
+  timeout?: number;
+  /** Retry policy. `true` enables defaults; `false` disables. */
+  retry?: boolean | RetryPolicy;
+  /** Disable in-flight coalescing for this call. Default: on. */
+  coalesce?: boolean;
 }
 
 export interface CachedSnapshot {
@@ -42,23 +70,82 @@ export interface CachedSnapshot {
   etag?: string;
 }
 
+/**
+ * Events emitted through `onEvent` for structured observability. Never
+ * `console.log` inside library code — adopters wire their own logger.
+ */
+export type ClientEvent =
+  | { type: 'request'; url: string; ms: number; status: number }
+  | { type: 'cache_hit'; url: string }
+  | { type: 'cache_miss'; url: string }
+  | { type: 'diff_applied'; url: string; changes: number }
+  | { type: 'coalesced'; url: string }
+  | { type: 'retry'; url: string; attempt: number; delayMs: number; code: AHTMLErrorCode }
+  | { type: 'error'; url: string; code: AHTMLErrorCode; status?: number };
+
+export interface ClientOptions extends FetchOptions {
+  /** Client-wide per-request timeout in ms. Default 30_000. */
+  timeout?: number;
+  /** Structured-log hook. Called for every internal event. */
+  onEvent?: (e: ClientEvent) => void;
+}
+
+const DEFAULT_RETRY: Required<RetryPolicy> = {
+  attempts: 3,
+  on: ['NETWORK', 'TIMEOUT', 'RATE_LIMITED', 'HTTP_STATUS'],
+  baseDelayMs: 250,
+  maxDelayMs: 10_000,
+  respectRetryAfter: true,
+  jitter: true,
+};
+
+const DEFAULT_TIMEOUT_MS = 30_000;
+
 export class AHTMLClient {
   private cache = new Map<string, CachedSnapshot>();
+  // v0.6.0: in-flight request coalescing — two parallel `fetch(url)` calls
+  // for the same URL share one HTTP request. Keyed by the cache key.
+  private inflight = new Map<string, Promise<Snapshot>>();
+  private onEvent?: (e: ClientEvent) => void;
 
-  constructor(private defaults: FetchOptions = {}) {}
+  constructor(private defaults: ClientOptions = {}) {
+    if (defaults.onEvent) this.onEvent = defaults.onEvent;
+  }
 
   /**
    * Fetch the snapshot for a URL. Uses ETag-based incremental fetch by
    * default; falls back to the diff endpoint when the cached snapshot is
    * stale enough that the server might prefer to send a delta.
    */
-  async fetch(url: string, opts: FetchOptions = {}): Promise<Snapshot> {
+  fetch(url: string, opts: FetchOptions = {}): Promise<Snapshot> {
     const o = { ...this.defaults, ...opts };
-    const fetcher = o.fetch ?? globalThis.fetch;
+    const coalesceOn = o.coalesce !== false;
+    const key = coalesceKey(url, o);
+
+    if (coalesceOn) {
+      const inflight = this.inflight.get(key);
+      if (inflight) {
+        this.emit({ type: 'coalesced', url });
+        return inflight;
+      }
+    }
+
+    const p = this.fetchOnce(url, o).finally(() => {
+      this.inflight.delete(key);
+    });
+    if (coalesceOn) this.inflight.set(key, p);
+    return p;
+  }
+
+  private async fetchOnce(url: string, o: FetchOptions): Promise<Snapshot> {
+    const fetcher = o.fetch ?? this.defaults.fetch ?? globalThis.fetch;
     const cached = this.cache.get(url);
+    const retry = normalizeRetry(o.retry, this.defaults.retry);
+    const timeoutMs = o.timeout ?? this.defaults.timeout ?? DEFAULT_TIMEOUT_MS;
 
     // 1) Fresh cache (within TTL) — skip the network entirely.
     if (cached && !o.noCache && isFresh(cached)) {
+      this.emit({ type: 'cache_hit', url });
       return cached.snapshot;
     }
 
@@ -70,17 +157,18 @@ export class AHTMLClient {
     // 2) Try a diff request if we already have a snapshot.
     if (cached && !o.noCache) {
       const diffUrl = url + (url.includes('?') ? '&' : '?') + 'since=' + encodeURIComponent(cached.etag ?? '');
-      const res = await fetcher(diffUrl, {
-        headers: requestHeaders('application/ahtml-diff+json, ' + accept, o),
-      }).catch((err) => failOrStale(err, cached, o));
+      try {
+        const res = await this.doFetch(fetcher, diffUrl, {
+          headers: requestHeaders('application/ahtml-diff+json, ' + accept, o),
+        }, timeoutMs, retry, url);
 
-      if (res instanceof Response) {
         const ct = res.headers.get('content-type') ?? '';
         if (res.ok && ct.includes('application/ahtml-diff+json')) {
           const d = (await res.json()) as SnapshotDiff;
           const next = applyDiff(cached.snapshot, d);
           const etag = res.headers.get('etag') ?? d.to_etag;
           this.cache.set(url, { snapshot: next, fetchedAt: Date.now(), etag });
+          this.emit({ type: 'diff_applied', url, changes: d.changes.length });
           return next;
         }
         if (res.ok && ct.includes('application/ahtml')) {
@@ -88,9 +176,14 @@ export class AHTMLClient {
         }
         if (res.status === 304) {
           this.cache.set(url, { ...cached, fetchedAt: Date.now() });
+          this.emit({ type: 'cache_hit', url });
           return cached.snapshot;
         }
         // anything else — fall through to a fresh fetch
+      } catch (err) {
+        if (cached && o.allowStale) return cached.snapshot;
+        // fall through to fresh GET; the GET path may succeed where diff didn't.
+        if (!AHTMLError.is(err)) throw err;
       }
     }
 
@@ -100,39 +193,120 @@ export class AHTMLClient {
 
     let res: Response;
     try {
-      res = await fetcher(url, { headers });
+      res = await this.doFetch(fetcher, url, { headers }, timeoutMs, retry, url);
     } catch (err) {
-      const fb = failOrStale(err, cached, o);
-      if (fb instanceof Response) res = fb;
-      else throw err;
+      if (cached && o.allowStale) return cached.snapshot;
+      throw err;
     }
 
     if (res.status === 304 && cached) {
       this.cache.set(url, { ...cached, fetchedAt: Date.now() });
+      this.emit({ type: 'cache_hit', url });
       return cached.snapshot;
     }
     if (!res.ok) {
       if (cached && o.allowStale) return cached.snapshot;
-      throw new AHTMLError(res.status, await res.text());
+      throw await httpError(url, res);
     }
+    this.emit({ type: 'cache_miss', url });
     return this.storeFromResponse(url, res);
+  }
+
+  private async doFetch(
+    fetcher: typeof fetch,
+    targetUrl: string,
+    init: RequestInit,
+    timeoutMs: number,
+    retry: Required<RetryPolicy>,
+    eventUrl: string,
+  ): Promise<Response> {
+    let attempt = 0;
+    const maxAttempts = Math.max(1, retry.attempts);
+
+    for (;;) {
+      const start = Date.now();
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+      let res: Response | null = null;
+      let thrown: unknown = null;
+      try {
+        res = await fetcher(targetUrl, { ...init, signal: ctrl.signal });
+      } catch (err) {
+        thrown = err;
+      } finally {
+        clearTimeout(timer);
+      }
+
+      if (res) {
+        this.emit({ type: 'request', url: eventUrl, ms: Date.now() - start, status: res.status });
+        if (res.status === 429 && shouldRetry('RATE_LIMITED', retry, attempt, maxAttempts)) {
+          const delay = retryAfterDelay(res, retry) ?? backoff(attempt, retry);
+          this.emit({ type: 'retry', url: eventUrl, attempt: attempt + 1, delayMs: delay, code: 'RATE_LIMITED' });
+          await sleep(delay);
+          attempt++;
+          continue;
+        }
+        if (res.status >= 500 && res.status < 600 && shouldRetry('HTTP_STATUS', retry, attempt, maxAttempts)) {
+          const delay = backoff(attempt, retry);
+          this.emit({ type: 'retry', url: eventUrl, attempt: attempt + 1, delayMs: delay, code: 'HTTP_STATUS' });
+          await sleep(delay);
+          attempt++;
+          continue;
+        }
+        return res;
+      }
+
+      // Network or abort
+      const aborted = isAbortError(thrown);
+      const code: AHTMLErrorCode = aborted ? 'TIMEOUT' : 'NETWORK';
+      if (shouldRetry(code, retry, attempt, maxAttempts)) {
+        const delay = backoff(attempt, retry);
+        this.emit({ type: 'retry', url: eventUrl, attempt: attempt + 1, delayMs: delay, code });
+        await sleep(delay);
+        attempt++;
+        continue;
+      }
+      this.emit({ type: 'error', url: eventUrl, code });
+      throw new AHTMLError({
+        code,
+        message: aborted
+          ? `request timed out after ${timeoutMs}ms`
+          : `fetch failed: ${(thrown as Error)?.message ?? String(thrown)}`,
+        hint: DEFAULT_HINTS[code],
+        retryable: true,
+        cause: thrown,
+        context: eventUrl,
+      });
+    }
   }
 
   private async storeFromResponse(url: string, res: Response): Promise<Snapshot> {
     const ct = res.headers.get('content-type') ?? '';
     const body = await res.text();
-    const snapshot = ct.includes('application/ahtml+json')
-      ? fromJson(body)
-      : fromCompact(body);
-    // Reject structurally-invalid snapshots BEFORE they enter our cache.
-    // A bad server response should never poison subsequent reads.
+    let snapshot: Snapshot;
+    try {
+      snapshot = ct.includes('application/ahtml+json') ? fromJson(body) : fromCompact(body);
+    } catch (err) {
+      // Parser already threw AHTMLError with JSON_PARSE / COMPACT_PARSE; surface
+      // through onEvent for observability.
+      if (AHTMLError.is(err)) this.emit({ type: 'error', url, code: err.code });
+      throw err;
+    }
     const issues = validate(snapshot);
     const errors = issues.filter((i) => i.severity === 'error');
     if (errors.length) {
-      throw new AHTMLError(
-        502,
-        `server returned an invalid AHTML snapshot: ${errors.slice(0, 3).map((e) => `${e.path}: ${e.message}`).join('; ')}`,
-      );
+      this.emit({ type: 'error', url, code: 'CACHE_POISONED', status: 502 });
+      throw new AHTMLError({
+        code: 'CACHE_POISONED',
+        status: 502,
+        message:
+          `server returned an invalid AHTML snapshot: ` +
+          errors.slice(0, 3).map((e) => `${e.path}: ${e.message}`).join('; '),
+        hint: DEFAULT_HINTS.CACHE_POISONED,
+        path: errors[0]?.path,
+        cause: errors,
+        context: url,
+      });
     }
     const etag = res.headers.get('etag') ?? undefined;
     this.cache.set(url, { snapshot, fetchedAt: Date.now(), etag });
@@ -151,18 +325,36 @@ export class AHTMLClient {
     const url = base.endsWith('/.well-known/ahtml.json')
       ? base
       : base + '/.well-known/ahtml.json';
-    const res = await fetcher(url, { headers: { accept: 'application/json' } });
-    if (!res.ok) throw new AHTMLError(res.status, `manifest fetch failed for ${url}`);
+    const timeoutMs = opts.timeout ?? this.defaults.timeout ?? DEFAULT_TIMEOUT_MS;
+    const retry = normalizeRetry(opts.retry, this.defaults.retry);
+    const res = await this.doFetch(
+      fetcher,
+      url,
+      { headers: { accept: 'application/json' } },
+      timeoutMs,
+      retry,
+      url,
+    );
+    if (!res.ok) throw await httpError(url, res);
     return res.json();
+  }
+
+  private emit(e: ClientEvent): void {
+    if (!this.onEvent) return;
+    try {
+      this.onEvent(e);
+    } catch {
+      // Logger faults must never break the request path.
+    }
   }
 }
 
-export class AHTMLError extends Error {
-  constructor(public status: number, message: string) {
-    super(`AHTML ${status}: ${message}`);
-    this.name = 'AHTMLError';
-  }
-}
+/**
+ * Re-export so adopters can `import { AHTMLError } from '@ahtmljs/agent'`
+ * without reaching into the schema package. This is the *same class* as
+ * `@ahtmljs/schema`'s — there is exactly one error type across the stack.
+ */
+export { AHTMLError };
 
 /** Build outbound headers honoring agent identity + bearer auth. */
 function requestHeaders(accept: string, o: FetchOptions): Record<string, string> {
@@ -180,9 +372,87 @@ function isFresh(cached: CachedSnapshot): boolean {
   return Date.now() - cached.fetchedAt < ttl * 1000;
 }
 
-function failOrStale(err: unknown, cached: CachedSnapshot | undefined, o: FetchOptions): Response | unknown {
-  if (cached && o.allowStale) {
-    return new Response(null, { status: 504 }); // signal caller to keep cached
+function coalesceKey(url: string, o: FetchOptions): string {
+  // Vary by format + bearer presence so a json-and-compact mix doesn't collide.
+  return `${o.format ?? 'compact'}|${o.bearer ? 'auth' : 'noauth'}|${url}`;
+}
+
+function normalizeRetry(
+  perCall: FetchOptions['retry'],
+  defaults: ClientOptions['retry'],
+): Required<RetryPolicy> {
+  const eff = perCall !== undefined ? perCall : defaults;
+  if (eff === false) return { ...DEFAULT_RETRY, attempts: 1 };
+  if (eff === true || eff === undefined) return { ...DEFAULT_RETRY, attempts: 1 };
+  return { ...DEFAULT_RETRY, ...eff };
+}
+
+function shouldRetry(
+  code: AHTMLErrorCode,
+  retry: Required<RetryPolicy>,
+  attempt: number,
+  maxAttempts: number,
+): boolean {
+  if (attempt + 1 >= maxAttempts) return false;
+  return retry.on.includes(code);
+}
+
+function backoff(attempt: number, retry: Required<RetryPolicy>): number {
+  const raw = retry.baseDelayMs * Math.pow(2, attempt);
+  const capped = Math.min(raw, retry.maxDelayMs);
+  if (!retry.jitter) return capped;
+  // ±25% jitter
+  const j = capped * (0.75 + Math.random() * 0.5);
+  return Math.round(j);
+}
+
+/** Parse `Retry-After` (RFC 7231) to milliseconds. No clamping. */
+function parseRetryAfter(res: Response): number | null {
+  const hdr = res.headers.get('retry-after');
+  if (!hdr) return null;
+  const secs = Number(hdr);
+  if (Number.isFinite(secs) && secs >= 0) return secs * 1000;
+  const date = Date.parse(hdr);
+  if (Number.isFinite(date)) {
+    const delta = date - Date.now();
+    if (delta > 0) return delta;
   }
-  return err;
+  return null;
+}
+
+function retryAfterDelay(res: Response, retry: Required<RetryPolicy>): number | null {
+  if (!retry.respectRetryAfter) return null;
+  const raw = parseRetryAfter(res);
+  if (raw == null) return null;
+  return Math.min(raw, retry.maxDelayMs);
+}
+
+function isAbortError(e: unknown): boolean {
+  return e instanceof Error && (e.name === 'AbortError' || /abort/i.test(e.message));
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function httpError(url: string, res: Response): Promise<AHTMLError> {
+  const body = await res.text().catch(() => '');
+  const status = res.status;
+  let code: AHTMLErrorCode;
+  let retryable = false;
+  if (status === 401) code = 'AUTH_REQUIRED';
+  else if (status === 403) code = 'POLICY_DENIED';
+  else if (status === 429) { code = 'RATE_LIMITED'; retryable = true; }
+  else if (status >= 500) { code = 'HTTP_STATUS'; retryable = true; }
+  else code = 'HTTP_STATUS';
+  const retryAfter = parseRetryAfter(res);
+  return new AHTMLError({
+    code,
+    status,
+    retryable,
+    message: `AHTML ${status}: ${body.slice(0, 200) || res.statusText || 'request failed'}`,
+    hint: DEFAULT_HINTS[code],
+    ...(retryAfter !== null ? { retryAfterMs: retryAfter } : {}),
+    context: url,
+  });
 }

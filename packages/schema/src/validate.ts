@@ -8,6 +8,7 @@
  */
 
 import type { Snapshot, Entity, Action } from './types.js';
+import { AHTMLError } from './errors.js';
 
 export interface Issue {
   path: string;
@@ -188,4 +189,30 @@ function isIso8601(s: string): boolean {
 
 export function isValid(snap: unknown): snap is Snapshot {
   return validate(snap).every((i) => i.severity !== 'error');
+}
+
+/**
+ * Throwing variant of `validate()`. Returns the snapshot (narrowed) on
+ * success; throws an `AHTMLError('SCHEMA_INVALID')` on the first error.
+ * Warnings are silently skipped.
+ *
+ * Prefer this when an invalid snapshot is a programmer error or a server
+ * bug — anywhere you'd otherwise write
+ * `if (!isValid(s)) throw new Error(...)`.
+ */
+export function validateStrict(snap: unknown): Snapshot {
+  const issues = validate(snap);
+  const first = issues.find((i) => i.severity === 'error');
+  if (first) {
+    const all = issues.filter((i) => i.severity === 'error');
+    throw new AHTMLError({
+      code: 'SCHEMA_INVALID',
+      message: `snapshot failed validation: ${first.path}: ${first.message}` +
+        (all.length > 1 ? ` (and ${all.length - 1} more)` : ''),
+      path: first.path,
+      hint: `Run validate(snapshot) to see every issue. First failure: ${first.message}`,
+      cause: all,
+    });
+  }
+  return snap as Snapshot;
 }

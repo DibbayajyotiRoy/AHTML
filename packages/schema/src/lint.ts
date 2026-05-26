@@ -23,6 +23,14 @@ export type LintSeverity = 'warning' | 'info';
 export interface LintWarning {
   /** Stable, kebab-case rule id — safe to reference in CI suppressions. */
   rule: string;
+  /**
+   * Stable code in the unified AHTML error taxonomy. v0.6.0 onward every
+   * lint warning carries `code: 'SCHEMA_INVALID'` (warnings are quality
+   * gaps inside an otherwise-valid snapshot — the same code adopters use
+   * to catch structural errors). Keeps `catch` blocks consistent across
+   * `validate()` and `lint()` outputs.
+   */
+  code: 'SCHEMA_INVALID';
   /** Dotted path into the snapshot, e.g. `entities[2].price`. */
   path: string;
   /** Human-readable description of the quality gap. */
@@ -78,8 +86,11 @@ export function lint(snap: Snapshot, opts: LintOptions = {}): LintWarning[] {
   const oversizedAt = opts.oversizedContentChars ?? 50_000;
   const out: LintWarning[] = [];
 
-  const push = (w: LintWarning): void => {
-    if (!disabled.has(w.rule)) out.push(w);
+  // v0.6.0: every emitted warning is stamped with `code: 'SCHEMA_INVALID'`
+  // so callers using the unified AHTML error taxonomy can route lint output
+  // through the same catch / switch they use for validate() errors.
+  const push = (w: Omit<LintWarning, 'code'>): void => {
+    if (!disabled.has(w.rule)) out.push({ ...w, code: 'SCHEMA_INVALID' });
   };
 
   // --- snapshot-level ----------------------------------------------------
@@ -218,7 +229,7 @@ export function lint(snap: Snapshot, opts: LintOptions = {}): LintWarning[] {
   return out;
 }
 
-function lintProduct(e: Product, p: string, push: (w: LintWarning) => void): void {
+function lintProduct(e: Product, p: string, push: (w: Omit<LintWarning, 'code'>) => void): void {
   if (!e.price) {
     push({
       rule: 'product-no-price',
@@ -252,7 +263,7 @@ function lintDocument(
   e: Document,
   p: string,
   oversizedAt: number,
-  push: (w: LintWarning) => void,
+  push: (w: Omit<LintWarning, 'code'>) => void,
 ): void {
   if (!e.summary) {
     push({
@@ -274,7 +285,7 @@ function lintDocument(
   }
 }
 
-function lintDataset(e: Dataset, p: string, snap: Snapshot, push: (w: LintWarning) => void): void {
+function lintDataset(e: Dataset, p: string, snap: Snapshot, push: (w: Omit<LintWarning, 'code'>) => void): void {
   if (
     e.row_count_total != null &&
     e.rows.length < e.row_count_total &&

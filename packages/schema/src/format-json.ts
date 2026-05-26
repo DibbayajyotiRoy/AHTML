@@ -11,6 +11,7 @@
  */
 
 import type { Snapshot } from './types.js';
+import { AHTMLError, DEFAULT_HINTS } from './errors.js';
 
 const KEY_ORDER = [
   'ahtml',
@@ -38,5 +39,14 @@ export function toJson(s: Snapshot, opts: { pretty?: boolean } = {}): string {
 }
 
 export function fromJson(text: string): Snapshot {
-  return JSON.parse(text) as Snapshot;
+  try {
+    return JSON.parse(text) as Snapshot;
+  } catch (err) {
+    throw new AHTMLError({
+      code: 'JSON_PARSE',
+      message: `failed to parse ahtml+json: ${(err as Error).message}`,
+      hint: DEFAULT_HINTS.JSON_PARSE,
+      cause: err,
+    });
+  }
 }

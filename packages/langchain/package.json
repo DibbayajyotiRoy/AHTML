@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/langchain",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "LangChain.js document loader for AHTML. Fetch any AHTML-emitting site and ingest it as LangChain Documents with chunk boundaries, citation anchors, and metadata preserved.",
   "type": "module",
   "main": "./dist/index.js",
@@ -52,8 +52,8 @@
     "embeddings"
   ],
   "dependencies": {
-    "@ahtmljs/schema": "0.5.0",
-    "@ahtmljs/agent": "0.5.0"
+    "@ahtmljs/schema": "0.6.0",
+    "@ahtmljs/agent": "0.6.0"
   },
   "peerDependencies": {
     "@langchain/core": ">=0.3"

@@ -1,7 +1,15 @@
 /**
  * @ahtmljs/agent — public API.
  */
-export { AHTMLClient, type FetchOptions, type CachedSnapshot } from './client.js';
+export {
+  AHTMLClient,
+  AHTMLError,
+  type FetchOptions,
+  type CachedSnapshot,
+  type ClientOptions,
+  type ClientEvent,
+  type RetryPolicy,
+} from './client.js';
 export { runAction, ActionRefused, type ActionRunOptions, type ActionResult, type DryRunResult } from './workflow.js';
 export {
   countTokens,

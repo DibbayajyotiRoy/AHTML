@@ -6,13 +6,97 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Planned for v0.6 (the *error story* release):
-- Unified `AHTMLError` taxonomy with stable error codes, actionable `hint`
-  field, and ES2022 `cause` chaining across every package
-- Client-side retry + timeout in `AHTMLClient` with `Retry-After` honoring
-- Request coalescing (parallel `fetchSnapshot()` for the same URL → one fetch)
-- `onEvent` logging hook for structured observability
-- `docs/errors.md` enumerating every code with example `catch` blocks
+Planned for v0.7 (the *scalability* release):
+- NDJSON streaming snapshots (`AsyncIterable<Entity>`)
+- `gzip` + `br` content-encoding
+- Edge-runtime story (Cloudflare Workers, Vercel Edge)
+- Pluggable `KvStore` for cache + rate-limit backends (`@ahtmljs/kv`)
+
+## [0.6.0] — 2026-05-24
+
+**The error story.** Every throw across `@ahtmljs/*` now routes through a
+single `AHTMLError` class with a stable `code` discriminator, an
+actionable `hint`, and ES2022 `cause` chaining. Adopters can finally
+write a `catch` block that means something. This is the release we lead
+the README with.
+
+### Added
+- **`@ahtmljs/schema`** — new `errors.ts` module exports `AHTMLError`,
+  `AHTMLErrorCode`, `DEFAULT_HINTS`, `makeError()`. Re-exported from
+  every package so adopters can write
+  `import { AHTMLError } from '@ahtmljs/agent'`. There is exactly **one**
+  error type across the stack.
+- **`@ahtmljs/schema`** — 13 stable error codes:
+  `SCHEMA_INVALID` / `DIFF_INVALID` / `COMPACT_PARSE` / `JSON_PARSE` /
+  `ETAG_MISMATCH` / `NETWORK` / `HTTP_STATUS` / `AUTH_REQUIRED` /
+  `POLICY_DENIED` / `RATE_LIMITED` / `TIMEOUT` / `CACHE_POISONED` /
+  `SIGNATURE_INVALID`. Every code has a default `hint` in
+  `DEFAULT_HINTS` — the error message itself is the documentation.
+- **`@ahtmljs/schema`** — `AHTMLError.is(e, code?)` type guard.
+  `AHTMLError.is(err, 'RATE_LIMITED')` narrows in one step.
+- **`@ahtmljs/schema`** — `validateStrict(snap)` throwing variant. Keeps
+  `validate()` returning `Issue[]` for back-compat; use whichever fits
+  the call site.
+- **`@ahtmljs/schema`** — `lint()` warnings now carry `code: 'SCHEMA_INVALID'`
+  alongside the existing `rule` field, so the same `catch`/log path that
+  consumes `validate()` errors also consumes lint warnings without
+  case-splitting.
+- **`@ahtmljs/schema`** — `fromCompact()` and `fromJson()` now throw
+  typed `AHTMLError('COMPACT_PARSE' / 'JSON_PARSE')` with the original
+  parse error in `cause`. Previously raw `SyntaxError` leaked through.
+- **`@ahtmljs/agent`** — `AHTMLClient` gains opt-in **retry policy**:
+  exponential backoff with optional ±25% jitter, `Retry-After` honoring
+  (seconds form *and* HTTP-date), per-code retry filter. Default retry
+  is OFF to preserve v0.5 behavior; pass `retry: { attempts: 3 }` to
+  enable.
+- **`@ahtmljs/agent`** — `AHTMLClient` gains per-request **timeout**
+  (default 30s, abort via `AbortController`).
+- **`@ahtmljs/agent`** — `AHTMLClient` gains **request coalescing**:
+  100 parallel `fetch(url)` calls now produce **exactly 1** network
+  request. Keyed by `format`/`bearer`/`url`. On by default; disable per
+  call with `coalesce: false`.
+- **`@ahtmljs/agent`** — `onEvent` hook on `ClientOptions` emits
+  `request` / `cache_hit` / `cache_miss` / `diff_applied` / `coalesced`
+  / `retry` / `error`. No `console.log` inside library code — adopters
+  wire `pino`, `bunyan`, or OTel. A throwing `onEvent` never breaks a
+  request (logger faults are swallowed).
+- **`docs/errors.md`** — every code documented with an example `catch`
+  block. The error message is the doc; this file is the index.
+
+### Fixed
+- **`@ahtmljs/schema`** — `InvalidDiffError` is now a subclass of
+  `AHTMLError` with `code: 'DIFF_INVALID'`. Both
+  `instanceof InvalidDiffError` and `AHTMLError.is(e, 'DIFF_INVALID')`
+  match the same throw; back-compat preserved for v0.4 / v0.5 callers.
+- **`@ahtmljs/agent`** — the old flat `AHTMLError(status, message)`
+  surface is replaced by the unified class. The new class still has a
+  `status` field, plus `code`, `hint`, `retryable`, `retryAfterMs`,
+  `path`, `context`, and `cause` — so existing callers that only
+  inspect `err.status` continue to work, and new callers gain the
+  taxonomy.
+- **`@ahtmljs/agent`** — the v0.4 `502` thrown for poisoned cache responses
+  is now `AHTMLError('CACHE_POISONED', { status: 502, … })` with the
+  validation errors in `cause`. Cache state is untouched — subsequent
+  calls do NOT serve poisoned content; they re-fetch.
+
+### Compatibility
+- **Fully additive.** No public API removed or renamed. v0.5 callers
+  compile against v0.6 unchanged.
+- **Wire compatibility** — unchanged from v0.5; same compact and JSON
+  formats.
+- All five `@ahtmljs/*` packages bumped 0.5.0 → 0.6.0 with peer-deps
+  aligned.
+
+### Test totals
+- Schema: **112 passing** (was 97), 0 todo — adds 15 tests for the new
+  error taxonomy
+- Agent: **49 passing** (was 30), 0 todo — adds 19 tests for retry,
+  timeout, coalescing, onEvent, and typed errors
+- Next: 43 passing
+- Vite: 11 passing
+- LangChain: 5 passing
+- UX integration: 30 passing
+- **Total: 250 passing, 0 todo, 0 failing** (was 216 at v0.5.0)
 
 ## [0.5.0] — 2026-05-24
 
@@ -164,6 +248,7 @@ Initial public preview.
 - OpenAPI 3.1
 - JSON Schema 2020-12
 
-[Unreleased]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.4.0...v0.5.0
 [0.1.0]: https://github.com/DibbayajyotiRoy/AHTML/releases/tag/v0.1.0

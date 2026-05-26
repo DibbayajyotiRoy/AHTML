@@ -52,6 +52,7 @@ import type {
   Asset,
   JsonSchema,
 } from './types.js';
+import { AHTMLError, DEFAULT_HINTS } from './errors.js';
 
 // =====================================================================
 // Serializer
@@ -400,6 +401,28 @@ interface Body {
 }
 
 export function fromCompact(text: string): Snapshot {
+  if (typeof text !== 'string') {
+    throw new AHTMLError({
+      code: 'COMPACT_PARSE',
+      message: 'fromCompact() expects a string',
+      hint: DEFAULT_HINTS.COMPACT_PARSE,
+      cause: text,
+    });
+  }
+  try {
+    return fromCompactInner(text);
+  } catch (err) {
+    if (err instanceof AHTMLError) throw err;
+    throw new AHTMLError({
+      code: 'COMPACT_PARSE',
+      message: `failed to parse ahtml+text: ${(err as Error).message}`,
+      hint: DEFAULT_HINTS.COMPACT_PARSE,
+      cause: err,
+    });
+  }
+}
+
+function fromCompactInner(text: string): Snapshot {
   const lines = text.split('\n');
   const snap: Snapshot = {
     ahtml: '0.1',

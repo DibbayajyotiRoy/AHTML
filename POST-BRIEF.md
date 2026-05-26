@@ -1,6 +1,6 @@
 # AHTML — Post-Release Product Brief
 
-**Released:** 2026-05-24 · **Latest:** v0.5.0 · **Project:** [DibbayajyotiRoy/AHTML](https://github.com/DibbayajyotiRoy/AHTML)
+**Released:** 2026-05-24 · **Latest:** v0.6.0 · **Project:** [DibbayajyotiRoy/AHTML](https://github.com/DibbayajyotiRoy/AHTML)
 
 > RSS, but for AI agents — a machine-native endpoint that sits next to your existing HTML.
 
@@ -149,33 +149,84 @@ removed or renamed.
 
 ---
 
-## What's next — the v0.6.0 worklist
+### v0.6.0 — The error story *(2026-05-24)*
 
-v0.6.0 is **the error story** release — the one we'll lead the README
-with. Typed errors become AHTML's identity.
+Every throw across `@ahtmljs/*` routes through a single `AHTMLError`
+class with a stable `code` discriminator, an actionable `hint`, and
+ES2022 `cause` chaining. Adopters can finally write a `catch` block
+that means something:
 
-Locked in `PLAN-NEXT-5.md`:
+```ts
+try {
+  const snap = await client.fetch('https://shop.com/p');
+} catch (err) {
+  if (AHTMLError.is(err, 'AUTH_REQUIRED'))   return promptLogin();
+  if (AHTMLError.is(err, 'RATE_LIMITED'))    return retryAfter(err.retryAfterMs);
+  if (AHTMLError.is(err, 'CACHE_POISONED'))  return reportBugToSite(err.cause);
+  throw err;
+}
+```
 
-- **Unified `AHTMLError` taxonomy** with stable `code` discriminator (
-  `SCHEMA_INVALID`, `DIFF_INVALID`, `COMPACT_PARSE`, `JSON_PARSE`,
-  `ETAG_MISMATCH`, `NETWORK`, `HTTP_STATUS`, `AUTH_REQUIRED`,
-  `POLICY_DENIED`, `RATE_LIMITED`, `TIMEOUT`, `CACHE_POISONED`),
-  actionable `hint` field, ES2022 `cause` chaining — re-exported from
-  `@ahtmljs/schema` and used across every package.
-- **Client-side retry + timeout** in `AHTMLClient` with `Retry-After`
-  honoring and configurable backoff.
-- **Request coalescing** — parallel `fetchSnapshot(url)` calls for the
-  same URL become one HTTP request. On by default.
-- **`onEvent` logging hook** — structured observability for
-  `request` / `cache_hit` / `cache_miss` / `diff_applied` / `error` /
-  `retry` / `coalesced`. No `console.log` inside the library.
-- **`docs/errors.md`** — every code documented with an example `catch`
-  block. The error message is the doc.
+**13 stable codes**, every one with a default `hint` baked in so the
+error message itself is the documentation:
 
-Performance budget: error construction < 50 µs, 100 parallel coalesced
-fetches → exactly 1 network call.
+`SCHEMA_INVALID` · `DIFF_INVALID` · `COMPACT_PARSE` · `JSON_PARSE` ·
+`ETAG_MISMATCH` · `NETWORK` · `HTTP_STATUS` · `AUTH_REQUIRED` ·
+`POLICY_DENIED` · `RATE_LIMITED` · `TIMEOUT` · `CACHE_POISONED` ·
+`SIGNATURE_INVALID` (reserved for v0.8).
 
-## After that — v0.7.0 → 1.0.0
+#### Beyond the error class
+
+- **`AHTMLClient` gets retries.** Exponential backoff with optional ±25%
+  jitter. `Retry-After` (seconds *and* HTTP-date) honored verbatim.
+  Per-code retry filter. Off by default to preserve v0.5 semantics;
+  enable with `retry: { attempts: 3 }`.
+- **`AHTMLClient` gets timeouts.** Per-request `AbortController`. Default 30s.
+- **`AHTMLClient` gets request coalescing.** 100 parallel `fetch(url)`
+  calls produce **exactly 1** network request. Keyed by format / bearer
+  / URL. On by default; opt out with `coalesce: false`.
+- **`AHTMLClient` gets `onEvent`.** Structured observability hook for
+  `request` / `cache_hit` / `cache_miss` / `diff_applied` / `coalesced`
+  / `retry` / `error`. No `console.log` inside library code — adopters
+  wire `pino` / `bunyan` / OTel. A throwing `onEvent` never breaks a
+  request.
+
+#### Compatibility
+
+Fully additive. `InvalidDiffError` is now a subclass of `AHTMLError`
+with `code: 'DIFF_INVALID'`, so both `instanceof InvalidDiffError` and
+`AHTMLError.is(e, 'DIFF_INVALID')` match the same throw. `validate()`
+still returns `Issue[]`; the new `validateStrict()` is the throwing
+variant. v0.5 callers compile against v0.6 unchanged.
+
+[Full reference: `docs/errors.md`](docs/errors.md)
+
+**250 tests passing** (up from 216 at v0.5), **zero todo**.
+
+---
+
+## What's next — the v0.7.0 worklist
+
+v0.7.0 is **the scalability** release. Per `PLAN-NEXT-5.md`:
+
+- **NDJSON streaming snapshots** — `AsyncIterable<Entity>` from
+  `client.streamSnapshot()`; server emits header → entities → actions →
+  footer as separate records over `transfer-encoding: chunked`.
+- **`gzip` + `br` content-encoding** — handler reads `Accept-Encoding`
+  and picks the right encoder. `CompressionStream` on Edge, `zlib` on
+  Node.
+- **Edge-runtime story** — `runtime: 'edge'` works end-to-end; every
+  `node:*` import in the hot path replaced with a Web Standards
+  equivalent. `docs/edge.md` documents the constraint surface.
+- **Pluggable `KvStore`** — cache and rate-limiter backends become an
+  interface. Default still in-memory; `@ahtmljs/kv/upstash` and
+  `@ahtmljs/kv/cloudflare` ship as sub-exports.
+
+Budget: 10,000-entity dataset under a 50 MB memory ceiling; `br` saves
+≥60% bytes on the benchmark corpus; Cloudflare Worker cold start under
+50ms p50.
+
+## After that — v0.8.0 → 1.0.0
 
 Sequenced per `PLAN-NEXT-5.md`. Each release ships an enforceable
 performance budget so the benchmarks become a contract, not marketing.

@@ -23,7 +23,13 @@ import {
   toCompact,
   computeEtag,
   diff,
+  toStreamResponse,
+  chooseEncoding,
+  compressStream,
+  compressBuffer,
+  STREAM_CONTENT_TYPE,
   type Snapshot,
+  type Encoding,
 } from '@ahtmljs/schema';
 import { getConfig, type AHTMLConfig } from './index.js';
 import { enforcePolicy } from './policy.js';
@@ -32,6 +38,24 @@ export type SnapshotBuilder = (
   pathSegments: string[],
   req: Request,
 ) => Promise<Snapshot | null> | Snapshot | null;
+
+export interface CreateRouteOptions {
+  /**
+   * Emit responses as a streaming NDJSON sequence
+   * (`application/ahtml+json-seq`) instead of a buffered body. The server
+   * can start writing entities before the full snapshot is materialized,
+   * and the client can begin processing them before the response ends.
+   *
+   * Use for snapshots with many entities (typically datasets) or whenever
+   * peak server memory matters. The non-streaming default keeps the
+   * v0.6.0 wire shape and is still the right choice for small pages.
+   *
+   * - `true`  → always stream
+   * - a number → stream when `entities.length + actions.length >= threshold`
+   * - `false` (default) → never stream
+   */
+  stream?: boolean | number;
+}
 
 /** A simple in-memory store for previous snapshots (per process) so the
  *  diff endpoint can answer "what changed since <etag>?" without the
@@ -53,7 +77,11 @@ function cacheSet(key: string, s: Snapshot): void {
   if (impl) impl.set(key, s); else _cache.set(key, s);
 }
 
-export function createAHTMLRoute(builder: SnapshotBuilder, configOverride?: AHTMLConfig) {
+export function createAHTMLRoute(
+  builder: SnapshotBuilder,
+  configOverride?: AHTMLConfig,
+  routeOpts: CreateRouteOptions = {},
+) {
   async function GET(req: Request, ctx: { params: Promise<{ path?: string[] }> | { path?: string[] } }): Promise<Response> {
     const config = configOverride ?? getConfig();
     const params = await ctx.params;
@@ -79,6 +107,7 @@ export function createAHTMLRoute(builder: SnapshotBuilder, configOverride?: AHTM
 
     const cacheKey = snap.url;
     const url = new URL(req.url);
+    const encoding = chooseEncoding(req.headers.get('accept-encoding'));
 
     // Diff endpoint: GET /ahtml/...?since=W/"abc"
     const sinceEtag = url.searchParams.get('since');
@@ -95,15 +124,16 @@ export function createAHTMLRoute(builder: SnapshotBuilder, configOverride?: AHTM
             headers: { etag, 'cache-control': cacheControl(snap, config) },
           });
         }
-        return new Response(JSON.stringify(d), {
-          status: 200,
-          headers: {
+        return await encodedResponse(
+          JSON.stringify(d),
+          {
             'content-type': 'application/ahtml-diff+json',
             etag,
             'cache-control': cacheControl(snap, config),
             'x-ahtml-version': '0.1',
           },
-        });
+          encoding,
+        );
       }
       // Fall through to full snapshot if we don't have the prior.
     }
@@ -119,19 +149,32 @@ export function createAHTMLRoute(builder: SnapshotBuilder, configOverride?: AHTM
 
     cacheSet(cacheKey, snap);
 
+    // Streaming path — emit NDJSON record-by-record. Cannot honor JSON / compact
+    // content negotiation since the wire format is its own type. Caller opts in
+    // via routeOpts.stream or via `Accept: application/ahtml+json-seq`.
+    if (shouldStream(req, snap, routeOpts)) {
+      let stream = toStreamResponse(snap);
+      stream = compressStream(stream, encoding);
+      return new Response(stream, {
+        status: 200,
+        headers: streamHeaders(snap, config, etag, encoding),
+      });
+    }
+
     const fmt = pickFormat(req);
     const body = fmt === 'json' ? toJson(snap) : toCompact(snap);
-    return new Response(body, {
-      status: 200,
-      headers: {
+    return await encodedResponse(
+      body,
+      {
         'content-type': fmt === 'json' ? 'application/ahtml+json' : 'application/ahtml+text; charset=utf-8',
         etag,
         'cache-control': cacheControl(snap, config),
         'last-modified': new Date(snap.fetched_at).toUTCString(),
         'x-ahtml-version': '0.1',
-        vary: 'Accept',
+        vary: 'Accept, Accept-Encoding',
       },
-    });
+      encoding,
+    );
   }
 
   async function HEAD(req: Request, ctx: { params: Promise<{ path?: string[] }> | { path?: string[] } }): Promise<Response> {
@@ -140,6 +183,55 @@ export function createAHTMLRoute(builder: SnapshotBuilder, configOverride?: AHTM
   }
 
   return { GET, HEAD };
+}
+
+function shouldStream(req: Request, snap: Snapshot, opts: CreateRouteOptions): boolean {
+  // Client can always force streaming by explicitly accepting the seq type.
+  const accept = req.headers.get('accept') ?? '';
+  if (accept.includes(STREAM_CONTENT_TYPE)) return true;
+  const s = opts.stream;
+  if (s === true) return true;
+  if (typeof s === 'number') {
+    return snap.entities.length + snap.actions.length >= s;
+  }
+  return false;
+}
+
+function streamHeaders(
+  snap: Snapshot,
+  config: AHTMLConfig,
+  etag: string,
+  encoding: Encoding,
+): Record<string, string> {
+  const h: Record<string, string> = {
+    'content-type': `${STREAM_CONTENT_TYPE}; charset=utf-8`,
+    etag,
+    'cache-control': cacheControl(snap, config),
+    'last-modified': new Date(snap.fetched_at).toUTCString(),
+    'x-ahtml-version': '0.1',
+    'transfer-encoding': 'chunked',
+    vary: 'Accept, Accept-Encoding',
+  };
+  if (encoding !== 'identity') h['content-encoding'] = encoding;
+  return h;
+}
+
+async function encodedResponse(
+  body: string,
+  headers: Record<string, string>,
+  encoding: Encoding,
+): Promise<Response> {
+  const h: Record<string, string> = {
+    ...headers,
+    vary: headers.vary ?? 'Accept-Encoding',
+  };
+  if (encoding === 'identity') {
+    return new Response(body, { status: 200, headers: h });
+  }
+  const bytes = await compressBuffer(body, encoding);
+  h['content-encoding'] = encoding;
+  // Uint8Array is a valid BodyInit at runtime; TS's narrower types disagree.
+  return new Response(bytes as unknown as BodyInit, { status: 200, headers: h });
 }
 
 function ensureDefaults(snap: Snapshot, config: ReturnType<typeof getConfig>): Snapshot {

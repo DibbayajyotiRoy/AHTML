@@ -55,7 +55,9 @@ describe('createAHTMLRoute', () => {
     assert.match(res.headers.get('cache-control') ?? '', /max-age=\d+/);
     assert.ok(res.headers.get('last-modified'));
     assert.equal(res.headers.get('x-ahtml-version'), '0.1');
-    assert.equal(res.headers.get('vary'), 'Accept');
+    // v0.7.0: Vary now also lists Accept-Encoding because we negotiate
+    // gzip/br on the body.
+    assert.match(res.headers.get('vary') ?? '', /Accept/);
   });
 
   test('returns 304 when If-None-Match matches the snapshot etag', async () => {

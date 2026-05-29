@@ -23,9 +23,16 @@ import {
   validate,
   AHTMLError,
   DEFAULT_HINTS,
+  parseStream,
+  STREAM_CONTENT_TYPE,
+  InMemoryCacheStore,
   type AHTMLErrorCode,
+  type CacheStore,
+  type Entity,
+  type Action,
   type Snapshot,
   type SnapshotDiff,
+  type StreamRecord,
 } from '@ahtmljs/schema';
 
 export interface RetryPolicy {
@@ -88,6 +95,13 @@ export interface ClientOptions extends FetchOptions {
   timeout?: number;
   /** Structured-log hook. Called for every internal event. */
   onEvent?: (e: ClientEvent) => void;
+  /**
+   * Snapshot cache backend. Defaults to a bounded in-memory `Map`
+   * (1000 entries). Swap for `@ahtmljs/kv/upstash`, `@ahtmljs/kv/cloudflare`,
+   * or your own `CacheStore<CachedSnapshot>` to share cache across
+   * replicas. v0.6 callers pass nothing and inherit the default.
+   */
+  cache?: CacheStore<CachedSnapshot>;
 }
 
 const DEFAULT_RETRY: Required<RetryPolicy> = {
@@ -102,7 +116,12 @@ const DEFAULT_RETRY: Required<RetryPolicy> = {
 const DEFAULT_TIMEOUT_MS = 30_000;
 
 export class AHTMLClient {
-  private cache = new Map<string, CachedSnapshot>();
+  /**
+   * v0.7.0: cache is a pluggable `CacheStore<CachedSnapshot>`. Default is
+   * the in-memory bounded LRU adapter — drop-in equivalent to the v0.6
+   * `Map`. Pass `{ cache: redisStore }` to share across replicas.
+   */
+  private cache: CacheStore<CachedSnapshot>;
   // v0.6.0: in-flight request coalescing — two parallel `fetch(url)` calls
   // for the same URL share one HTTP request. Keyed by the cache key.
   private inflight = new Map<string, Promise<Snapshot>>();
@@ -110,6 +129,7 @@ export class AHTMLClient {
 
   constructor(private defaults: ClientOptions = {}) {
     if (defaults.onEvent) this.onEvent = defaults.onEvent;
+    this.cache = defaults.cache ?? new InMemoryCacheStore<CachedSnapshot>(1000);
   }
 
   /**
@@ -139,7 +159,7 @@ export class AHTMLClient {
 
   private async fetchOnce(url: string, o: FetchOptions): Promise<Snapshot> {
     const fetcher = o.fetch ?? this.defaults.fetch ?? globalThis.fetch;
-    const cached = this.cache.get(url);
+    const cached = await this.cache.get(url);
     const retry = normalizeRetry(o.retry, this.defaults.retry);
     const timeoutMs = o.timeout ?? this.defaults.timeout ?? DEFAULT_TIMEOUT_MS;
 
@@ -167,7 +187,7 @@ export class AHTMLClient {
           const d = (await res.json()) as SnapshotDiff;
           const next = applyDiff(cached.snapshot, d);
           const etag = res.headers.get('etag') ?? d.to_etag;
-          this.cache.set(url, { snapshot: next, fetchedAt: Date.now(), etag });
+          await this.cache.set(url, { snapshot: next, fetchedAt: Date.now(), etag });
           this.emit({ type: 'diff_applied', url, changes: d.changes.length });
           return next;
         }
@@ -175,7 +195,7 @@ export class AHTMLClient {
           return this.storeFromResponse(url, res);
         }
         if (res.status === 304) {
-          this.cache.set(url, { ...cached, fetchedAt: Date.now() });
+          await this.cache.set(url, { ...cached, fetchedAt: Date.now() });
           this.emit({ type: 'cache_hit', url });
           return cached.snapshot;
         }
@@ -200,7 +220,7 @@ export class AHTMLClient {
     }
 
     if (res.status === 304 && cached) {
-      this.cache.set(url, { ...cached, fetchedAt: Date.now() });
+      await this.cache.set(url, { ...cached, fetchedAt: Date.now() });
       this.emit({ type: 'cache_hit', url });
       return cached.snapshot;
     }
@@ -309,13 +329,67 @@ export class AHTMLClient {
       });
     }
     const etag = res.headers.get('etag') ?? undefined;
-    this.cache.set(url, { snapshot, fetchedAt: Date.now(), etag });
+    await this.cache.set(url, { snapshot, fetchedAt: Date.now(), etag });
     return snapshot;
   }
 
-  invalidate(url?: string): void {
-    if (url) this.cache.delete(url);
-    else this.cache.clear();
+  async invalidate(url?: string): Promise<void> {
+    if (url) await this.cache.delete(url);
+    else await this.cache.clear();
+  }
+
+  /**
+   * v0.7.0: stream a snapshot record-by-record. Returns an `AsyncIterable`
+   * over `StreamRecord`s — caller can begin processing entities while later
+   * ones are still on the wire. End-to-end peak memory stays bounded by
+   * the per-entity working set rather than the full snapshot.
+   *
+   * Caller is responsible for the iteration lifecycle: do NOT skip the
+   * `kind: 'end'` record if you rely on its `etag`. The client does not
+   * populate its snapshot cache on stream paths — call `fetch(url)` if
+   * you also want the cache to warm up.
+   */
+  async *streamSnapshot(url: string, opts: FetchOptions = {}): AsyncIterable<StreamRecord> {
+    const o = { ...this.defaults, ...opts };
+    const fetcher = o.fetch ?? globalThis.fetch;
+    const headers = requestHeaders(STREAM_CONTENT_TYPE, o);
+    const retry = normalizeRetry(o.retry, this.defaults.retry);
+    const timeoutMs = o.timeout ?? this.defaults.timeout ?? DEFAULT_TIMEOUT_MS;
+    const res = await this.doFetch(fetcher, url, { headers }, timeoutMs, retry, url);
+    if (!res.ok) throw await httpError(url, res);
+    const ct = res.headers.get('content-type') ?? '';
+    if (!ct.includes(STREAM_CONTENT_TYPE)) {
+      throw new AHTMLError({
+        code: 'HTTP_STATUS',
+        status: res.status,
+        message: `expected ${STREAM_CONTENT_TYPE} but server returned ${ct || 'no content-type'}`,
+        hint: 'The server did not advertise streaming. Either pass routeOpts.stream = true on the route, or use client.fetch() instead.',
+        context: url,
+      });
+    }
+    if (!res.body) {
+      throw new AHTMLError({
+        code: 'NETWORK',
+        message: 'stream response had no body',
+        hint: DEFAULT_HINTS.NETWORK,
+        context: url,
+      });
+    }
+    yield* parseStream(res.body);
+  }
+
+  /** Convenience: stream only the entity records (skip envelope/actions/end). */
+  async *streamEntities(url: string, opts: FetchOptions = {}): AsyncIterable<Entity> {
+    for await (const r of this.streamSnapshot(url, opts)) {
+      if (r.kind === 'entity') yield r.entity;
+    }
+  }
+
+  /** Convenience: stream only the action records. */
+  async *streamActions(url: string, opts: FetchOptions = {}): AsyncIterable<Action> {
+    for await (const r of this.streamSnapshot(url, opts)) {
+      if (r.kind === 'action') yield r.action;
+    }
   }
 
   /** Discover a site's manifest. Returns the parsed JSON. */

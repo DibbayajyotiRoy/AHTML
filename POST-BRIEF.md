@@ -1,6 +1,6 @@
 # AHTML — Post-Release Product Brief
 
-**Released:** 2026-05-24 · **Latest:** v0.6.0 · **Project:** [DibbayajyotiRoy/AHTML](https://github.com/DibbayajyotiRoy/AHTML)
+**Released:** 2026-05-26 · **Latest:** v0.7.0 · **Project:** [DibbayajyotiRoy/AHTML](https://github.com/DibbayajyotiRoy/AHTML)
 
 > RSS, but for AI agents — a machine-native endpoint that sits next to your existing HTML.
 
@@ -205,41 +205,107 @@ variant. v0.5 callers compile against v0.6 unchanged.
 
 ---
 
-## What's next — the v0.7.0 worklist
+### v0.7.0 — Scalability *(2026-05-26)*
 
-v0.7.0 is **the scalability** release. Per `PLAN-NEXT-5.md`:
+Snapshots stop being one big buffer. The wire goes streaming, the body
+goes compressed, the cache goes pluggable, and the whole hot path runs
+on the edge.
 
-- **NDJSON streaming snapshots** — `AsyncIterable<Entity>` from
-  `client.streamSnapshot()`; server emits header → entities → actions →
-  footer as separate records over `transfer-encoding: chunked`.
-- **`gzip` + `br` content-encoding** — handler reads `Accept-Encoding`
-  and picks the right encoder. `CompressionStream` on Edge, `zlib` on
-  Node.
-- **Edge-runtime story** — `runtime: 'edge'` works end-to-end; every
-  `node:*` import in the hot path replaced with a Web Standards
-  equivalent. `docs/edge.md` documents the constraint surface.
-- **Pluggable `KvStore`** — cache and rate-limiter backends become an
-  interface. Default still in-memory; `@ahtmljs/kv/upstash` and
-  `@ahtmljs/kv/cloudflare` ship as sub-exports.
+#### NDJSON streaming
 
-Budget: 10,000-entity dataset under a 50 MB memory ceiling; `br` saves
-≥60% bytes on the benchmark corpus; Cloudflare Worker cold start under
-50ms p50.
+```ts
+// server
+export const { GET, HEAD } = createAHTMLRoute(buildSnapshot, undefined, {
+  stream: 50, // or `true` to always stream
+});
 
-## After that — v0.8.0 → 1.0.0
+// client
+for await (const e of client.streamEntities('https://shop.com/datasets/sales')) {
+  if (e.type === 'product') indexInVectorDB(e);
+}
+```
 
-Sequenced per `PLAN-NEXT-5.md`. Each release ships an enforceable
-performance budget so the benchmarks become a contract, not marketing.
+Wire format: `application/ahtml+json-seq` — line-delimited JSON, envelope
+first, then entities, then actions, then a `kind: 'end'` sentinel. Server
+writes records as they're produced; client iterates as they arrive.
+`break` out of the loop tears down the stream cleanly. Peak memory stays
+bounded by the per-entity working set, not the full payload.
 
-- **v0.7.0 — Scalability.** NDJSON streaming snapshots
-  (`AsyncIterable<Entity>`), `gzip` + `br` content-encoding, edge-runtime
-  story (Cloudflare Workers, Vercel Edge), pluggable `KvStore` for cache
-  and rate-limiter backends (Upstash / Cloudflare KV via `@ahtmljs/kv`).
-  Budget: 10,000-entity dataset under a 50 MB memory ceiling.
-- **v0.8.0 — Trust.** Detached JWS over canonical JSON for signed
-  snapshots, plus emitter consolidation: `@ahtmljs/next` and
-  `@ahtmljs/vite` collapse their duplicated well-known / MCP / OpenAPI
-  emitters into shared `@ahtmljs/schema/emit/*` subpaths.
+#### Compression
+
+`Accept-Encoding` negotiation lives in `@ahtmljs/schema/compress`. The
+handler picks `br > gzip > identity`, honors q-value refusals
+(`gzip;q=0`), and wraps the body in `CompressionStream` — Web Standard,
+zero `node:zlib`. Works the same in Node, Bun, Deno, Cloudflare Workers,
+and Vercel Edge.
+
+#### Pluggable cache
+
+```ts
+import { AHTMLClient, type CacheStore, type CachedSnapshot } from '@ahtmljs/agent';
+
+const redisStore: CacheStore<CachedSnapshot> = {
+  async get(k)    { /* ... */ },
+  async set(k, v) { /* ... */ },
+  async delete(k) { /* ... */ },
+  async clear()   { /* ... */ },
+};
+const client = new AHTMLClient({ cache: redisStore });
+```
+
+The `AHTMLClient` snapshot cache is now any `CacheStore<CachedSnapshot>`
+(sync or async). Default stays in-memory but is now a bounded LRU
+(1,000 entries) with TTL — drop-in for the v0.6 unbounded `Map`. The
+`@ahtmljs/schema` package also exports a `KvStore` interface for
+cross-process rate limiters / idempotency keys; pre-built Upstash and
+Cloudflare KV adapters ship next in `@ahtmljs/kv`.
+
+#### Edge runtime
+
+Every package in the hot path runs on Cloudflare Workers, Vercel Edge,
+Bun, and Deno from the same dist. No `node:*` imports. `computeEtag`
+uses pure-JS `djb2`; compression uses `CompressionStream`. See
+[`docs/edge.md`](docs/edge.md) for the Cloudflare Workers example and
+the runtime constraint surface.
+
+#### Compatibility
+
+Fully additive at the API level. Legacy `application/ahtml+text` and
+`application/ahtml+json` paths unchanged. `Vary` header expands from
+`Accept` to `Accept, Accept-Encoding` (caches that key on `Vary` settle
+on the second request). `AHTMLClient.invalidate()` returns
+`Promise<void>` instead of `void` — sync callers that ignored the return
+value are unaffected.
+
+**291 tests passing** (up from 250 at v0.6), **zero todo**.
+
+[Full reference: `docs/streaming.md`](docs/streaming.md) ·
+[Edge guide: `docs/edge.md`](docs/edge.md)
+
+---
+
+## What's next — the v0.8.0 worklist
+
+v0.8.0 is **the trust** release. Per `PLAN-NEXT-5.md`:
+
+- **Detached JWS over canonical JSON** — signed snapshots, verifiable
+  provenance. The `provenance.signed: true` field stops being reserved
+  and starts being checkable.
+- **`@ahtmljs/agent/sign`** — `verifySnapshot(snap, sig, { trustedKeys })`.
+  Tampered snapshots fail with `AHTMLError(SIGNATURE_INVALID)`.
+- **Emitter consolidation** — `@ahtmljs/next` and `@ahtmljs/vite`
+  currently carry duplicate copies of the well-known / MCP / OpenAPI /
+  Accept / policy code. Extract to `@ahtmljs/schema/emit/*` so there's
+  one canonical implementation; framework adapters become thin
+  request/response shells.
+- **`@ahtmljs/kv` package** — the `KvStore` interface from v0.7.0 gets
+  pre-built Upstash + Cloudflare KV adapters under sub-exports.
+
+Budget: sign a 100-entity snapshot in < 5ms; emitter LOC in
+`@ahtmljs/next` and `@ahtmljs/vite` drops ≥40%.
+
+## After that — v0.9.0 → 1.0.0
+
 - **v0.9.0 → 1.0.0-rc.** Production observability via OpenTelemetry,
   a single new adapter (`@ahtmljs/hono` — covers Bun / Deno / Cloudflare
   Workers), `npx @ahtmljs/cli doctor` as an external auditor, CJS

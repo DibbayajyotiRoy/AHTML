@@ -6,11 +6,101 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Planned for v0.7 (the *scalability* release):
-- NDJSON streaming snapshots (`AsyncIterable<Entity>`)
-- `gzip` + `br` content-encoding
-- Edge-runtime story (Cloudflare Workers, Vercel Edge)
-- Pluggable `KvStore` for cache + rate-limit backends (`@ahtmljs/kv`)
+Planned for v0.8 (the *trust* release):
+- Detached JWS signatures over canonical JSON
+- `verifySnapshot()` against trusted-key registry
+- Emitter consolidation: extract `well-known` / `mcp` / `openapi` / `Accept` / `policy`
+  from `@ahtmljs/next` and `@ahtmljs/vite` into shared `@ahtmljs/schema/emit/*` subpaths
+- `@ahtmljs/kv` package with Upstash + Cloudflare KV adapters
+
+## [0.7.0] — 2026-05-26
+
+**The scalability release.** Snapshots stop being one big buffer.
+
+### Added
+- **`@ahtmljs/schema/stream`** — new module. `toStream(snap)` is an
+  `AsyncIterable<string>` (one NDJSON line per record). `toStreamResponse(snap)`
+  returns a `ReadableStream<Uint8Array>` suitable as a `Response` body in
+  any Web-Standards runtime. `parseStream(source)` is the inverse, yielding
+  `StreamRecord`s as they arrive. `fromStream(source)` materializes back to
+  a `Snapshot` when buffering is acceptable. Content-Type:
+  `application/ahtml+json-seq` (length-delimited NDJSON).
+- **`@ahtmljs/schema/compress`** — new module. `chooseEncoding(header)`
+  parses `Accept-Encoding` with q-values, prefers `br > gzip > identity`,
+  honors `q=0` refusals, respects `*` wildcards.
+  `compressBuffer(body, enc)` and `compressStream(body, enc)` use
+  `CompressionStream` (Web Standard) — no `node:zlib` import.
+- **`@ahtmljs/schema/kv`** — new module. `KvStore` interface
+  (`get / set / delete / incr` with optional `ttlMs`) for cross-process
+  rate-limit / idempotency / cache backends. `CacheStore<T>` interface for
+  object-valued caches (sync or async). `InMemoryKvStore` and
+  `InMemoryCacheStore` ship as the default adapters. `InMemoryCacheStore`
+  is a bounded LRU (default 1,000 entries) with lazy TTL expiration.
+- **`@ahtmljs/next/handler`** — `createAHTMLRoute(builder, config, opts)`
+  gains an `opts.stream` parameter (`true` / threshold number / default
+  `false`). When triggered, the handler emits NDJSON via a
+  `ReadableStream`. A client can also force streaming by sending
+  `Accept: application/ahtml+json-seq`.
+- **`@ahtmljs/next/handler`** — every response path now negotiates
+  `Accept-Encoding` and wraps the body in `CompressionStream` for
+  `br` / `gzip`. `Content-Encoding` + `Vary: Accept, Accept-Encoding`
+  emitted accordingly.
+- **`@ahtmljs/agent`** — `AHTMLClient.streamSnapshot(url)` returns an
+  `AsyncIterable<StreamRecord>`. `streamEntities(url)` and
+  `streamActions(url)` are convenience filters. Caller can `break` out of
+  the iteration to short-circuit — the underlying `ReadableStream` is
+  torn down cleanly.
+- **`@ahtmljs/agent`** — `ClientOptions.cache` accepts any
+  `CacheStore<CachedSnapshot>` (sync or async). The default is the
+  `InMemoryCacheStore` from `@ahtmljs/schema`. Swap for Redis / Upstash /
+  Cloudflare KV by implementing the four-method interface.
+- **`docs/streaming.md`** — the streaming wire format, client patterns,
+  short-circuit behaviour, and error taxonomy.
+- **`docs/edge.md`** — the runtime constraint surface, Cloudflare Workers
+  example, multi-replica cache wiring, cold-start budget.
+
+### Fixed
+- **`@ahtmljs/agent`** — the v0.6 snapshot cache was a private `Map`,
+  hard-coded. Now defaults to `InMemoryCacheStore` but is fully swappable.
+  Existing v0.6 callers (no `cache:` option) see identical behaviour and
+  a bounded 1,000-entry LRU instead of the old unbounded `Map`.
+
+### Changed
+- **`@ahtmljs/agent`** — `AHTMLClient.invalidate()` now returns
+  `Promise<void>` (it was `void`). Required to support async cache
+  backends. Existing call sites work unchanged in async contexts; sync
+  callers that ignored the return value are unaffected.
+- **`@ahtmljs/next/handler`** — `Vary` header changes from `Accept` to
+  `Accept, Accept-Encoding`. Caches that key on `Vary` will treat this
+  as a cold cache the first time, then settle.
+
+### Compatibility
+- **Fully additive at the API level.** No public surface removed.
+- **Wire-compatible**: legacy `application/ahtml+text` and
+  `application/ahtml+json` paths are unchanged.
+- All five `@ahtmljs/*` packages bumped 0.6.0 → 0.7.0 with peer-deps
+  aligned.
+
+### Edge runtime
+- Every package in the hot path runs on Cloudflare Workers, Vercel Edge,
+  Bun, and Deno with no runtime-conditional imports. `computeEtag` uses
+  pure-JS `djb2`; compression uses `CompressionStream`. No `node:*`
+  imports.
+
+### Test totals
+- Schema: **137 passing** (was 112), 0 todo — 25 new tests covering
+  `toStream` / `fromStream` round-trip, `chooseEncoding` q-value parsing,
+  `compressBuffer` round-trip via `DecompressionStream`,
+  `InMemoryCacheStore` LRU + TTL, `InMemoryKvStore` async `incr`.
+- Agent: **57 passing** (was 49), 0 todo — 8 new tests for `streamSnapshot`,
+  `streamEntities`, pluggable `CacheStore` (sync + async), default behaviour.
+- Next: **51 passing** (was 43), 0 todo — 8 new tests for
+  `createAHTMLRoute` streaming + gzip negotiation, threshold triggering,
+  `Accept` override, byte-size win.
+- Vite: 11 passing
+- LangChain: 5 passing
+- UX integration: 30 passing
+- **Total: 291 passing, 0 todo, 0 failing** (was 250 at v0.6.0)
 
 ## [0.6.0] — 2026-05-24
 
@@ -248,7 +338,8 @@ Initial public preview.
 - OpenAPI 3.1
 - JSON Schema 2020-12
 
-[Unreleased]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.4.0...v0.5.0
 [0.1.0]: https://github.com/DibbayajyotiRoy/AHTML/releases/tag/v0.1.0

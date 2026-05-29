@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/schema",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "AHTML semantic snapshot schema — types, validator, builder, and dual-format serializers (JSON + token-optimal compact text). The agent-readable contract layer for the web.",
   "type": "module",
   "main": "./dist/index.js",

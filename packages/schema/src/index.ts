@@ -27,3 +27,23 @@ export {
   type AHTMLErrorCode,
   type AHTMLErrorInit,
 } from './errors.js';
+export {
+  toStream,
+  toStreamResponse,
+  parseStream,
+  fromStream,
+  STREAM_CONTENT_TYPE,
+  type StreamRecord,
+} from './stream.js';
+export {
+  chooseEncoding,
+  compressStream,
+  compressBuffer,
+  type Encoding,
+} from './compress.js';
+export {
+  InMemoryCacheStore,
+  InMemoryKvStore,
+  type KvStore,
+  type CacheStore,
+} from './kv.js';

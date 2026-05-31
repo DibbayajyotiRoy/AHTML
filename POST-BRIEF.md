@@ -1,6 +1,6 @@
 # AHTML — Post-Release Product Brief
 
-**Released:** 2026-05-26 · **Latest:** v0.7.0 · **Project:** [DibbayajyotiRoy/AHTML](https://github.com/DibbayajyotiRoy/AHTML)
+**Released:** 2026-05-27 · **Latest:** v0.8.0 · **Project:** [DibbayajyotiRoy/AHTML](https://github.com/DibbayajyotiRoy/AHTML)
 
 > RSS, but for AI agents — a machine-native endpoint that sits next to your existing HTML.
 
@@ -284,25 +284,107 @@ value are unaffected.
 
 ---
 
-## What's next — the v0.8.0 worklist
+### v0.8.0 — Trust *(2026-05-27)*
 
-v0.8.0 is **the trust** release. Per `PLAN-NEXT-5.md`:
+`provenance.signed: true` stops being reserved and starts being
+checkable. Plus the duplicated framework emitters collapse into one
+canonical implementation, and every README gets rewritten for AI-agent
+discoverability.
 
-- **Detached JWS over canonical JSON** — signed snapshots, verifiable
-  provenance. The `provenance.signed: true` field stops being reserved
-  and starts being checkable.
-- **`@ahtmljs/agent/sign`** — `verifySnapshot(snap, sig, { trustedKeys })`.
-  Tampered snapshots fail with `AHTMLError(SIGNATURE_INVALID)`.
-- **Emitter consolidation** — `@ahtmljs/next` and `@ahtmljs/vite`
-  currently carry duplicate copies of the well-known / MCP / OpenAPI /
-  Accept / policy code. Extract to `@ahtmljs/schema/emit/*` so there's
-  one canonical implementation; framework adapters become thin
-  request/response shells.
-- **`@ahtmljs/kv` package** — the `KvStore` interface from v0.7.0 gets
-  pre-built Upstash + Cloudflare KV adapters under sub-exports.
+#### Detached JWS over canonical JSON
 
-Budget: sign a 100-entity snapshot in < 5ms; emitter LOC in
-`@ahtmljs/next` and `@ahtmljs/vite` drops ≥40%.
+```ts
+// server — sign a snapshot
+import { snapshot, signSnapshot } from '@ahtmljs/schema';
+
+const jws = await signSnapshot(snap, { kid: 'shop-2026', alg: 'ES256', key });
+
+return new Response(toJson(snap), {
+  headers: { 'X-AHTML-Signature': jws, 'content-type': 'application/ahtml+json' },
+});
+
+// client — verify
+import { verifySnapshot } from '@ahtmljs/agent/sign';
+
+const result = await verifySnapshot(snap, jws, {
+  trustedKeys: [{ alg: 'ES256', kid: 'shop-2026', key: publicKey }],
+});
+if (!result.ok) throw new Error(`Signature invalid: ${result.reason}`);
+```
+
+Supports **ES256**, **EdDSA** (Ed25519), **RS256**. Uses Web Crypto
+(`globalThis.crypto.subtle`) — zero `node:crypto`, so signing and
+verification run identically on Cloudflare Workers, Vercel Edge, Bun,
+Deno, and Node. `verifySnapshot` never throws on bad signatures
+(returns `{ ok: false, reason }`); `verifySnapshotStrict` throws
+`AHTMLError('SIGNATURE_INVALID')` when you want the boundary check.
+
+[Full guide: `docs/signing.md`](docs/signing.md)
+
+#### Emitter consolidation
+
+`well-known`, `mcp`, `openapi`, and `llms-txt` were each duplicated
+across `@ahtmljs/next` and `@ahtmljs/vite`. v0.8.0 extracts them into
+`@ahtmljs/schema/emit/*` so there's one canonical implementation. Pure
+HTTP helpers (`chooseFormat`, `parseAcceptEntries`, `isNotModified`,
+`weakEtagOf`) live in `@ahtmljs/schema/http/*`. Framework packages are
+now thin Request → Response shells (~30-40 LOC per emitter). New
+adapters (Hono, SvelteKit, Astro) plug in cheaply.
+
+#### Documentation pass — npm + GitHub SEO for AI agents
+
+All six READMEs rewritten: root + the five `@ahtmljs/*` packages. Every
+one now leads with the one-line value prop, ships copy-pasteable code
+in the first 20 lines, carries the badges row, and ends with a
+Search-keywords section + a suggested `npm keywords` block. Target
+keywords were researched from what AI engineers, RAG operators,
+Cursor/Continue users, Next.js developers adding MCP, and serverless
+MCP builders actually search for in 2026 — competitor positioning
+includes Firecrawl, Jina Reader, ScrapingBee, Crawlee, Schema.org,
+hand-rolled MCP SDKs, and llms.txt.
+
+#### Compatibility
+
+Fully additive at the package root. The only call-site change is
+`buildLlmsTxt()` — its signature canonicalised from the v0.7
+`{title, description, sections, ahtml_manifest_url}` shape to the new
+`{site, title?, description?, routes?}` shape. Adopters using
+`createLlmsTxtRoute()` are unaffected (the route shell translates).
+Wire formats unchanged.
+
+**303 tests passing** (up from 291 at v0.7), **zero todo**. Schema test
+suite jumps from 137 → 149 with JWS round-trip / tamper detection /
+multi-key trusted set / `kid` round-trip.
+
+[Full reference: `docs/signing.md`](docs/signing.md) ·
+[v0.8 emit modules: `packages/schema/src/emit/`](packages/schema/src/emit/)
+
+---
+
+## What's next — the v0.9.0 worklist
+
+v0.9.0 is **the production-ready** release — the last one before
+`1.0.0-rc`. Per `PLAN-NEXT-5.md`:
+
+- **OpenTelemetry tracing** — handler spans (snapshot build, sign,
+  diff, policy check) and client spans (fetch, retry, parse, verify).
+  Drops in via the standard `@opentelemetry/api` channel; works on Node
+  and Edge.
+- **`@ahtmljs/hono` adapter** — single new framework adapter covering
+  Hono on Node, Bun, Deno, and Cloudflare Workers. Built against the
+  consolidated `@ahtmljs/schema/emit/*` from v0.8.
+- **`npx @ahtmljs/cli doctor`** — an external auditor that walks the
+  AHTML discovery chain on a live site and reports what's well-formed,
+  what's missing, and which AI clients can already consume it. Useful
+  for CI; useful for adopters debugging "is my site agent-ready?".
+- **CJS dual-publish + Node 18** — `tsup` build that emits both ESM and
+  CJS so older toolchains can adopt. Drops the Node 20 floor to Node 18.
+- **`did:web` key resolution** for signed snapshots — fetch the
+  publisher's key set from `.well-known/did.json` so adopters don't
+  hand-distribute keys.
+
+Then `1.0.0-rc.1` ships after a two-week bake. From `1.0.0` onward,
+breaking changes go through a deprecation window.
 
 ## After that — v0.9.0 → 1.0.0
 

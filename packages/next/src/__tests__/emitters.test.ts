@@ -185,31 +185,27 @@ describe('buildManifest (/.well-known/ahtml.json)', () => {
 });
 
 describe('buildLlmsTxt', () => {
-  test('emits Jeremy Howard convention layout — H1 + blockquote + H2 sections', () => {
+  // v0.8.0: signature is now {site, title?, description?, routes?} —
+  // canonicalised in @ahtmljs/schema/emit/llms-txt.ts.
+  test('emits Jeremy Howard convention layout — H1 + blockquote + Pages section', () => {
     const txt = buildLlmsTxt({
+      site: 'https://shop.com',
       title: 'Shop',
       description: 'Buy things.',
-      sections: [
-        {
-          name: 'Products',
-          items: [
-            { title: 'MacBook', url: 'https://shop.com/products/mbp', description: 'Apple laptop' },
-          ],
-        },
+      routes: [
+        { path: '/products/mbp', page_type: 'product_detail' },
       ],
     });
     assert.match(txt, /^# Shop$/m);
     assert.match(txt, /^> Buy things\.$/m);
-    assert.match(txt, /^## Products$/m);
-    assert.match(txt, /\[MacBook\]\(https:\/\/shop\.com\/products\/mbp\): Apple laptop/);
+    assert.match(txt, /^## Pages$/m);
+    assert.match(txt, /\[\/products\/mbp\]\(https:\/\/shop\.com\/products\/mbp\): product_detail/);
   });
 
-  test('appends a "Machine-readable" pointer to ahtml_manifest_url when provided', () => {
-    const txt = buildLlmsTxt({
-      title: 'Shop',
-      ahtml_manifest_url: 'https://shop.com/.well-known/ahtml.json',
-    });
+  test('appends a "Machine-readable" pointer to the .well-known manifest', () => {
+    const txt = buildLlmsTxt({ site: 'https://shop.com', title: 'Shop' });
     assert.match(txt, /## Machine-readable/);
     assert.match(txt, /AHTML manifest/);
+    assert.match(txt, /\/\.well-known\/ahtml\.json/);
   });
 });

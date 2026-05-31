@@ -6,12 +6,94 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Planned for v0.8 (the *trust* release):
-- Detached JWS signatures over canonical JSON
-- `verifySnapshot()` against trusted-key registry
-- Emitter consolidation: extract `well-known` / `mcp` / `openapi` / `Accept` / `policy`
-  from `@ahtmljs/next` and `@ahtmljs/vite` into shared `@ahtmljs/schema/emit/*` subpaths
-- `@ahtmljs/kv` package with Upstash + Cloudflare KV adapters
+Planned for v0.9 → 1.0.0-rc (the *production-ready* release):
+- OpenTelemetry tracing spans across handlers and the client
+- `@ahtmljs/hono` adapter (covers Bun, Deno, Cloudflare Workers)
+- `npx @ahtmljs/cli doctor` external auditor walking the discovery chain
+- CJS dual-publish + Node 18 support
+- did:web resolution for signed snapshots
+
+## [0.8.0] — 2026-05-27
+
+**The trust release.** Signed snapshots land. The duplicated framework
+emitters consolidate into one canonical implementation. Plus a sweeping
+README + npm SEO pass across all five packages for AI-agent discovery.
+
+### Added
+- **`@ahtmljs/schema`** — `signSnapshot(snap, key, opts?)` produces a
+  detached JWS over `toJson(snap)` using Web Crypto (`globalThis.crypto.subtle`).
+  Supports `ES256`, `EdDSA`, `RS256`. No `node:crypto` import — runs on
+  Cloudflare Workers, Vercel Edge, Bun, Deno.
+- **`@ahtmljs/schema`** — `verifySnapshot(snap, jws, { trustedKeys })`
+  returns `{ ok: true, signer: { kid, alg } } | { ok: false, reason }`.
+  Tries each trusted key in order. **Never throws on mismatch** — only on
+  programmer errors (malformed JWS, missing fields).
+- **`@ahtmljs/schema`** — `verifySnapshotStrict(snap, jws, opts)`
+  throws `AHTMLError('SIGNATURE_INVALID')` on verification failure.
+- **`@ahtmljs/agent/sign`** — re-exports the verifier so adopters write
+  `import { verifySnapshot } from '@ahtmljs/agent/sign'` without
+  reaching into the schema package.
+- **`@ahtmljs/schema/emit/*`** — framework-neutral emitter modules.
+  `buildWellKnown(config)`, `snapshotsToMcp(server, snaps)`,
+  `snapshotsToOpenApi(opts, snaps)`, `buildLlmsTxt(config, snaps?)`.
+  These are the canonical implementations used by every framework
+  adapter from v0.8.0 on.
+- **`@ahtmljs/schema/http/*`** — pure HTTP helpers. `chooseFormat()` and
+  `parseAcceptEntries()` (q-value-aware Accept parsing); `isNotModified()`,
+  `notModifiedResponse()`, `weakEtagOf()` for ETag-based conditional GET
+  on arbitrary bodies.
+- **`docs/signing.md`** — JWS signing guide. Producer + verifier code,
+  key distribution options (`did:web`, `.well-known/ahtml-keys.json`,
+  out-of-band), threat model, error handling, performance budget.
+
+### Changed
+- **`@ahtmljs/next`** — `well-known.ts`, `mcp.ts`, `openapi.ts`,
+  `llms-txt.ts` are now thin adapters (~30-40 LOC each) delegating to
+  `@ahtmljs/schema/emit/*`. Public exports (`buildManifest`,
+  `snapshotsToMcp`, `snapshotsToOpenApi`, `buildLlmsTxt`,
+  `createXxxRoute`) are preserved.
+- **`buildLlmsTxt` signature update** — moved from the `@ahtmljs/next`
+  internal `{title, description, sections, ahtml_manifest_url}` shape
+  to the canonical `@ahtmljs/schema` shape `{site, title?, description?, routes?}`.
+  Callers using `createLlmsTxtRoute()` are unaffected (it translates
+  from `AHTMLConfig`). Direct callers of `buildLlmsTxt()` must update
+  their call site — see `docs/signing.md` and the schema/emit/llms-txt
+  source for the new shape.
+
+### Documentation
+- **All six READMEs rewritten** for npm + GitHub discoverability:
+  root, `@ahtmljs/schema`, `@ahtmljs/agent`, `@ahtmljs/next`,
+  `@ahtmljs/vite`, `@ahtmljs/langchain`. Each now leads with the
+  one-line value prop, ships copy-pasteable code in the first 20 lines,
+  carries badges (npm version, MIT, MCP-compatible, OpenAPI 3.1, npm
+  provenance), and ends with a Search-keywords section + a suggested
+  `npm keywords` block calibrated to what AI engineers, RAG operators,
+  Cursor/Continue users, and MCP server builders actually search for.
+  Targets competitor positioning vs Firecrawl, Jina Reader,
+  ScrapingBee, Crawlee, the various MCP SDKs, Schema.org, and
+  hand-rolled llms.txt.
+
+### Compatibility
+- **Fully additive at the package root.** Five packages bumped 0.7.0 →
+  0.8.0 with peer-deps aligned. v0.7 callers compile unchanged for
+  every public API surface other than `buildLlmsTxt` (see above).
+- **Wire-compatible.** Compact text, canonical JSON, NDJSON stream,
+  diff endpoint — all unchanged from v0.7.
+- **Edge runtime preserved.** Every new module (sign, emit/*, http/*)
+  uses Web Standards only; no `node:*` imports. Verified on the schema
+  test suite which runs identically in Node 22.
+
+### Test totals
+- Schema: **149 passing** (was 137), 0 todo — adds 12 tests for JWS
+  round-trip across ES256/EdDSA/RS256, tamper detection, multi-key
+  trusted set, `kid` round-trip, `SIGNATURE_INVALID` strict path.
+- Agent: 57 passing (same)
+- Next: 51 passing (same — emitter tests now exercise the new shape via
+  the rewired adapters)
+- Vite: 11 passing
+- LangChain: 5 passing
+- UX integration: 30 passing
+- **Total: 303 passing, 0 todo, 0 failing** (was 291 at v0.7.0)
 
 ## [0.7.0] — 2026-05-26
 
@@ -338,7 +420,8 @@ Initial public preview.
 - OpenAPI 3.1
 - JSON Schema 2020-12
 
-[Unreleased]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.4.0...v0.5.0

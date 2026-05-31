@@ -13,6 +13,58 @@ Planned for v0.9 → 1.0.0-rc (the *production-ready* release):
 - CJS dual-publish + Node 18 support
 - did:web resolution for signed snapshots
 
+## [0.8.1] — 2026-05-31
+
+**Patch: restore `buildLlmsTxt` v0.7 back-compat.** Adopters who were
+calling `buildLlmsTxt({title, description, sections, ahtml_manifest_url})`
+on v0.4–v0.7 hit a typecheck error on v0.8.0 because the signature
+moved to `{site, ...}`. The legacy shape is now restored as a runtime-
+discriminated overload — both forms produce their original output. The
+canonical v0.8 form is unchanged.
+
+### Fixed
+- **`@ahtmljs/schema`** — `buildLlmsTxt()` now accepts
+  `LlmsTxtConfig | LegacyLlmsTxtConfig`. The legacy `{title, description?,
+  sections?, ahtml_manifest_url?}` shape is detected by the absence of
+  `site` and rendered via the v0.4–v0.7 path: rich `## H2` sections + a
+  `## Machine-readable` block driven by `ahtml_manifest_url`. The new
+  `{site, title?, description?, routes?}` shape still emits the canonical
+  `## Pages` + `## Machine-readable` layout. Zero call-site changes
+  required for v0.7 → v0.8 upgrade.
+- **`@ahtmljs/next`** — `createLlmsTxtRoute(cfgFn?, configOverride?)`
+  widened: `cfgFn` may return `AHTMLConfig | LegacyLlmsTxtConfig | LlmsTxtConfig`.
+  The route shell detects `AHTMLConfig` (by presence of `policy` /
+  `default_ttl` / `emit_mcp` / `emit_openapi`) and translates to
+  `LlmsTxtConfig`; everything else is forwarded verbatim to
+  `buildLlmsTxt()` which auto-discriminates.
+- **`examples/landing`** — the v0.7 rich-sections call site in
+  `app/llms.txt/route.ts` continues to produce its hand-curated
+  `## Get started` / `## Demo` / `## Machine-readable` output. The CI
+  typecheck failure that v0.8.0 caused is gone.
+
+### Added
+- **`@ahtmljs/schema`** — new exported type `LegacyLlmsTxtConfig` for
+  callers who want to construct the v0.7 shape with type safety.
+- **Tests** — `@ahtmljs/next`'s `emitters.test.ts` now covers both
+  shapes: the new `{site, ...}` Pages layout and the legacy `{title,
+  sections, ahtml_manifest_url}` rich layout.
+
+### Compatibility
+- All five packages bumped 0.8.0 → 0.8.1 with peer-deps aligned.
+- v0.8.0 callers compile unchanged.
+- v0.7 callers (rich `buildLlmsTxt` shape) compile unchanged again —
+  the v0.8.0 CHANGELOG note "Direct callers of `buildLlmsTxt()` need a
+  one-line update" no longer applies. Both shapes are first-class.
+
+### Test totals
+- Schema: 149 passing
+- Agent: 57 passing
+- Next: **53 passing** (was 51 — adds 2 for the legacy shape coverage)
+- Vite: 11 passing
+- LangChain: 5 passing
+- UX integration: 30 passing
+- **Total: 305 passing, 0 todo, 0 failing** (was 303 at v0.8.0)
+
 ## [0.8.0] — 2026-05-27
 
 **The trust release.** Signed snapshots land. The duplicated framework
@@ -52,13 +104,13 @@ README + npm SEO pass across all five packages for AI-agent discovery.
   `@ahtmljs/schema/emit/*`. Public exports (`buildManifest`,
   `snapshotsToMcp`, `snapshotsToOpenApi`, `buildLlmsTxt`,
   `createXxxRoute`) are preserved.
-- **`buildLlmsTxt` signature update** — moved from the `@ahtmljs/next`
-  internal `{title, description, sections, ahtml_manifest_url}` shape
-  to the canonical `@ahtmljs/schema` shape `{site, title?, description?, routes?}`.
-  Callers using `createLlmsTxtRoute()` are unaffected (it translates
-  from `AHTMLConfig`). Direct callers of `buildLlmsTxt()` must update
-  their call site — see `docs/signing.md` and the schema/emit/llms-txt
-  source for the new shape.
+- **`buildLlmsTxt` signature** — adds a canonical
+  `{site, title?, description?, routes?}` shape. **v0.8.1 restored
+  back-compat for the legacy `{title, sections, ahtml_manifest_url}`
+  shape**, so v0.7 callers compile unchanged on v0.8.1+. If you're
+  pinning exactly v0.8.0, direct callers of `buildLlmsTxt()` need a
+  one-line update — pin v0.8.1 instead and the rich shape continues
+  to work.
 
 ### Documentation
 - **All six READMEs rewritten** for npm + GitHub discoverability:
@@ -420,7 +472,8 @@ Initial public preview.
 - OpenAPI 3.1
 - JSON Schema 2020-12
 
-[Unreleased]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.5.0...v0.6.0

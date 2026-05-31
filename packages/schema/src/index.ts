@@ -78,6 +78,7 @@ export {
 export {
   buildLlmsTxt,
   type LlmsTxtConfig,
+  type LegacyLlmsTxtConfig,
 } from './emit/llms-txt.js';
 
 // v0.8.0 — pure HTTP helpers used by every framework adapter.

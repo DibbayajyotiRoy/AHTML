@@ -184,9 +184,7 @@ describe('buildManifest (/.well-known/ahtml.json)', () => {
   });
 });
 
-describe('buildLlmsTxt', () => {
-  // v0.8.0: signature is now {site, title?, description?, routes?} —
-  // canonicalised in @ahtmljs/schema/emit/llms-txt.ts.
+describe('buildLlmsTxt — v0.8 canonical {site, ...} shape', () => {
   test('emits Jeremy Howard convention layout — H1 + blockquote + Pages section', () => {
     const txt = buildLlmsTxt({
       site: 'https://shop.com',
@@ -207,5 +205,35 @@ describe('buildLlmsTxt', () => {
     assert.match(txt, /## Machine-readable/);
     assert.match(txt, /AHTML manifest/);
     assert.match(txt, /\/\.well-known\/ahtml\.json/);
+  });
+});
+
+describe('buildLlmsTxt — v0.4–v0.7 legacy {title, sections, ahtml_manifest_url} shape', () => {
+  test('emits rich H2 sections with item lists from the legacy shape', () => {
+    const txt = buildLlmsTxt({
+      title: 'Shop',
+      description: 'Buy things.',
+      sections: [
+        {
+          name: 'Products',
+          items: [
+            { title: 'MacBook', url: 'https://shop.com/products/mbp', description: 'Apple laptop' },
+          ],
+        },
+      ],
+    });
+    assert.match(txt, /^# Shop$/m);
+    assert.match(txt, /^> Buy things\.$/m);
+    assert.match(txt, /^## Products$/m);
+    assert.match(txt, /\[MacBook\]\(https:\/\/shop\.com\/products\/mbp\): Apple laptop/);
+  });
+
+  test('legacy shape: appends a "Machine-readable" pointer to ahtml_manifest_url when provided', () => {
+    const txt = buildLlmsTxt({
+      title: 'Shop',
+      ahtml_manifest_url: 'https://shop.com/.well-known/ahtml.json',
+    });
+    assert.match(txt, /## Machine-readable/);
+    assert.match(txt, /AHTML manifest/);
   });
 });

@@ -44,19 +44,47 @@ export interface LlmsTxtConfig {
 }
 
 /**
+ * Pre-v0.8 (v0.4 → v0.7) rich-sections shape — kept as a back-compat
+ * overload so direct callers don't need to rewrite. Use {@link LlmsTxtConfig}
+ * for new code; this shape is also accepted but no longer the canonical form.
+ */
+export interface LegacyLlmsTxtConfig {
+  /** H1 (required in the legacy shape). */
+  title: string;
+  /** Optional blockquote one-liner. */
+  description?: string;
+  /** Optional grouped sections — each becomes an `## H2` block. */
+  sections?: Array<{
+    name: string;
+    items?: Array<{ title: string; url: string; description?: string }>;
+  }>;
+  /** Optional pointer appended as `## Machine-readable` → AHTML manifest. */
+  ahtml_manifest_url?: string;
+}
+
+/** Type guard for the v0.4–v0.7 legacy shape (lacks `site`, may carry `sections`). */
+function isLegacyConfig(c: LlmsTxtConfig | LegacyLlmsTxtConfig): c is LegacyLlmsTxtConfig {
+  return !('site' in c) || (c as { site?: unknown }).site === undefined;
+}
+
+/**
  * Build the `llms.txt` body for a site.
  *
- * Emits a single `## Pages` section listing each route as
- * `- [<path>](<absolute-url>): <page_type>` followed by a
- * `## Machine-readable` pointer to the well-known AHTML manifest. When
- * `snaps` is provided, snapshot URLs not already covered by `routes` are
- * appended at the end (deduped by absolute URL); their `page_type` is taken
- * from the snapshot. Returns ready-to-serve markdown.
+ * v0.8.0+ canonical shape: `{ site, title?, description?, routes? }` — emits a
+ * single `## Pages` section listing each route plus a `## Machine-readable`
+ * pointer to the well-known AHTML manifest. When `snaps` is provided, snapshot
+ * URLs not already covered by `routes` are appended (deduped by absolute URL).
+ *
+ * Back-compat: also accepts the v0.4 → v0.7 rich shape
+ * `{ title, description?, sections?, ahtml_manifest_url? }`. In that mode each
+ * section becomes an `## H2` block and `ahtml_manifest_url` is appended as
+ * `## Machine-readable`. Detected automatically — no flag required.
  */
 export function buildLlmsTxt(
-  config: LlmsTxtConfig,
+  config: LlmsTxtConfig | LegacyLlmsTxtConfig,
   snaps?: Snapshot[],
 ): string {
+  if (isLegacyConfig(config)) return buildLegacy(config);
   const base = config.site.replace(/\/$/, '');
   const title = config.title ?? hostFromUrl(config.site);
   const description = config.description ?? 'AHTML-enabled site';
@@ -103,4 +131,42 @@ function hostFromUrl(u: string): string {
   } catch {
     return u;
   }
+}
+
+/**
+ * v0.4 → v0.7 legacy renderer. Kept as a back-compat path so direct callers
+ * who passed `{title, description, sections, ahtml_manifest_url}` continue to
+ * produce the same output they did pre-v0.8.
+ */
+function buildLegacy(cfg: LegacyLlmsTxtConfig): string {
+  const lines: string[] = [];
+  lines.push(`# ${cfg.title}`);
+  lines.push('');
+  if (cfg.description) {
+    lines.push(`> ${cfg.description}`);
+    lines.push('');
+  }
+
+  const sections = cfg.sections && cfg.sections.length
+    ? cfg.sections
+    : [{ name: 'Pages', items: [] as Array<{ title: string; url: string; description?: string }> }];
+
+  for (const section of sections) {
+    lines.push(`## ${section.name}`);
+    lines.push('');
+    for (const item of section.items ?? []) {
+      const desc = item.description ? `: ${item.description}` : '';
+      lines.push(`- [${item.title}](${item.url})${desc}`);
+    }
+    lines.push('');
+  }
+
+  if (cfg.ahtml_manifest_url) {
+    lines.push('## Machine-readable');
+    lines.push('');
+    lines.push(`- [AHTML manifest](${cfg.ahtml_manifest_url}): Structured semantic snapshots, typed actions, MCP-compatible tools, OpenAPI`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
 }

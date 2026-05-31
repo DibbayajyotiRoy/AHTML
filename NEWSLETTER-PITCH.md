@@ -5,7 +5,7 @@
 > in `[BRACKETED]` bits, send. Personalize the first sentence in every
 > email; do not blast the same body verbatim to 30 people.
 
-**Maintainer:** Roy Mehta · rdibbayajyoti@gmail.com
+**Maintainer:** Dibbayajyoti Roy · rdibbayajyoti@gmail.com
 **Repo:** https://github.com/DibbayajyotiRoy/AHTML
 **Site:** https://ahtml.dev
 **npm org:** https://www.npmjs.com/org/ahtmljs
@@ -126,7 +126,7 @@ Lead with the angle the newsletter cares about. Avoid `[Submission]` /
 >
 > No agenda either way — happy to be a source, not a subject.
 >
-> — Roy Mehta
+> — Dibbayajyoti Roy
 > `rdibbayajyoti@gmail.com`
 
 ---

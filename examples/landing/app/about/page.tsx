@@ -54,7 +54,7 @@ export default function AboutPage() {
           <h2 style={{ fontSize: 32, marginTop: 64, marginBottom: 16 }}>Who&apos;s behind it</h2>
           <p>
             AHTML is built by{' '}
-            <a href="https://github.com/DibbayajyotiRoy" rel="noopener noreferrer">Roy Mehta</a>{' '}
+            <a href="https://github.com/DibbayajyotiRoy" rel="noopener noreferrer">Dibbayajyoti Roy</a>{' '}
             and contributors. The project lives on GitHub at{' '}
             <a href="https://github.com/DibbayajyotiRoy/AHTML" rel="noopener noreferrer">
               github.com/DibbayajyotiRoy/AHTML

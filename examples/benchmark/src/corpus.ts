@@ -96,9 +96,9 @@ const PRODUCT: ProductData = {
 const ARTICLE: ArticleData = {
   id: 'why-agents-need-ahtml',
   title: 'Why agents need a new HTML',
-  author: 'Roy Mehta',
+  author: 'Dibbayajyoti Roy',
   author_bio:
-    'Roy Mehta writes about the agent web and the infrastructure underneath it. He is the creator of AHTML.',
+    'Dibbayajyoti Roy writes about the agent web and the infrastructure underneath it. He is the creator of AHTML.',
   published: '2026-05-12T08:00:00Z',
   summary:
     'HTML optimized the web for browsers. The agent web needs a new contract: typed semantics, typed actions, signed provenance.',

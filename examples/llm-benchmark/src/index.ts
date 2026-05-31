@@ -100,7 +100,7 @@ function articleFixtures() {
       id: 'document:why-agents-need-ahtml',
       type: 'document',
       title: 'Why agents need a new HTML',
-      author: 'Roy Mehta',
+      author: 'Dibbayajyoti Roy',
       published_at: '2026-05-12T08:00:00Z',
       summary: 'HTML optimized the web for browsers. The agent web needs a new contract.',
       language: 'en',
@@ -111,23 +111,23 @@ function articleFixtures() {
 <title>Why agents need a new HTML — Rumour</title>
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2026-05-12T08:00:00Z" />
-<meta property="article:author" content="Roy Mehta" />
+<meta property="article:author" content="Dibbayajyoti Roy" />
 <script type="application/ld+json">${JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'NewsArticle',
   headline: 'Why agents need a new HTML',
-  author: { '@type': 'Person', name: 'Roy Mehta' },
+  author: { '@type': 'Person', name: 'Dibbayajyoti Roy' },
   datePublished: '2026-05-12T08:00:00Z',
   inLanguage: 'en',
   description: 'HTML optimized the web for browsers. The agent web needs a new contract.',
 })}</script></head><body>
 <article><h1>Why agents need a new HTML</h1>
-<p class="byline">By Roy Mehta · May 12, 2026</p>
+<p class="byline">By Dibbayajyoti Roy · May 12, 2026</p>
 <p>The web that browsers see and the web that agents see are two different things. Browsers see pixels. Agents see tokens.</p>
 </article></body></html>`;
 
   const llmsTxt = `# Why agents need a new HTML
-> Author: Roy Mehta. Published 2026-05-12. Language: en.
+> Author: Dibbayajyoti Roy. Published 2026-05-12. Language: en.
 
 HTML optimized the web for browsers. The agent web needs a new contract.
 `;

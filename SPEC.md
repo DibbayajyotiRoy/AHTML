@@ -125,7 +125,7 @@ Stock statuses: `in_stock`, `low_stock`, `out_of_stock`, `preorder`, `discontinu
 {
   "id": "profile:roy",
   "type": "profile",
-  "name": "Roy Mehta",
+  "name": "Dibbayajyoti Roy",
   "kind": "person" | "organization" | "bot",
   "handle": "@roy",
   "email": "...",

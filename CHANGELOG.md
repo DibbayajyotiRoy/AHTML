@@ -6,12 +6,110 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Planned for v0.9 → 1.0.0-rc (the *production-ready* release):
-- OpenTelemetry tracing spans across handlers and the client
-- `@ahtmljs/hono` adapter (covers Bun, Deno, Cloudflare Workers)
-- `npx @ahtmljs/cli doctor` external auditor walking the discovery chain
-- CJS dual-publish + Node 18 support
-- did:web resolution for signed snapshots
+Planned for `1.0.0-rc.1` (the *stability commitment* release):
+- CJS dual-publish via `tsup` (drops the ESM-only constraint for older
+  Node, Electron, Jest-without-ESM)
+- Node 18 support (engines floor drops from `>=20` to `>=18`)
+- OpenTelemetry metrics + logs (v0.9 shipped traces only)
+- After two-week bake, tag `1.0.0` with API-stability commitment
+
+## [0.9.0] — 2026-06-02
+
+**The production-ready release** — the last one before `1.0.0-rc`. Adds
+OpenTelemetry tracing, a `did:web` key resolver, two **new packages**
+(`@ahtmljs/hono`, `@ahtmljs/cli`), and an external auditor `npx ahtml
+doctor` for end-to-end verification of any AHTML deployment.
+
+### Added — `@ahtmljs/schema`
+- **OpenTelemetry tracing** via a new `trace()` helper. Lazy
+  dynamic-imports `@opentelemetry/api` (declared as optional
+  `peerDependency`). Zero overhead when OTel is not installed — a
+  single null check per span. When present, spans are created via the
+  global tracer with proper status / exception / `finally` semantics.
+  Also exports `addEvent(name, attrs?)` and `setStatus(code, message?)`.
+- **`did:web` resolver** (`resolveDidWeb(did)`, `verifySnapshotWithDidWeb(snap, jws, did)`).
+  Fetches the publisher's `.well-known/did.json`, imports each
+  `verificationMethod.publicKeyJwk` via `crypto.subtle.importKey`, and
+  returns a `VerifyKey[]` ready for signature verification. Caches
+  resolved keys for 5 minutes (`CacheStore<VerifyKey[]>`, pluggable).
+  Maps JWK `alg` (and `kty`/`crv` fallback) to `ES256` / `EdDSA` /
+  `RS256`. Unsupported algs are skipped, not thrown. End-to-end signing
+  + verification now requires zero out-of-band key distribution — just
+  publish `did.json`.
+
+### Added — instrumentation in existing packages
+- **`@ahtmljs/next/handler`** — `createAHTMLRoute` GET wrapped in
+  `ahtml.serve_snapshot` span; nested `ahtml.enforce_policy` and
+  `ahtml.build_snapshot` spans. All existing behavior (diff endpoint,
+  streaming, compression, error paths) preserved exactly.
+- **`@ahtmljs/agent/client`** — `AHTMLClient.fetch()` wrapped in
+  `ahtml.client.fetch` span; `streamSnapshot()` setup phase wrapped in
+  `ahtml.client.stream` span. Attributes include `ahtml.url` and
+  `ahtml.format`. Retry, coalescing, timeout, `onEvent` hook all
+  unchanged.
+
+### Added — new packages
+
+- **`@ahtmljs/hono@0.9.0`** — first-class Hono adapter. Single export
+  `mountAHTML(app, config)` registers `/ahtml/*`, `/.well-known/ahtml.json`,
+  `/ahtml/mcp.json`, `/ahtml/openapi.json`, `/llms.txt` on an existing
+  Hono app. Structural `HonoAppLike` interface — no hard dependency on
+  `hono` (declared `peerDependenciesMeta` optional). Runs identically on
+  Node, Bun, Deno, Cloudflare Workers, AWS Lambda. 14 tests covering
+  route registration + per-handler response shapes.
+
+- **`@ahtmljs/cli@0.9.0`** — `npx @ahtmljs/cli doctor <url>` walks the
+  AHTML discovery chain on a live site:
+  1. `/.well-known/ahtml.json` — must parse, must declare endpoints.
+  2. `/ahtml` snapshot — must fetch, must `validate()` clean, must
+     carry ≥1 entity (warn if zero).
+  3. `lint()` warnings printed alongside.
+  4. `/ahtml/mcp.json` — must declare `schema_version`, `server`, `tools`.
+  5. `/ahtml/openapi.json` — must be `openapi: '3.1.0'`.
+  6. `/llms.txt` — must exist, must start with `#` (warn if absent).
+  Final report: `N PASS, N WARN, N FAIL`. Exit 0 on all-pass, 1 if any
+  fail. ANSI-coloured output, zero deps beyond `@ahtmljs/schema` +
+  `@ahtmljs/agent`. Exported `doctor(url, opts?)` returns a structured
+  `DoctorReport` for programmatic use. 4 tests covering green/yellow/red
+  paths.
+
+### Added — docs
+- `docs/observability.md` — OpenTelemetry setup guide. Span catalog,
+  attribute reference, Node + Cloudflare Workers wiring examples,
+  zero-overhead-when-absent guarantee, roadmap to metrics + logs in 1.x.
+- `docs/did-web.md` — did:web producer + verifier guide. Sample
+  `did.json` with ES256 key rotation, threat model (trust anchor =
+  TLS), 5-min cache semantics, roadmap to did:key + did:ion.
+
+### Changed
+- **CI workflow** (`.github/workflows/ci.yml`) — added typecheck +
+  unit test jobs for `@ahtmljs/hono` and `@ahtmljs/cli`.
+- **Release workflow** (`.github/workflows/release.yml`) — added build,
+  typecheck, and `npm publish --provenance` steps for the two new
+  packages. The auto-generated GitHub Release body lists all seven
+  packages with npm links.
+
+### Compatibility
+- **Fully additive.** No public API removed. v0.8 callers compile
+  unchanged.
+- **Wire-compatible.** Same compact text, canonical JSON, NDJSON,
+  diff endpoint, `Accept-Encoding` negotiation as v0.8.
+- **Edge-runtime preserved.** No new `node:*` imports. OTel + did:web
+  both use Web Standards exclusively.
+- **All seven `@ahtmljs/*` packages bumped 0.8.1 → 0.9.0**, peer-deps
+  aligned, inter-package deps pinned to exact `0.9.0`.
+
+### Test totals
+- Schema: **170 passing + 1 intentional skip** (was 149), 0 todo — +21
+  tests for OTel no-op behavior and did:web key resolution.
+- Agent: 57 passing (unchanged behavior; OTel wrapping is transparent)
+- Next: 53 passing (unchanged behavior; OTel wrapping is transparent)
+- Vite: 11 passing
+- LangChain: 5 passing
+- **Hono: 14 passing** (NEW)
+- **CLI: 4 passing** (NEW)
+- UX integration: 30 passing
+- **Total: 344 passing, 0 todo, 0 failing** (was 305 at v0.8.1)
 
 ## [0.8.1] — 2026-05-31
 
@@ -472,7 +570,8 @@ Initial public preview.
 - OpenAPI 3.1
 - JSON Schema 2020-12
 
-[Unreleased]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/DibbayajyotiRoy/AHTML/compare/v0.6.0...v0.7.0

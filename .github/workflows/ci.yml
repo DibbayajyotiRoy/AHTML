@@ -34,6 +34,8 @@ jobs:
           npm run build -w @ahtmljs/schema
           npm run build -w @ahtmljs/next
           npm run build -w @ahtmljs/agent
+          npm run build -w @ahtmljs/hono
+          npm run build -w @ahtmljs/cli
 
       - name: Typecheck — @ahtmljs/schema
         run: cd packages/schema && npx tsc --noEmit -p tsconfig.json
@@ -43,6 +45,12 @@ jobs:
 
       - name: Typecheck — @ahtmljs/agent
         run: cd packages/agent && npx tsc --noEmit -p tsconfig.json
+
+      - name: Typecheck — @ahtmljs/hono
+        run: cd packages/hono && npx tsc --noEmit -p tsconfig.json
+
+      - name: Typecheck — @ahtmljs/cli
+        run: cd packages/cli && npx tsc --noEmit -p tsconfig.json
 
       - name: Typecheck — examples/benchmark
         run: cd examples/benchmark && npx tsc --noEmit -p tsconfig.json
@@ -58,6 +66,12 @@ jobs:
 
       - name: Unit tests — @ahtmljs/agent (18 tests)
         run: cd packages/agent && npm test
+
+      - name: Unit tests — @ahtmljs/hono
+        run: cd packages/hono && npm test
+
+      - name: Unit tests — @ahtmljs/cli
+        run: cd packages/cli && npm test
 
       - name: UX scenario tests (30 tests — token-saving, action safety, incremental crawl, MCP, zero-config)
         run: npm run test:ux

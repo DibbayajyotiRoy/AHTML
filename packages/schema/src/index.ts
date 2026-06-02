@@ -57,6 +57,10 @@ export {
   type VerifyResult,
 } from './sign.js';
 
+// v0.9.0 — did:web key resolution. Adopters can pass a DID string instead
+// of pre-imported VerifyKey arrays; the helper handles fetch + import + verify.
+export { resolveDidWeb, verifySnapshotWithDidWeb, didWebToUrl } from './did-web.js';
+
 // v0.8.0 — framework-neutral emitters. Adapters (@ahtmljs/next, @ahtmljs/vite,
 // future @ahtmljs/hono / sveltekit / astro) delegate to these so the wire
 // formats are bit-identical across runtimes.
@@ -91,3 +95,7 @@ export {
   notModifiedResponse,
   weakEtagOf,
 } from './http/conditional.js';
+
+// v0.9.0 — optional OpenTelemetry tracing. `@opentelemetry/api` is a
+// soft peer dep; these helpers no-op when it isn't installed.
+export { trace, addEvent, setStatus } from './otel.js';

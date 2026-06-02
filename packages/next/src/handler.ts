@@ -16,6 +16,7 @@
  *   - Diff endpoint via ?since=<etag>   → SnapshotDiff
  *   - ETag, Cache-Control, Last-Modified headers
  *   - Optional policy enforcement (rate limit / auth gate)
+ *   - OpenTelemetry tracing via @ahtmljs/schema `trace` helper
  */
 
 import {
@@ -27,6 +28,7 @@ import {
   chooseEncoding,
   compressStream,
   compressBuffer,
+  trace,
   STREAM_CONTENT_TYPE,
   type Snapshot,
   type Encoding,
@@ -83,97 +85,111 @@ export function createAHTMLRoute(
   routeOpts: CreateRouteOptions = {},
 ) {
   async function GET(req: Request, ctx: { params: Promise<{ path?: string[] }> | { path?: string[] } }): Promise<Response> {
-    const config = configOverride ?? getConfig();
-    const params = await ctx.params;
-    const segments = params.path ?? [];
+    return trace(
+      'ahtml.serve_snapshot',
+      async () => {
+        const config = configOverride ?? getConfig();
+        const params = await ctx.params;
+        const segments = params.path ?? [];
 
-    const policyDecision = await enforcePolicy(req, config);
-    if (policyDecision.deny) return policyDecision.response;
+        const policyDecision = await trace(
+          'ahtml.enforce_policy',
+          () => enforcePolicy(req, config),
+          { 'ahtml.url': new URL(req.url).pathname },
+        );
+        if (policyDecision.deny) return policyDecision.response;
 
-    let snap: Snapshot | null;
-    try {
-      snap = await builder(segments, req);
-    } catch (err) {
-      return error(500, 'snapshot_build_failed', err);
-    }
-    if (!snap) {
-      return error(404, 'no_snapshot', `no snapshot for /${segments.join('/')}`);
-    }
+        let snap: Snapshot | null;
+        try {
+          snap = await trace(
+            'ahtml.build_snapshot',
+            () => Promise.resolve(builder(segments, req)),
+            { 'ahtml.url': new URL(req.url).pathname },
+          );
+        } catch (err) {
+          return error(500, 'snapshot_build_failed', err);
+        }
+        if (!snap) {
+          return error(404, 'no_snapshot', `no snapshot for /${segments.join('/')}`);
+        }
 
-    snap = ensureDefaults(snap, config);
+        snap = ensureDefaults(snap, config);
 
-    const etag = snap.etag ?? computeEtag(snap);
-    snap.etag = etag;
+        const etag = snap.etag ?? computeEtag(snap);
+        snap.etag = etag;
 
-    const cacheKey = snap.url;
-    const url = new URL(req.url);
-    const encoding = chooseEncoding(req.headers.get('accept-encoding'));
+        const cacheKey = snap.url;
+        const url = new URL(req.url);
+        const encoding = chooseEncoding(req.headers.get('accept-encoding'));
 
-    // Diff endpoint: GET /ahtml/...?since=W/"abc"
-    const sinceEtag = url.searchParams.get('since');
-    if (sinceEtag) {
-      const prev = cacheGet(cacheKey);
-      if (prev && (prev.etag === sinceEtag || computeEtag(prev) === sinceEtag)) {
-        const d = diff(prev, snap);
-        cacheSet(cacheKey, snap);
-        // Optimization: when there are no changes, return 304 — saves
-        // ~150 B per page on no-change recrawls at scale.
-        if (d.changes.length === 0) {
+        // Diff endpoint: GET /ahtml/...?since=W/"abc"
+        const sinceEtag = url.searchParams.get('since');
+        if (sinceEtag) {
+          const prev = cacheGet(cacheKey);
+          if (prev && (prev.etag === sinceEtag || computeEtag(prev) === sinceEtag)) {
+            const d = diff(prev, snap);
+            cacheSet(cacheKey, snap);
+            // Optimization: when there are no changes, return 304 — saves
+            // ~150 B per page on no-change recrawls at scale.
+            if (d.changes.length === 0) {
+              return new Response(null, {
+                status: 304,
+                headers: { etag, 'cache-control': cacheControl(snap, config) },
+              });
+            }
+            return await encodedResponse(
+              JSON.stringify(d),
+              {
+                'content-type': 'application/ahtml-diff+json',
+                etag,
+                'cache-control': cacheControl(snap, config),
+                'x-ahtml-version': '0.1',
+              },
+              encoding,
+            );
+          }
+          // Fall through to full snapshot if we don't have the prior.
+        }
+
+        // Conditional GET
+        const ifNoneMatch = req.headers.get('if-none-match');
+        if (ifNoneMatch && ifNoneMatch === etag) {
           return new Response(null, {
             status: 304,
             headers: { etag, 'cache-control': cacheControl(snap, config) },
           });
         }
+
+        cacheSet(cacheKey, snap);
+
+        // Streaming path — emit NDJSON record-by-record. Cannot honor JSON / compact
+        // content negotiation since the wire format is its own type. Caller opts in
+        // via routeOpts.stream or via `Accept: application/ahtml+json-seq`.
+        if (shouldStream(req, snap, routeOpts)) {
+          let stream = toStreamResponse(snap);
+          stream = compressStream(stream, encoding);
+          return new Response(stream, {
+            status: 200,
+            headers: streamHeaders(snap, config, etag, encoding),
+          });
+        }
+
+        const fmt = pickFormat(req);
+        const body = fmt === 'json' ? toJson(snap) : toCompact(snap);
         return await encodedResponse(
-          JSON.stringify(d),
+          body,
           {
-            'content-type': 'application/ahtml-diff+json',
+            'content-type': fmt === 'json' ? 'application/ahtml+json' : 'application/ahtml+text; charset=utf-8',
             etag,
             'cache-control': cacheControl(snap, config),
+            'last-modified': new Date(snap.fetched_at).toUTCString(),
             'x-ahtml-version': '0.1',
+            vary: 'Accept, Accept-Encoding',
           },
           encoding,
         );
-      }
-      // Fall through to full snapshot if we don't have the prior.
-    }
-
-    // Conditional GET
-    const ifNoneMatch = req.headers.get('if-none-match');
-    if (ifNoneMatch && ifNoneMatch === etag) {
-      return new Response(null, {
-        status: 304,
-        headers: { etag, 'cache-control': cacheControl(snap, config) },
-      });
-    }
-
-    cacheSet(cacheKey, snap);
-
-    // Streaming path — emit NDJSON record-by-record. Cannot honor JSON / compact
-    // content negotiation since the wire format is its own type. Caller opts in
-    // via routeOpts.stream or via `Accept: application/ahtml+json-seq`.
-    if (shouldStream(req, snap, routeOpts)) {
-      let stream = toStreamResponse(snap);
-      stream = compressStream(stream, encoding);
-      return new Response(stream, {
-        status: 200,
-        headers: streamHeaders(snap, config, etag, encoding),
-      });
-    }
-
-    const fmt = pickFormat(req);
-    const body = fmt === 'json' ? toJson(snap) : toCompact(snap);
-    return await encodedResponse(
-      body,
-      {
-        'content-type': fmt === 'json' ? 'application/ahtml+json' : 'application/ahtml+text; charset=utf-8',
-        etag,
-        'cache-control': cacheControl(snap, config),
-        'last-modified': new Date(snap.fetched_at).toUTCString(),
-        'x-ahtml-version': '0.1',
-        vary: 'Accept, Accept-Encoding',
       },
-      encoding,
+      { 'ahtml.url': new URL(req.url).pathname },
     );
   }
 

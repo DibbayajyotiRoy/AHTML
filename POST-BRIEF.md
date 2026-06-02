@@ -1,6 +1,6 @@
 # AHTML — Post-Release Product Brief
 
-**Released:** 2026-05-27 · **Latest:** v0.8.0 · **Project:** [DibbayajyotiRoy/AHTML](https://github.com/DibbayajyotiRoy/AHTML)
+**Released:** 2026-06-02 · **Latest:** v0.9.0 · **Project:** [DibbayajyotiRoy/AHTML](https://github.com/DibbayajyotiRoy/AHTML)
 
 > RSS, but for AI agents — a machine-native endpoint that sits next to your existing HTML.
 
@@ -361,37 +361,129 @@ multi-key trusted set / `kid` round-trip.
 
 ---
 
-## What's next — the v0.9.0 worklist
+### v0.9.0 — Production-ready *(2026-06-02)*
 
-v0.9.0 is **the production-ready** release — the last one before
-`1.0.0-rc`. Per `PLAN-NEXT-5.md`:
+The last release before `1.0.0-rc`. Adds production observability, two
+new packages (`@ahtmljs/hono`, `@ahtmljs/cli`), and trustless key
+distribution for signed snapshots.
 
-- **OpenTelemetry tracing** — handler spans (snapshot build, sign,
-  diff, policy check) and client spans (fetch, retry, parse, verify).
-  Drops in via the standard `@opentelemetry/api` channel; works on Node
-  and Edge.
-- **`@ahtmljs/hono` adapter** — single new framework adapter covering
-  Hono on Node, Bun, Deno, and Cloudflare Workers. Built against the
-  consolidated `@ahtmljs/schema/emit/*` from v0.8.
-- **`npx @ahtmljs/cli doctor`** — an external auditor that walks the
-  AHTML discovery chain on a live site and reports what's well-formed,
-  what's missing, and which AI clients can already consume it. Useful
-  for CI; useful for adopters debugging "is my site agent-ready?".
-- **CJS dual-publish + Node 18** — `tsup` build that emits both ESM and
-  CJS so older toolchains can adopt. Drops the Node 20 floor to Node 18.
-- **`did:web` key resolution** for signed snapshots — fetch the
-  publisher's key set from `.well-known/did.json` so adopters don't
-  hand-distribute keys.
+#### OpenTelemetry tracing
 
-Then `1.0.0-rc.1` ships after a two-week bake. From `1.0.0` onward,
-breaking changes go through a deprecation window.
+```ts
+// install once on app startup
+import { trace as otelTrace } from '@opentelemetry/api';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+// ... your favorite OTel exporter
 
-## After that — v0.9.0 → 1.0.0
+// AHTML now emits spans automatically:
+// - ahtml.serve_snapshot      (Next.js / Hono handler)
+//   - ahtml.enforce_policy
+//   - ahtml.build_snapshot
+// - ahtml.client.fetch        (AHTMLClient.fetch)
+// - ahtml.client.stream       (AHTMLClient.streamSnapshot)
+```
 
-- **v0.9.0 → 1.0.0-rc.** Production observability via OpenTelemetry,
-  a single new adapter (`@ahtmljs/hono` — covers Bun / Deno / Cloudflare
-  Workers), `npx @ahtmljs/cli doctor` as an external auditor, CJS
-  dual-publish, Node 18 support. Tag `1.0.0-rc.1` after baking.
+Lazy-loads `@opentelemetry/api` as an optional `peerDependency`. **Zero
+overhead when OTel isn't installed** — a single null check per span.
+Attributes attached: `ahtml.url`, `ahtml.format`. The catalog grows as
+`PLAN-NEXT-5` advances toward metrics + logs in 1.x.
+
+[Full reference: `docs/observability.md`](docs/observability.md)
+
+#### did:web key resolution
+
+v0.8 shipped signing but left key distribution to the publisher. v0.9
+makes the publisher's own domain the key registry:
+
+```ts
+import { verifySnapshotWithDidWeb } from '@ahtmljs/schema';
+
+const result = await verifySnapshotWithDidWeb(snap, jws, 'did:web:shop.com');
+// fetches https://shop.com/.well-known/did.json, imports JWKs, verifies.
+if (!result.ok) throw new Error(`Signature invalid: ${result.reason}`);
+```
+
+Cached for 5 minutes via a pluggable `CacheStore<VerifyKey[]>` (default
+in-memory, swap for `@ahtmljs/kv` adapters in multi-replica setups).
+Trust anchor = the TLS chain to the publisher's site. Key rotation just
+means publishing a new `did.json` — no client-side coordination.
+
+[Full reference: `docs/did-web.md`](docs/did-web.md)
+
+#### `@ahtmljs/hono` (new package)
+
+```ts
+// works on Node, Bun, Deno, Cloudflare Workers, AWS Lambda
+import { Hono } from 'hono';
+import { mountAHTML } from '@ahtmljs/hono';
+
+const app = mountAHTML(new Hono(), {
+  site: 'https://shop.com',
+  snapshotBuilder: (segs, req) => buildSnapshotFor(segs),
+  policy: { agents_welcome: true },
+});
+```
+
+`mountAHTML(app, config)` registers `/ahtml/*`,
+`/.well-known/ahtml.json`, `/ahtml/mcp.json`, `/ahtml/openapi.json`, and
+`/llms.txt`. Structural `HonoAppLike` interface — `hono` itself is an
+optional `peerDependency`, so the package compiles and tests without it.
+
+#### `@ahtmljs/cli` (new package)
+
+```bash
+npx @ahtmljs/cli doctor https://shop.com
+```
+
+Walks the AHTML discovery chain end-to-end:
+
+```
+PASS  .well-known/ahtml.json      site=https://shop.com
+PASS  /ahtml validate()            page_type=product_list, entities=8, actions=2
+WARN  /ahtml lint()                1 warning(s); first: [product-no-stock]...
+PASS  /ahtml/mcp.json              3 tool(s)
+PASS  /ahtml/openapi.json          OpenAPI 3.1.0
+PASS  /llms.txt                    well-formed (137 bytes)
+
+Result: 5 PASS, 1 WARN, 0 FAIL.
+```
+
+Exits non-zero on failure — wire into CI to gate deploys on
+agent-readiness. Also exports `doctor(url)` returning a structured
+`DoctorReport` for programmatic use.
+
+#### Test totals
+
+**344 passing** (was 305 at v0.8.1), 1 intentional skip (the OTel
+SDK-active integration test, queued for v0.9.x), 0 failing.
+
+Schema jumps 149 → 170 (OTel no-op contract + did:web key import +
+verification round-trip). Two new package suites land: `@ahtmljs/hono`
+(14 tests) and `@ahtmljs/cli` (4 tests).
+
+#### Compatibility
+
+Fully additive. No public API removed. Wire formats unchanged. No new
+`node:*` imports — every new module uses Web Standards exclusively. All
+seven packages bumped 0.8.1 → 0.9.0.
+
+---
+
+## What's next — `1.0.0-rc.1`
+
+After v0.9.0 bakes for two weeks with zero P0 issues:
+
+- **CJS dual-publish** via `tsup` — restores access for Electron, older
+  Node, Jest without ESM.
+- **Node 18 support** — engines floor drops from `>=20` to `>=18`,
+  expanding the deployable runtime envelope.
+- **OpenTelemetry metrics + logs** — v0.9 shipped traces; the next
+  release rounds out the OTel-native story.
+
+Then `1.0.0` ships with API-stability commitment. Breaking changes from
+1.0 onward go through a one-release deprecation window.
+
+## Post-1.0 — Phase 2
 
 After `1.0.0`, AHTML commits to API stability for the 1.x line —
 breaking changes go through a deprecation window.

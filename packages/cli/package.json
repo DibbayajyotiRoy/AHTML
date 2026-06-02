@@ -1,15 +1,11 @@
 {
-  "name": "@ahtmljs/langchain",
+  "name": "@ahtmljs/cli",
   "version": "0.9.0",
-  "description": "LangChain.js document loader for AHTML. Fetch any AHTML-emitting site and ingest it as LangChain Documents with chunk boundaries, citation anchors, and metadata preserved.",
+  "description": "AHTML auditor CLI — npx @ahtmljs/cli doctor <url> walks the AHTML discovery chain (.well-known + /ahtml + /llms.txt + /ahtml/mcp.json + /ahtml/openapi.json) on a live site and reports what's well-formed, what's missing, and what AI clients can already consume.",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
+  "main": "./dist/cli.js",
+  "bin": {
+    "ahtml": "./dist/cli.js"
   },
   "files": [
     "dist",
@@ -19,14 +15,14 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
     "dev": "tsc -p tsconfig.json --watch",
     "test": "tsx --test src/__tests__/*.test.ts"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/DibbayajyotiRoy/AHTML.git",
-    "directory": "packages/langchain"
+    "directory": "packages/cli"
   },
   "homepage": "https://github.com/DibbayajyotiRoy/AHTML#readme",
   "bugs": {
@@ -40,28 +36,25 @@
   },
   "keywords": [
     "ahtml",
-    "langchain",
-    "langchain-loader",
-    "document-loader",
-    "rag",
-    "agent",
+    "cli",
+    "doctor",
+    "mcp",
+    "audit",
+    "lint",
+    "well-known",
+    "llms-txt",
+    "openapi",
+    "json-ld",
     "agent-web",
     "ai",
-    "llm",
-    "vector-db",
-    "embeddings"
+    "diagnostic"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
   "dependencies": {
     "@ahtmljs/schema": "0.9.0",
     "@ahtmljs/agent": "0.9.0"
-  },
-  "peerDependencies": {
-    "@langchain/core": ">=0.3"
-  },
-  "peerDependenciesMeta": {
-    "@langchain/core": {
-      "optional": true
-    }
-  },
-  "license": "MIT"
+  }
 }

@@ -12,6 +12,10 @@
  *     backoff + Retry-After honoring, configurable timeout (AbortController),
  *     in-flight request coalescing (parallel `fetch(url)` calls dedupe to
  *     one network request), and an `onEvent` hook for structured logging.
+ *   - v0.9.0: OpenTelemetry spans wrap `fetch()` and `streamSnapshot()` via
+ *     the framework-neutral `trace` helper from `@ahtmljs/schema`. The helper
+ *     is a no-op when no OTEL provider is registered, so non-instrumented
+ *     callers pay nothing.
  *
  * No network library — uses the global fetch (Node 20+, modern browsers).
  */
@@ -26,6 +30,7 @@ import {
   parseStream,
   STREAM_CONTENT_TYPE,
   InMemoryCacheStore,
+  trace,
   type AHTMLErrorCode,
   type CacheStore,
   type Entity,
@@ -35,6 +40,12 @@ import {
   type StreamRecord,
 } from '@ahtmljs/schema';
 
+/**
+ * Retry policy governing transient-failure recovery for a single
+ * client call. Defaults are conservative: 3 attempts on
+ * NETWORK / TIMEOUT / RATE_LIMITED / 5xx with exponential backoff
+ * and ±25% jitter.
+ */
 export interface RetryPolicy {
   /** Max attempts including the first try. 0 or 1 disables retries. */
   attempts?: number;
@@ -50,6 +61,10 @@ export interface RetryPolicy {
   jitter?: boolean;
 }
 
+/**
+ * Per-call fetch options. Anything omitted falls back to the
+ * `ClientOptions` defaults passed to the `AHTMLClient` constructor.
+ */
 export interface FetchOptions {
   /** "compact" (default, token-optimal) or "json". */
   format?: 'compact' | 'json';
@@ -71,6 +86,10 @@ export interface FetchOptions {
   coalesce?: boolean;
 }
 
+/**
+ * The cache entry shape stored by `AHTMLClient`. Plug-in cache
+ * backends must serialize/deserialize this shape verbatim.
+ */
 export interface CachedSnapshot {
   snapshot: Snapshot;
   fetchedAt: number;
@@ -90,6 +109,9 @@ export type ClientEvent =
   | { type: 'retry'; url: string; attempt: number; delayMs: number; code: AHTMLErrorCode }
   | { type: 'error'; url: string; code: AHTMLErrorCode; status?: number };
 
+/**
+ * Client-wide defaults. Per-call `FetchOptions` overlay these.
+ */
 export interface ClientOptions extends FetchOptions {
   /** Client-wide per-request timeout in ms. Default 30_000. */
   timeout?: number;
@@ -115,6 +137,16 @@ const DEFAULT_RETRY: Required<RetryPolicy> = {
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
+/**
+ * The agent-side AHTML fetcher. Use one client per process / worker;
+ * cache + in-flight coalescing live on the instance.
+ *
+ * v0.9.0 wraps the public `fetch()` and `streamSnapshot()` paths in
+ * OpenTelemetry spans (`ahtml.client.fetch`, `ahtml.client.stream`)
+ * via the framework-neutral `trace` helper from `@ahtmljs/schema`.
+ * When no OTEL provider is registered, `trace` is a zero-overhead
+ * pass-through.
+ */
 export class AHTMLClient {
   /**
    * v0.7.0: cache is a pluggable `CacheStore<CachedSnapshot>`. Default is
@@ -136,25 +168,36 @@ export class AHTMLClient {
    * Fetch the snapshot for a URL. Uses ETag-based incremental fetch by
    * default; falls back to the diff endpoint when the cached snapshot is
    * stale enough that the server might prefer to send a delta.
+   *
+   * v0.9.0: the entire call is wrapped in an `ahtml.client.fetch` span
+   * with `ahtml.url` and `ahtml.format` attributes. Inner HTTP retries
+   * remain a single span — child spans for individual attempts are a
+   * future enhancement.
    */
   fetch(url: string, opts: FetchOptions = {}): Promise<Snapshot> {
-    const o = { ...this.defaults, ...opts };
-    const coalesceOn = o.coalesce !== false;
-    const key = coalesceKey(url, o);
+    return trace(
+      'ahtml.client.fetch',
+      async () => {
+        const o = { ...this.defaults, ...opts };
+        const coalesceOn = o.coalesce !== false;
+        const key = coalesceKey(url, o);
 
-    if (coalesceOn) {
-      const inflight = this.inflight.get(key);
-      if (inflight) {
-        this.emit({ type: 'coalesced', url });
-        return inflight;
-      }
-    }
+        if (coalesceOn) {
+          const inflight = this.inflight.get(key);
+          if (inflight) {
+            this.emit({ type: 'coalesced', url });
+            return inflight;
+          }
+        }
 
-    const p = this.fetchOnce(url, o).finally(() => {
-      this.inflight.delete(key);
-    });
-    if (coalesceOn) this.inflight.set(key, p);
-    return p;
+        const p = this.fetchOnce(url, o).finally(() => {
+          this.inflight.delete(key);
+        });
+        if (coalesceOn) this.inflight.set(key, p);
+        return p;
+      },
+      { 'ahtml.url': url, 'ahtml.format': opts?.format ?? 'compact' },
+    );
   }
 
   private async fetchOnce(url: string, o: FetchOptions): Promise<Snapshot> {
@@ -229,6 +272,10 @@ export class AHTMLClient {
       throw await httpError(url, res);
     }
     this.emit({ type: 'cache_miss', url });
+    // TODO(v0.9.x): when the agent grows automatic signed-snapshot
+    // verification, wrap the verifySnapshot call site here in a
+    // `trace('ahtml.client.verify', ..., { 'ahtml.url': url })` span so
+    // signature-check latency is visible alongside fetch latency.
     return this.storeFromResponse(url, res);
   }
 
@@ -333,6 +380,11 @@ export class AHTMLClient {
     return snapshot;
   }
 
+  /**
+   * Drop the cached entry for one URL, or the whole cache if `url` is
+   * omitted. Use this when an out-of-band invalidation (webhook,
+   * publish event) tells you the upstream snapshot has rolled forward.
+   */
   async invalidate(url?: string): Promise<void> {
     if (url) await this.cache.delete(url);
     else await this.cache.clear();
@@ -348,34 +400,48 @@ export class AHTMLClient {
    * `kind: 'end'` record if you rely on its `etag`. The client does not
    * populate its snapshot cache on stream paths — call `fetch(url)` if
    * you also want the cache to warm up.
+   *
+   * v0.9.0: the request-setup phase (up to the point we begin yielding
+   * records) is wrapped in an `ahtml.client.stream` span. The yielded
+   * iterator itself is not enclosed by the span because the span would
+   * have to outlive the caller's loop; that would skew duration metrics
+   * and entangle span lifetime with backpressure. Per-record spans are
+   * out of scope — record bandwidth would dominate the cost.
    */
   async *streamSnapshot(url: string, opts: FetchOptions = {}): AsyncIterable<StreamRecord> {
-    const o = { ...this.defaults, ...opts };
-    const fetcher = o.fetch ?? globalThis.fetch;
-    const headers = requestHeaders(STREAM_CONTENT_TYPE, o);
-    const retry = normalizeRetry(o.retry, this.defaults.retry);
-    const timeoutMs = o.timeout ?? this.defaults.timeout ?? DEFAULT_TIMEOUT_MS;
-    const res = await this.doFetch(fetcher, url, { headers }, timeoutMs, retry, url);
-    if (!res.ok) throw await httpError(url, res);
-    const ct = res.headers.get('content-type') ?? '';
-    if (!ct.includes(STREAM_CONTENT_TYPE)) {
-      throw new AHTMLError({
-        code: 'HTTP_STATUS',
-        status: res.status,
-        message: `expected ${STREAM_CONTENT_TYPE} but server returned ${ct || 'no content-type'}`,
-        hint: 'The server did not advertise streaming. Either pass routeOpts.stream = true on the route, or use client.fetch() instead.',
-        context: url,
-      });
-    }
-    if (!res.body) {
-      throw new AHTMLError({
-        code: 'NETWORK',
-        message: 'stream response had no body',
-        hint: DEFAULT_HINTS.NETWORK,
-        context: url,
-      });
-    }
-    yield* parseStream(res.body);
+    const body = await trace(
+      'ahtml.client.stream',
+      async (): Promise<ReadableStream<Uint8Array>> => {
+        const o = { ...this.defaults, ...opts };
+        const fetcher = o.fetch ?? globalThis.fetch;
+        const headers = requestHeaders(STREAM_CONTENT_TYPE, o);
+        const retry = normalizeRetry(o.retry, this.defaults.retry);
+        const timeoutMs = o.timeout ?? this.defaults.timeout ?? DEFAULT_TIMEOUT_MS;
+        const res = await this.doFetch(fetcher, url, { headers }, timeoutMs, retry, url);
+        if (!res.ok) throw await httpError(url, res);
+        const ct = res.headers.get('content-type') ?? '';
+        if (!ct.includes(STREAM_CONTENT_TYPE)) {
+          throw new AHTMLError({
+            code: 'HTTP_STATUS',
+            status: res.status,
+            message: `expected ${STREAM_CONTENT_TYPE} but server returned ${ct || 'no content-type'}`,
+            hint: 'The server did not advertise streaming. Either pass routeOpts.stream = true on the route, or use client.fetch() instead.',
+            context: url,
+          });
+        }
+        if (!res.body) {
+          throw new AHTMLError({
+            code: 'NETWORK',
+            message: 'stream response had no body',
+            hint: DEFAULT_HINTS.NETWORK,
+            context: url,
+          });
+        }
+        return res.body;
+      },
+      { 'ahtml.url': url, 'ahtml.format': opts?.format ?? 'compact' },
+    );
+    yield* parseStream(body);
   }
 
   /** Convenience: stream only the entity records (skip envelope/actions/end). */

@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     'Write your page once. AHTML emits MCP, OpenAPI, JSON-LD, llms.txt, and a 100× cheaper semantic snapshot — from your existing Next.js, Vite, or SvelteKit app. Zero migration.',
   metadataBase: new URL(SITE_URL),
   applicationName: 'AHTML',
-  authors: [{ name: 'Dibbayajyoti Roy', url: 'https://github.com/DibbayajyotiRoy' }],
+  authors: [{ name: 'Dibbayajyoti Roy', url: 'https://dibbayajyoti.com/about' }],
   creator: 'Dibbayajyoti Roy',
   publisher: 'AHTML',
   keywords: [
@@ -83,7 +83,7 @@ export const metadata: Metadata = {
     },
   },
   other: {
-    'x-ahtml-version': '0.1',
+    'x-ahtml-version': '0.9.0',
   },
 };
 
@@ -94,15 +94,22 @@ const softwareJsonLd = {
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'Cross-platform',
   description:
-    'Open-source npm packages that make any Next.js, Vite, or SvelteKit site speak MCP, OpenAPI, JSON-LD, and llms.txt automatically.',
+    'Open-source npm packages that make any Next.js, Vite, SvelteKit, or Hono site speak MCP, OpenAPI, JSON-LD, and llms.txt automatically.',
   url: SITE_URL,
   downloadUrl: 'https://www.npmjs.com/package/@ahtmljs/next',
-  softwareVersion: '0.1',
+  softwareVersion: '0.9.0',
   license: 'https://opensource.org/licenses/MIT',
-  author: { '@type': 'Person', name: 'Dibbayajyoti Roy', url: 'https://github.com/DibbayajyotiRoy' },
+  author: { '@type': 'Person', name: 'Dibbayajyoti Roy', url: 'https://dibbayajyoti.com/about' },
+  creator: { '@type': 'Person', name: 'Dibbayajyoti Roy', url: 'https://dibbayajyoti.com/about' },
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   codeRepository: 'https://github.com/DibbayajyotiRoy/AHTML',
   programmingLanguage: ['TypeScript', 'JavaScript'],
+  sameAs: [
+    'https://dibbayajyoti.com/projects/ahtml',
+    'https://dibbayajyoti.com',
+    'https://github.com/DibbayajyotiRoy/AHTML',
+    'https://www.npmjs.com/org/ahtmljs',
+  ],
 };
 
 const orgJsonLd = {
@@ -111,7 +118,13 @@ const orgJsonLd = {
   name: 'AHTML',
   url: SITE_URL,
   logo: `${SITE_URL}/logo.png`,
-  sameAs: ['https://github.com/DibbayajyotiRoy/AHTML', 'https://www.npmjs.com/org/ahtmljs'],
+  founder: { '@type': 'Person', name: 'Dibbayajyoti Roy', url: 'https://dibbayajyoti.com/about' },
+  sameAs: [
+    'https://dibbayajyoti.com/projects/ahtml',
+    'https://dibbayajyoti.com',
+    'https://github.com/DibbayajyotiRoy/AHTML',
+    'https://www.npmjs.com/org/ahtmljs',
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

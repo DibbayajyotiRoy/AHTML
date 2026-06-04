@@ -99,6 +99,45 @@ const PACKAGES = [
       </>
     ),
   },
+  {
+    id: 'hono',
+    layer: 'Adapter',
+    name: '@ahtmljs/hono',
+    role: 'Hono adapter. The same emitter on every JavaScript runtime.',
+    install: 'npm install @ahtmljs/hono',
+    forWho: 'Hono apps on Node, Bun, Deno, Cloudflare Workers, or AWS Lambda.',
+    bullets: [
+      'Mounts the well-known + /ahtml/* routes on any Hono app',
+      'Byte-identical output to the Next and Vite adapters — true parity',
+      'Runs on Node, Bun, Deno, Cloudflare Workers, and AWS Lambda',
+      'One line; Hono 4+ peer dep',
+    ],
+    snippet: (
+      <>
+        <span className="keyword">import</span> {'{ ahtml }'} <span className="keyword">from</span>{' '}
+        <span className="string">'@ahtmljs/hono'</span>;
+      </>
+    ),
+  },
+  {
+    id: 'cli',
+    layer: 'Tooling',
+    name: '@ahtmljs/cli',
+    role: 'ahtml doctor. Validate the whole discovery chain from CI.',
+    install: 'npm install -g @ahtmljs/cli',
+    forWho: 'Anyone shipping AHTML who wants the discovery chain checked on every build.',
+    bullets: [
+      'Walks /.well-known/ahtml.json → snapshot → MCP → OpenAPI → llms.txt',
+      'Validates each endpoint against the AHTML lint rules',
+      'Exits non-zero on failure — wire it straight into CI',
+      'Zero-config; reads the site like an agent would',
+    ],
+    snippet: (
+      <>
+        <span className="string">$</span> ahtml doctor <span className="string">https://example.com</span>
+      </>
+    ),
+  },
 ];
 
 export default function Packages() {
@@ -106,10 +145,11 @@ export default function Packages() {
     <section className="section" id="packages">
       <div className="container">
         <div className="kicker">The packages</div>
-        <h2 style={{ marginTop: 12, marginBottom: 12 }}>Five packages, one contract.</h2>
+        <h2 style={{ marginTop: 12, marginBottom: 12 }}>Seven packages, one contract.</h2>
         <p className="lede" style={{ marginBottom: 12 }}>
-          The <code className="inline">@ahtmljs/*</code> scope splits cleanly into three layers — one
-          schema everyone shares, two server adapters that emit it, two clients that consume it.
+          The <code className="inline">@ahtmljs/*</code> scope splits cleanly into four layers — one
+          schema everyone shares, three server adapters that emit it, two clients that consume it,
+          and a CLI that validates the whole chain.
         </p>
         <p style={{ color: 'var(--ink-3)', marginBottom: 40, fontSize: 14 }}>
           Full per-package endpoints, download counters, and STAR breakdowns in{' '}

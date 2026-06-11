@@ -15,7 +15,10 @@
     "test:web-reality": "tsx --test tests/web-reality/__tests__/*.test.ts",
     "benchmark:llm": "bash scripts/run-llm-benchmark.sh",
     "benchmark": "npm run start --workspace examples/benchmark",
-    "demo": "npm run dev --workspace examples/landing"
+    "demo": "npm run dev --workspace examples/landing",
+    "test:conformance": "tsx --test tests/conformance/*.test.ts",
+    "test:budgets": "tsx --test tests/budgets/*.test.ts",
+    "smoke:imports": "node build-tools/smoke-imports.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -23,7 +26,7 @@
     "typescript": "^5.6.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=18"
   },
   "license": "MIT"
 }

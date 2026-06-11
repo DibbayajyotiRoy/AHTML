@@ -6,23 +6,27 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { snapshot, toJson } from '@ahtmljs/schema';
+import { snapshot, toJson, signSnapshot, type Snapshot, type Provenance } from '@ahtmljs/schema';
 import { doctor } from '../doctor.js';
 
 const ORIGIN = 'https://shop.example.com';
 
+/** Build a known-good Snapshot object so signing tests can sign the exact served bytes. */
+function makeSnapshot(provenance?: Provenance): Snapshot {
+  const b = snapshot(`${ORIGIN}/`, 'home').add({
+    type: 'product',
+    id: 'product:p1',
+    name: 'Test Widget',
+    price: { amount: 19.99, currency: 'USD' },
+    stock: { status: 'in_stock', quantity: 10 },
+  });
+  if (provenance) b.provenance(provenance);
+  return b.build();
+}
+
 /** Build a known-good snapshot so the validate/lint paths have something to grade. */
 function makeValidSnapshot(): string {
-  const s = snapshot(`${ORIGIN}/`, 'home')
-    .add({
-      type: 'product',
-      id: 'product:p1',
-      name: 'Test Widget',
-      price: { amount: 19.99, currency: 'USD' },
-      stock: { status: 'in_stock', quantity: 10 },
-    })
-    .build();
-  return toJson(s);
+  return toJson(makeSnapshot());
 }
 
 /** Build a snapshot that won't validate — missing `ahtml` field. */
@@ -71,7 +75,9 @@ const OPENAPI_OK = JSON.stringify({
 const LLMS_OK = '# Shop\n\nWelcome to the shop.\n';
 
 /** Build a mock fetch from a routing table keyed by URL. */
-function mockFetch(routes: Record<string, { status: number; body: string; ct: string }>): typeof fetch {
+function mockFetch(
+  routes: Record<string, { status: number; body: string; ct: string; headers?: Record<string, string> }>,
+): typeof fetch {
   return (async (input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input.toString();
     const route = routes[url];
@@ -81,7 +87,7 @@ function mockFetch(routes: Record<string, { status: number; body: string; ct: st
     return new Response(route.body, {
       status: route.status,
       statusText: route.status === 200 ? 'OK' : 'Error',
-      headers: { 'content-type': route.ct },
+      headers: { 'content-type': route.ct, ...route.headers },
     });
   }) as typeof fetch;
 }
@@ -137,6 +143,22 @@ describe('doctor()', () => {
     assert.ok(report.totals.fail >= 1, JSON.stringify(report.checks, null, 2));
   });
 
+  test('unsigned snapshot -> signature check WARNs (not FAIL)', async () => {
+    const fetcher = mockFetch({
+      [`${ORIGIN}/.well-known/ahtml.json`]: { status: 200, body: makeManifest(), ct: 'application/json' },
+      [`${ORIGIN}/ahtml`]: { status: 200, body: makeValidSnapshot(), ct: 'application/ahtml+json' },
+      [`${ORIGIN}/ahtml/mcp.json`]: { status: 200, body: MCP_OK, ct: 'application/json' },
+      [`${ORIGIN}/ahtml/openapi.json`]: { status: 200, body: OPENAPI_OK, ct: 'application/json' },
+      [`${ORIGIN}/llms.txt`]: { status: 200, body: LLMS_OK, ct: 'text/plain' },
+    });
+    const report = await doctor(ORIGIN, { fetch: fetcher });
+    const sig = report.checks.find((c) => c.name.includes('signature'));
+    assert.ok(sig, 'signature check missing from report');
+    assert.equal(sig.status, 'warn', 'unsigned snapshot must WARN, never FAIL');
+    assert.match(sig.detail ?? '', /unsigned/i);
+    assert.equal(report.totals.fail, 0, 'unsigned adopters must not regress to FAIL');
+  });
+
   test('missing /llms.txt -> WARN (not FAIL)', async () => {
     const fetcher = mockFetch({
       [`${ORIGIN}/.well-known/ahtml.json`]: { status: 200, body: makeManifest(), ct: 'application/json' },
@@ -150,5 +172,141 @@ describe('doctor()', () => {
     assert.ok(llms, 'llms.txt check missing');
     assert.equal(llms.status, 'warn', 'llms.txt must downgrade to warn when missing');
     assert.equal(report.totals.fail, 0, 'no FAILs when only llms.txt is absent');
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* signature verification (did:web)                                           */
+/* -------------------------------------------------------------------------- */
+
+const DID = `did:web:shop.example.com`;
+const DID_JSON_URL = `${ORIGIN}/.well-known/did.json`;
+
+/** Generate a real ES256 keypair; export the public half for the DID document. */
+async function makeEs256Keypair(): Promise<{ privateKey: CryptoKey; publicJwk: JsonWebKey }> {
+  const pair = (await crypto.subtle.generateKey(
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    true,
+    ['sign', 'verify'],
+  )) as CryptoKeyPair;
+  const publicJwk = await crypto.subtle.exportKey('jwk', pair.publicKey);
+  return { privateKey: pair.privateKey, publicJwk };
+}
+
+/** W3C-shaped did.json advertising one ES256 verification key. */
+function makeDidJson(publicJwk: JsonWebKey, kid: string): string {
+  return JSON.stringify({
+    '@context': ['https://www.w3.org/ns/did/v1'],
+    id: DID,
+    verificationMethod: [
+      {
+        id: `${DID}#${kid}`,
+        type: 'JsonWebKey2020',
+        controller: DID,
+        publicKeyJwk: { ...publicJwk, alg: 'ES256', kid },
+      },
+    ],
+    assertionMethod: [`${DID}#${kid}`],
+  });
+}
+
+/** All non-snapshot routes for a healthy site. */
+function healthyRoutes(): Record<string, { status: number; body: string; ct: string }> {
+  return {
+    [`${ORIGIN}/.well-known/ahtml.json`]: { status: 200, body: makeManifest(), ct: 'application/json' },
+    [`${ORIGIN}/ahtml/mcp.json`]: { status: 200, body: MCP_OK, ct: 'application/json' },
+    [`${ORIGIN}/ahtml/openapi.json`]: { status: 200, body: OPENAPI_OK, ct: 'application/json' },
+    [`${ORIGIN}/llms.txt`]: { status: 200, body: LLMS_OK, ct: 'text/plain' },
+  };
+}
+
+describe('doctor() signature check', () => {
+  test('valid X-AHTML-Signature header + did:web key -> PASS with signer', async () => {
+    const { privateKey, publicJwk } = await makeEs256Keypair();
+    const snap = makeSnapshot();
+    const jws = await signSnapshot(snap, { kid: 'shop-2026', alg: 'ES256', key: privateKey });
+    const fetcher = mockFetch({
+      ...healthyRoutes(),
+      [`${ORIGIN}/ahtml`]: {
+        status: 200,
+        body: toJson(snap),
+        ct: 'application/ahtml+json',
+        headers: { 'x-ahtml-signature': jws },
+      },
+      [DID_JSON_URL]: { status: 200, body: makeDidJson(publicJwk, 'shop-2026'), ct: 'application/did+json' },
+    });
+    const report = await doctor(ORIGIN, { fetch: fetcher });
+    const sig = report.checks.find((c) => c.name.includes('signature'));
+    assert.ok(sig, 'signature check missing from report');
+    assert.equal(sig.status, 'pass', JSON.stringify(sig, null, 2));
+    assert.match(sig.detail ?? '', /shop-2026/, 'detail must name the signer kid');
+    assert.match(sig.detail ?? '', /did:web:shop\.example\.com/, 'detail must name the did:web identity');
+    assert.equal(report.totals.fail, 0, JSON.stringify(report.checks, null, 2));
+  });
+
+  test('valid provenance.signature (embedded) + did:web issuer -> PASS', async () => {
+    const { privateKey, publicJwk } = await makeEs256Keypair();
+    // Sign BEFORE embedding — a signature cannot cover itself.
+    const snap = makeSnapshot({ issuer: DID, signed: true });
+    const jws = await signSnapshot(snap, { kid: 'shop-2026', alg: 'ES256', key: privateKey });
+    const served = JSON.parse(toJson(snap)) as { provenance: Record<string, unknown> };
+    served.provenance.signature = jws;
+    const fetcher = mockFetch({
+      ...healthyRoutes(),
+      [`${ORIGIN}/ahtml`]: { status: 200, body: JSON.stringify(served), ct: 'application/ahtml+json' },
+      [DID_JSON_URL]: { status: 200, body: makeDidJson(publicJwk, 'shop-2026'), ct: 'application/did+json' },
+    });
+    const report = await doctor(ORIGIN, { fetch: fetcher });
+    const sig = report.checks.find((c) => c.name.includes('signature'));
+    assert.ok(sig, 'signature check missing from report');
+    assert.equal(sig.status, 'pass', JSON.stringify(sig, null, 2));
+    assert.match(sig.detail ?? '', /provenance\.signature/, 'detail must name the wire form');
+    assert.equal(report.totals.fail, 0, JSON.stringify(report.checks, null, 2));
+  });
+
+  test('tampered snapshot -> signature check FAILs with a hint', async () => {
+    const { privateKey, publicJwk } = await makeEs256Keypair();
+    const snap = makeSnapshot();
+    const jws = await signSnapshot(snap, { kid: 'shop-2026', alg: 'ES256', key: privateKey });
+    // Tamper after signing: change the price in the served bytes.
+    const tampered = JSON.parse(toJson(snap)) as { entities: { price: { amount: number } }[] };
+    tampered.entities[0]!.price.amount = 0.01;
+    const fetcher = mockFetch({
+      ...healthyRoutes(),
+      [`${ORIGIN}/ahtml`]: {
+        status: 200,
+        body: JSON.stringify(tampered),
+        ct: 'application/ahtml+json',
+        headers: { 'x-ahtml-signature': jws },
+      },
+      [DID_JSON_URL]: { status: 200, body: makeDidJson(publicJwk, 'shop-2026'), ct: 'application/did+json' },
+    });
+    const report = await doctor(ORIGIN, { fetch: fetcher });
+    const sig = report.checks.find((c) => c.name.includes('signature'));
+    assert.ok(sig, 'signature check missing from report');
+    assert.equal(sig.status, 'fail', 'tampered bytes must FAIL the signature check');
+    assert.ok(sig.hint, 'a FAILing signature check must carry an actionable hint');
+    assert.ok(report.totals.fail >= 1);
+  });
+
+  test('signed but no resolvable did:web key (did.json 404) -> FAIL with a hint', async () => {
+    const { privateKey } = await makeEs256Keypair();
+    const snap = makeSnapshot();
+    const jws = await signSnapshot(snap, { kid: 'shop-2026', alg: 'ES256', key: privateKey });
+    const fetcher = mockFetch({
+      ...healthyRoutes(),
+      [`${ORIGIN}/ahtml`]: {
+        status: 200,
+        body: toJson(snap),
+        ct: 'application/ahtml+json',
+        headers: { 'x-ahtml-signature': jws },
+      },
+      // No did.json route -> 404 -> unresolvable key.
+    });
+    const report = await doctor(ORIGIN, { fetch: fetcher });
+    const sig = report.checks.find((c) => c.name.includes('signature'));
+    assert.ok(sig, 'signature check missing from report');
+    assert.equal(sig.status, 'fail', 'an unverifiable signature must FAIL');
+    assert.match(sig.hint ?? '', /did/i, 'hint must point at the DID document');
   });
 });

@@ -123,20 +123,32 @@ describe('chooseEncoding() — Accept-Encoding negotiation', () => {
     assert.equal(chooseEncoding(''), 'identity');
   });
 
+  // chooseEncoding only offers 'br' when this runtime's CompressionStream
+  // can actually produce it (Node gained br after 22), so br expectations
+  // are runtime-conditional.
+  const brOk = (() => {
+    try {
+      new (CompressionStream as unknown as new (f: string) => unknown)('br');
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
   test('picks the highest q-value encoding among supported', () => {
     assert.equal(chooseEncoding('gzip, deflate'), 'gzip');
     assert.equal(chooseEncoding('br;q=0.8, gzip;q=0.9'), 'gzip');
-    assert.equal(chooseEncoding('br;q=1.0, gzip;q=0.5'), 'br');
+    assert.equal(chooseEncoding('br;q=1.0, gzip;q=0.5'), brOk ? 'br' : 'gzip');
   });
 
   test('honors explicit q=0 as refusal', () => {
-    assert.equal(chooseEncoding('gzip;q=0, br'), 'br');
+    assert.equal(chooseEncoding('gzip;q=0, br'), brOk ? 'br' : 'identity');
     assert.equal(chooseEncoding('gzip;q=0, identity'), 'identity');
   });
 
   test('* wildcard fills in unspecified encodings', () => {
-    assert.equal(chooseEncoding('*'), 'br');                // br wins by our preference order
-    assert.equal(chooseEncoding('gzip, *;q=0.1'), 'gzip');  // explicit beats wildcard
+    assert.equal(chooseEncoding('*'), brOk ? 'br' : 'gzip'); // our preference order, gated on runtime support
+    assert.equal(chooseEncoding('gzip, *;q=0.1'), 'gzip');   // explicit beats wildcard
   });
 
   test('falls back to identity when no supported encoding offered', () => {

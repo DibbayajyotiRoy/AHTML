@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { snapshot } from '@ahtmljs/schema';
+import { snapshot, buildWellKnown, buildLlmsTxt } from '@ahtmljs/schema';
 import { ahtml } from '../index.js';
 
 /** Minimal mock of the Node `req`/`res` Vite middleware passes. */
@@ -158,5 +158,78 @@ describe('@ahtmljs/vite plugin', () => {
     });
     await handler(r.req, r.res, () => {});
     assert.match(r.headers['content-type'] ?? '', /application\/ahtml\+json/);
+  });
+
+  test('/ahtml/mcp.json emits the MCP tool catalog (warm cache)', async () => {
+    const withAction = async (segments: string[], req: { url: string }) => {
+      if (segments[0] !== 'p') return null;
+      return snapshot(req.url, 'product_detail')
+        .add({ id: 'product:demo', type: 'product', name: 'Demo', price: { amount: 1, currency: 'USD' } })
+        .action({
+          id: 'add_to_cart',
+          label: 'Add to cart',
+          category: 'transact',
+          method: 'POST',
+          execute_url: '/api/cart',
+          input: { type: 'object', properties: { qty: { type: 'number' } } },
+        })
+        .build();
+    };
+    const handler = registerPlugin({ site: 'https://x.com', buildSnapshot: withAction });
+    // Warm the cache so the MCP emitter has something to describe.
+    const warm = makeReqRes('/ahtml/p');
+    await handler(warm.req, warm.res, () => {});
+    const r = makeReqRes('/ahtml/mcp.json');
+    await handler(r.req, r.res, () => {});
+    assert.equal(r.res.statusCode, 200);
+    assert.match(r.headers['content-type'] ?? '', /application\/json/);
+    const m = JSON.parse(r.body);
+    assert.equal(m.schema_version, '0.1');
+    // Same server identity as @ahtmljs/next / @ahtmljs/hono for identical config.
+    assert.deepEqual(m.server, { name: 'ahtml', url: 'https://x.com' });
+    assert.equal(m.tools.length, 1);
+    assert.equal(m.tools[0].name, 'product_detail.add_to_cart');
+    assert.equal(m.tools[0].description, 'Add to cart');
+    assert.deepEqual(m.tools[0].inputSchema, { type: 'object', properties: { qty: { type: 'number' } } });
+  });
+
+  test('/.well-known/ahtml.json delegates to the schema emitter (no drift)', async () => {
+    const cfg = {
+      site: 'https://x.com',
+      policy: { agents_welcome: true, license: 'MIT' },
+      routes: [{ path: '/p', page_type: 'product_detail' }],
+      buildSnapshot: builder,
+    };
+    const handler = registerPlugin(cfg);
+    const r = makeReqRes('/.well-known/ahtml.json');
+    await handler(r.req, r.res, () => {});
+    const served = JSON.parse(r.body);
+    const canonical = JSON.parse(JSON.stringify(buildWellKnown({
+      site: cfg.site,
+      policy: cfg.policy,
+      routes: cfg.routes,
+    })));
+    // generated_at is the only nondeterministic field.
+    delete served.generated_at;
+    delete canonical.generated_at;
+    assert.deepEqual(served, canonical);
+  });
+
+  test('/llms.txt delegates to the schema emitter (no drift)', async () => {
+    const cfg = {
+      site: 'https://x.com',
+      policy: { agents_welcome: true, contact: 'agents@x.com' },
+      routes: [{ path: '/p', page_type: 'product_detail' }],
+      buildSnapshot: builder,
+    };
+    const handler = registerPlugin(cfg);
+    const r = makeReqRes('/llms.txt');
+    await handler(r.req, r.res, () => {});
+    // Same config → llms_txt mapping as @ahtmljs/next / @ahtmljs/hono.
+    assert.equal(r.body, buildLlmsTxt({
+      site: cfg.site,
+      description: 'Agents welcome — contact: agents@x.com',
+      routes: cfg.routes,
+    }));
   });
 });

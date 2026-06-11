@@ -127,25 +127,33 @@ export function createAHTMLRoute(
         if (sinceEtag) {
           const prev = cacheGet(cacheKey);
           if (prev && (prev.etag === sinceEtag || computeEtag(prev) === sinceEtag)) {
-            const d = diff(prev, snap);
-            cacheSet(cacheKey, snap);
-            // Optimization: when there are no changes, return 304 — saves
-            // ~150 B per page on no-change recrawls at scale.
-            if (d.changes.length === 0) {
-              return new Response(null, {
-                status: 304,
-                headers: { etag, 'cache-control': cacheControl(snap, config) },
-              });
-            }
-            return await encodedResponse(
-              JSON.stringify(d),
-              {
-                'content-type': 'application/ahtml-diff+json',
-                etag,
-                'cache-control': cacheControl(snap, config),
-                'x-ahtml-version': '0.1',
+            // `const` capture so the closure below sees the narrowed Snapshot.
+            const current = snap;
+            return await trace(
+              'ahtml.serve_diff',
+              async () => {
+                const d = diff(prev, current);
+                cacheSet(cacheKey, current);
+                // Optimization: when there are no changes, return 304 — saves
+                // ~150 B per page on no-change recrawls at scale.
+                if (d.changes.length === 0) {
+                  return new Response(null, {
+                    status: 304,
+                    headers: { etag, 'cache-control': cacheControl(current, config) },
+                  });
+                }
+                return await encodedResponse(
+                  JSON.stringify(d),
+                  {
+                    'content-type': 'application/ahtml-diff+json',
+                    etag,
+                    'cache-control': cacheControl(current, config),
+                    'x-ahtml-version': '0.1',
+                  },
+                  encoding,
+                );
               },
-              encoding,
+              { 'ahtml.url': url.pathname, 'ahtml.since': sinceEtag },
             );
           }
           // Fall through to full snapshot if we don't have the prior.

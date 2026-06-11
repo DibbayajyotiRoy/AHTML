@@ -22,7 +22,10 @@ import {
   validate,
   lint,
   AHTMLError,
+  verifySnapshotWithDidWeb,
+  InMemoryCacheStore,
   type Snapshot,
+  type VerifyKey,
 } from '@ahtmljs/schema';
 import { AHTMLClient } from '@ahtmljs/agent';
 
@@ -65,7 +68,8 @@ const DEFAULT_TIMEOUT_MS = 15_000;
  *
  * Walks, in order:
  *   1. `<origin>/.well-known/ahtml.json`
- *   2. The snapshot at `<origin>/ahtml` (validated + linted)
+ *   2. The snapshot at `<origin>/ahtml` (validated + linted, signature
+ *      verified via did:web when one is present)
  *   3. `<origin>/ahtml/mcp.json` (if the manifest advertises it)
  *   4. `<origin>/ahtml/openapi.json` (if the manifest advertises it)
  *   5. `<origin>/llms.txt`
@@ -131,7 +135,7 @@ export async function doctor(
       detail: e ? `${e.code}: ${e.message}` : (err as Error).message,
       hint: e?.hint ?? 'Mount the AHTML snapshot route — see @ahtmljs/next or @ahtmljs/hono.',
     });
-    skipDownstream(checks, ['validate', 'lint', 'mcp', 'openapi', 'llms.txt']);
+    skipDownstream(checks, ['validate', 'lint', 'signature', 'mcp', 'openapi', 'llms.txt']);
     return finalize(origin, checks);
   }
 
@@ -182,6 +186,9 @@ export async function doctor(
       hint: first.hint ?? 'Run lint(snapshot) locally and address each rule, or disable specific rules with { disable: [...] }.',
     });
   }
+
+  // 3b) signature — optional, but when present it must verify via did:web.
+  checks.push(await checkSignature(fetcher, snapshotUrl, origin, snap, timeoutMs));
 
   // 4) /ahtml/mcp.json — only required when advertised.
   if (endpoints?.mcp) {
@@ -292,7 +299,7 @@ function validateOpenApi(m: unknown): string | null {
 /** Mark a fixed list of downstream checks as `warn: skipped`. */
 function skipDownstream(
   checks: DoctorCheck[],
-  names: string[] = ['/ahtml', 'validate', 'lint', 'mcp', 'openapi', 'llms.txt'],
+  names: string[] = ['/ahtml', 'validate', 'lint', 'signature', 'mcp', 'openapi', 'llms.txt'],
 ): void {
   for (const n of names) {
     checks.push({
@@ -308,6 +315,141 @@ function finalize(url: string, checks: DoctorCheck[]): DoctorReport {
   const totals = { pass: 0, warn: 0, fail: 0 };
   for (const c of checks) totals[c.status] += 1;
   return { url, checks, totals };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Signature check                                                            */
+/* -------------------------------------------------------------------------- */
+
+/** Response header carrying the detached JWS (case-insensitive on the wire). */
+const SIGNATURE_HEADER = 'x-ahtml-signature';
+
+/**
+ * Audit the snapshot signature.
+ *
+ * Wire forms handled (in priority order):
+ *   1. `X-AHTML-Signature` response header — the JWS signs the response
+ *      body exactly as served.
+ *   2. `provenance.signature` embedded in the snapshot JSON — the JWS
+ *      signs the snapshot *without* `provenance.signature` (a signature
+ *      cannot cover itself), so that field is stripped before verifying.
+ *
+ * Semantics:
+ *   - No signature anywhere  -> `warn` (signing is optional but recommended).
+ *   - Signature verifies      -> `pass`, reporting the signer kid/alg.
+ *   - Signature present but unverifiable (unresolvable did:web key,
+ *     malformed JWS, tampered bytes) -> `fail` with an actionable hint.
+ *
+ * The signer's did:web identity is taken from the JWS `kid` when it is a
+ * `did:web:` URI, else from `provenance.issuer`, else derived from the
+ * audited origin (did:web's trust anchor is the serving host).
+ *
+ * The snapshot is re-fetched raw because `AHTMLClient.fetch` does not
+ * expose response headers; the header and the bytes it signs must come
+ * from the same response. Never throws — always returns a DoctorCheck.
+ */
+async function checkSignature(
+  fetcher: typeof fetch,
+  snapshotUrl: string,
+  origin: string,
+  fallbackSnap: Snapshot,
+  timeoutMs: number,
+): Promise<DoctorCheck> {
+  const name = '/ahtml signature';
+
+  let jws: string | null = null;
+  let source: 'X-AHTML-Signature header' | 'provenance.signature' = 'X-AHTML-Signature header';
+  let payloadSnap: Snapshot = fallbackSnap;
+
+  const raw = await fetchRaw(fetcher, snapshotUrl, timeoutMs);
+  if (raw.ok) {
+    try {
+      payloadSnap = JSON.parse(raw.body) as Snapshot;
+    } catch {
+      payloadSnap = fallbackSnap; // non-JSON body (e.g. compact-only server)
+    }
+    jws = raw.headers.get(SIGNATURE_HEADER);
+  }
+
+  if (!jws) {
+    const embedded = payloadSnap.provenance?.signature;
+    if (typeof embedded === 'string' && embedded.length > 0) {
+      jws = embedded;
+      source = 'provenance.signature';
+      // The embedded signature cannot sign itself — verify against the
+      // snapshot with the signature field removed.
+      const clone = JSON.parse(JSON.stringify(payloadSnap)) as Snapshot;
+      delete clone.provenance!.signature;
+      payloadSnap = clone;
+    }
+  }
+
+  if (!jws) {
+    return {
+      name,
+      status: 'warn',
+      detail: 'Snapshot is unsigned — signing is optional but recommended.',
+      hint: 'Sign snapshots with signSnapshot() from @ahtmljs/schema and serve the JWS via the X-AHTML-Signature header (or provenance.signature). See docs/signing.md.',
+    };
+  }
+
+  const did = resolveSignerDid(jws, payloadSnap, origin);
+  const result = await verifySnapshotWithDidWeb(payloadSnap, jws, did, {
+    fetch: fetcher,
+    cache: new InMemoryCacheStore<VerifyKey[]>(),
+  });
+
+  if (result.ok) {
+    const kid = result.signer.kid ? `kid=${result.signer.kid}, ` : '';
+    return {
+      name,
+      status: 'pass',
+      detail: `Verified via ${did} (${kid}alg=${result.signer.alg}; from ${source}).`,
+    };
+  }
+  return {
+    name,
+    status: 'fail',
+    detail: `Signature from ${source} did not verify via ${did}: ${result.reason}`,
+    hint: `Publish the signing public JWK in the DID document for ${did} (its kid must match the JWS header kid) and re-sign whenever the snapshot bytes change. See docs/did-web.md.`,
+  };
+}
+
+/**
+ * Pick the did:web identity to verify against: a `did:web:` JWS `kid`
+ * wins, then a `did:web:` `provenance.issuer`, then the audited origin's
+ * host (ports percent-encoded per the did:web spec). Fragments (`#key-1`)
+ * are stripped — they name a key inside the document, not the document.
+ */
+function resolveSignerDid(jws: string, snap: Snapshot, origin: string): string {
+  const kid = jwsKid(jws);
+  if (kid?.startsWith('did:web:')) return kid.split('#')[0]!;
+  const issuer = snap.provenance?.issuer;
+  if (typeof issuer === 'string' && issuer.startsWith('did:web:')) return issuer.split('#')[0]!;
+  let host: string;
+  try {
+    host = new URL(origin).host;
+  } catch {
+    host = origin.replace(/^[a-z+]+:\/\//i, '').split('/')[0]!;
+  }
+  return `did:web:${host.replace(':', '%3A')}`;
+}
+
+/** Best-effort extraction of `kid` from a JWS protected header. Never throws. */
+function jwsKid(jws: string): string | null {
+  const headerB64 = jws.split('.')[0];
+  if (!headerB64) return null;
+  try {
+    const padLen = (4 - (headerB64.length % 4)) % 4;
+    const b64 = headerB64.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(padLen);
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const header = JSON.parse(new TextDecoder().decode(bytes)) as { kid?: unknown };
+    return typeof header.kid === 'string' ? header.kid : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Strip trailing slash from a URL so URL composition is deterministic. */
@@ -331,6 +473,28 @@ async function fetchJson(
     } catch (err) {
       return { ok: false, detail: `JSON parse failed: ${(err as Error).message}` };
     }
+  } catch (err) {
+    return { ok: false, detail: `fetch failed: ${(err as Error).message}` };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Bounded raw `fetch` keeping body + headers (for the signature check). Never throws. */
+async function fetchRaw(
+  fetcher: typeof fetch,
+  url: string,
+  timeoutMs: number,
+): Promise<{ ok: true; body: string; headers: Headers } | { ok: false; detail: string }> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetcher(url, {
+      signal: ctrl.signal,
+      headers: { accept: 'application/ahtml+json' },
+    });
+    if (!res.ok) return { ok: false, detail: `HTTP ${res.status} ${res.statusText}` };
+    return { ok: true, body: await res.text(), headers: res.headers };
   } catch (err) {
     return { ok: false, detail: `fetch failed: ${(err as Error).message}` };
   } finally {

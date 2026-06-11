@@ -28,7 +28,19 @@
  * accepts Vite plugins. For Astro, prefer @ahtmljs/astro (similar shape).
  */
 
-import { toJson, toCompact, computeEtag, diff, type Snapshot, type Policy } from '@ahtmljs/schema';
+import {
+  toJson,
+  toCompact,
+  computeEtag,
+  diff,
+  buildWellKnown,
+  snapshotsToMcp,
+  snapshotsToOpenApi,
+  buildLlmsTxt,
+  chooseFormat,
+  type Snapshot,
+  type Policy,
+} from '@ahtmljs/schema';
 
 // Minimal Vite plugin type — we don't depend on Vite at runtime (peerDep).
 interface ViteServer {
@@ -138,37 +150,19 @@ async function ahtmlRoute(
 
   // Special endpoints: /ahtml/mcp.json and /ahtml/openapi.json (lazy emit
   // from the snapshot cache; cold cache produces empty tools/paths — call a
-  // /ahtml/<page> first to warm it).
+  // /ahtml/<page> first to warm it). Both delegate to the framework-neutral
+  // emitters in @ahtmljs/schema, with the same config mapping as @ahtmljs/next
+  // and @ahtmljs/hono so the wire-format is identical across adapters.
+  const base = config.site.replace(/\/$/, '');
   if (segments.length === 1 && segments[0] === 'mcp.json' && config.emit_mcp !== false) {
-    const tools: unknown[] = [];
-    for (const snap of cache.values()) {
-      for (const action of snap.actions) {
-        // Strip raw $refs — the schema component they reference may not exist
-        // on the consuming end, and bare $refs produce invalid MCP. Same
-        // policy as @ahtmljs/next's mcp emitter.
-        const inputSchema =
-          action.input && '$ref' in action.input
-            ? { type: 'object' }
-            : action.input ?? { type: 'object', properties: {} };
-        tools.push({
-          name: `${snap.page_type}.${action.id}`,
-          description: action.label ?? action.category ?? action.id,
-          inputSchema,
-          annotations: {
-            auth: action.auth, cost: action.cost, reversible: action.reversible,
-            side_effects: action.side_effects, confirmation: action.confirmation,
-            execute_url: action.execute_url, snapshot_url: snap.url,
-          },
-        });
-      }
-    }
+    const m = snapshotsToMcp({ name: 'ahtml', url: base }, [...cache.values()]);
     res.statusCode = 200;
     res.setHeader('content-type', 'application/json');
-    res.end(JSON.stringify({ schema_version: '0.1', server: { name: config.site, url: config.site }, tools }, null, 2));
+    res.end(JSON.stringify(m, null, 2));
     return;
   }
   if (segments.length === 1 && segments[0] === 'openapi.json' && config.emit_openapi !== false) {
-    const doc = mkOpenApiDoc(config, cache);
+    const doc = snapshotsToOpenApi({ title: 'AHTML', baseUrl: base }, [...cache.values()]);
     res.statusCode = 200;
     res.setHeader('content-type', 'application/json');
     res.end(JSON.stringify(doc, null, 2));
@@ -233,7 +227,7 @@ async function ahtmlRoute(
   }
 
   cache.set(cacheKey, snap);
-  const fmt = pickFormat(headerObj['accept'] ?? '');
+  const fmt = chooseFormat(headerObj['accept'] ?? '');
   const body = fmt === 'json' ? toJson(snap) : toCompact(snap);
   res.statusCode = 200;
   res.setHeader('content-type', fmt === 'json' ? 'application/ahtml+json' : 'application/ahtml+text; charset=utf-8');
@@ -246,31 +240,13 @@ async function ahtmlRoute(
 }
 
 function wellKnown(config: AHTMLViteConfig, res: ServerResponseLike) {
-  const base = config.site.replace(/\/$/, '');
-  const manifest = {
-    ahtml: '0.1',
-    site: base,
-    policy: config.policy ?? { agents_welcome: true },
-    snapshot_url_template: `${base}/ahtml/{path}`,
-    routes: config.routes?.map((r) => ({
-      path: r.path,
-      page_type: r.page_type,
-      snapshot_url: `${base}/ahtml${r.path.startsWith('/') ? r.path : '/' + r.path}`,
-    })),
-    endpoints: {
-      snapshot: `${base}/ahtml/{path}`,
-      diff_param: 'since',
-      mcp: config.emit_mcp !== false ? `${base}/ahtml/mcp.json` : undefined,
-      openapi: config.emit_openapi !== false ? `${base}/ahtml/openapi.json` : undefined,
-    },
-    formats: [
-      { media_type: 'application/ahtml+text', description: 'Token-optimal compact text. Default for LLM agents.' },
-      { media_type: 'application/ahtml+json', description: 'Canonical JSON. Use for programmatic consumers and signature verification.' },
-      { media_type: 'application/ahtml-diff+json', description: 'Returned for ?since=<etag> requests; minimal change list.' },
-    ],
-    generated_at: new Date().toISOString(),
-    generated_by: '@ahtmljs/vite 0.1.0',
-  };
+  const manifest = buildWellKnown({
+    site: config.site,
+    policy: config.policy,
+    routes: config.routes,
+    emit_mcp: config.emit_mcp,
+    emit_openapi: config.emit_openapi,
+  });
   res.statusCode = 200;
   res.setHeader('content-type', 'application/json');
   res.setHeader('cache-control', 'public, max-age=300');
@@ -278,134 +254,21 @@ function wellKnown(config: AHTMLViteConfig, res: ServerResponseLike) {
 }
 
 function llmsTxt(config: AHTMLViteConfig, res: ServerResponseLike) {
-  const base = config.site.replace(/\/$/, '');
-  const host = (() => {
-    try { return new URL(base).host; } catch { return base; }
-  })();
-  const lines: string[] = [];
-  lines.push(`# ${host}`);
-  lines.push('');
-  if (config.llms_contact ?? config.policy?.contact) {
-    lines.push(`> Agents welcome. Contact: ${config.llms_contact ?? config.policy?.contact}`);
-    lines.push('');
-  }
-  if (config.routes?.length) {
-    lines.push('## Pages');
-    lines.push('');
-    for (const route of config.routes) {
-      lines.push(`- [${route.path}](${base}${route.path}): ${route.page_type}`);
-    }
-    lines.push('');
-  }
-  lines.push('## Machine-readable');
-  lines.push('');
-  lines.push(`- [AHTML manifest](${base}/.well-known/ahtml.json): structured semantic snapshots, typed actions, MCP-compatible tools, OpenAPI`);
-  lines.push('');
+  const contact = config.llms_contact ?? config.policy?.contact;
+  const body = buildLlmsTxt({
+    site: config.site,
+    description: contact ? `Agents welcome — contact: ${contact}` : undefined,
+    routes: config.routes ?? [],
+  });
   res.statusCode = 200;
   res.setHeader('content-type', 'text/markdown; charset=utf-8');
   res.setHeader('cache-control', 'public, max-age=300');
-  res.end(lines.join('\n'));
+  res.end(body);
 }
 
 function cacheControl(snap: Snapshot, config: AHTMLViteConfig): string {
   const ttl = snap.ttl ?? config.default_ttl ?? 60;
   return `public, max-age=${ttl}, must-revalidate`;
-}
-
-/**
- * Minimal OpenAPI 3.1 emission for the vite plugin. Lives here rather than
- * importing @ahtmljs/next because vite shouldn't depend on the Next adapter;
- * the duplication will be removed once the shared framework-neutral helpers
- * land in @ahtmljs/schema.
- */
-function mkOpenApiDoc(
-  config: AHTMLViteConfig,
-  cache: Map<string, Snapshot>,
-): Record<string, unknown> {
-  const baseUrl = config.site.replace(/\/$/, '');
-  const paths: Record<string, Record<string, unknown>> = {};
-  const securitySchemes: Record<string, unknown> = {};
-
-  for (const snap of cache.values()) {
-    const p = snap.url.replace(baseUrl, '') || '/';
-    paths['/ahtml' + p] = {
-      get: {
-        summary: `AHTML snapshot of ${p}`,
-        responses: {
-          '200': {
-            description: 'snapshot',
-            content: {
-              'application/ahtml+text': { schema: { type: 'string' } },
-              'application/ahtml+json': { schema: { $ref: '#/components/schemas/Snapshot' } },
-            },
-          },
-          '304': { description: 'not modified' },
-        },
-      },
-    };
-
-    for (const a of snap.actions) {
-      if (!a.execute_url) continue;
-      const verb = (a.method ?? 'post').toLowerCase();
-      const op: Record<string, unknown> = {
-        summary: a.label ?? a.id,
-        operationId: a.id,
-        responses: { '200': { description: 'success' } },
-      };
-      if (a.input) op.requestBody = { content: { 'application/json': { schema: a.input } } };
-      if (a.auth && a.auth !== 'none') {
-        if (typeof a.auth === 'string') {
-          securitySchemes.bearer ??= { type: 'http', scheme: 'bearer' };
-          op.security = [{ bearer: [] }];
-        } else {
-          securitySchemes[a.auth.scheme] ??= { type: 'http', scheme: a.auth.scheme };
-          op.security = [{ [a.auth.scheme]: a.auth.scopes ?? [] }];
-        }
-      }
-      (paths[a.execute_url] ??= {})[verb] = op;
-    }
-  }
-
-  return {
-    openapi: '3.1.0',
-    info: { title: config.site, version: '1.0.0' },
-    servers: [{ url: baseUrl }],
-    paths,
-    components: {
-      schemas: {
-        Snapshot: { $ref: 'https://raw.githubusercontent.com/DibbayajyotiRoy/AHTML/main/packages/schema/src/schema.json' },
-      },
-      ...(Object.keys(securitySchemes).length > 0 && { securitySchemes }),
-    },
-  };
-}
-
-/**
- * RFC 7231 q-value aware Accept parsing. Mirror of next/handler.ts#chooseFormat;
- * the two will be unified into @ahtmljs/schema once we extract the shared
- * framework-neutral helpers (tracked: issue #29 in v0.4 audit).
- */
-function pickFormat(accept: string): 'json' | 'compact' {
-  if (!accept) return 'compact';
-  let bestJson = -1;
-  let bestCompact = -1;
-  for (const raw of accept.split(',')) {
-    const parts = raw.trim().split(';').map((p) => p.trim());
-    const type = (parts.shift() ?? '').toLowerCase();
-    if (!type) continue;
-    let q = 1;
-    for (const p of parts) {
-      const m = p.match(/^q=([0-9]*\.?[0-9]+)$/i);
-      if (m) q = Math.max(0, Math.min(1, parseFloat(m[1]!)));
-    }
-    if (type === 'application/ahtml+json' || type === 'application/json') {
-      if (q > bestJson) bestJson = q;
-    } else if (type === 'application/ahtml+text' || type === 'text/plain') {
-      if (q > bestCompact) bestCompact = q;
-    }
-  }
-  if (bestJson < 0 && bestCompact < 0) return 'compact';
-  return bestJson >= bestCompact ? 'json' : 'compact';
 }
 
 export type { Snapshot, Policy } from '@ahtmljs/schema';

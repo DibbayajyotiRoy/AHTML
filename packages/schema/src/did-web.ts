@@ -163,16 +163,26 @@ function importParamsFor(alg: SignAlg):
   }
 }
 
-function subtleOrThrow(): SubtleCrypto {
+let subtleCached: SubtleCrypto | null = null;
+
+async function subtleOrThrow(): Promise<SubtleCrypto> {
+  if (subtleCached) return subtleCached;
   const c = (globalThis as { crypto?: Crypto }).crypto;
-  if (!c || !c.subtle) {
-    throw new AHTMLError({
-      code: 'SIGNATURE_INVALID',
-      message: 'Web Crypto (globalThis.crypto.subtle) is not available in this runtime',
-      hint: DEFAULT_HINTS.SIGNATURE_INVALID,
-    });
+  if (c?.subtle) return (subtleCached = c.subtle);
+  // Bare Node 18 exposes Web Crypto only behind a flag; load it from
+  // node:crypto. Edge runtimes always have the global, so they never reach
+  // this import.
+  try {
+    const { webcrypto } = await import('node:crypto');
+    if (webcrypto?.subtle) return (subtleCached = webcrypto.subtle as unknown as SubtleCrypto);
+  } catch {
+    /* not Node — fall through to the throw below */
   }
-  return c.subtle;
+  throw new AHTMLError({
+    code: 'SIGNATURE_INVALID',
+    message: 'Web Crypto (globalThis.crypto.subtle) is not available in this runtime',
+    hint: DEFAULT_HINTS.SIGNATURE_INVALID,
+  });
 }
 
 /**
@@ -279,7 +289,7 @@ export async function resolveDidWeb(
     });
   }
 
-  const subtle = subtleOrThrow();
+  const subtle = await subtleOrThrow();
   const keys: VerifyKey[] = [];
 
   for (const vm of doc.verificationMethod) {

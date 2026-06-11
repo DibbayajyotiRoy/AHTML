@@ -51,6 +51,7 @@ import {
   snapshotsToOpenApi,
   buildLlmsTxt,
   chooseFormat,
+  trace,
   type Snapshot,
   type Policy,
   type Encoding,
@@ -148,6 +149,42 @@ export interface AHTMLHonoConfig {
 export function mountAHTML(app: HonoAppLike, config: AHTMLHonoConfig): HonoAppLike {
   const snapshotHandler = makeSnapshotHandler(config);
 
+  // Hono dispatches matching handlers in registration order and stops at the
+  // first returned Response, so the specific /ahtml/mcp.json and
+  // /ahtml/openapi.json routes MUST be registered before the /ahtml/*
+  // wildcard or the wildcard swallows them.
+  if (config.emit_mcp !== false) {
+    app.get('/ahtml/mcp.json', async (c) => {
+      const req = toRequest(c);
+      const url = new URL(req.url);
+      const snaps = await collectSnapshots(config, req);
+      const m = snapshotsToMcp(
+        { name: 'ahtml', url: `${url.protocol}//${url.host}` },
+        snaps,
+      );
+      return jsonResponse(m, {
+        'cache-control': 'public, max-age=300, must-revalidate',
+        'x-ahtml-version': '0.1',
+      });
+    });
+  }
+
+  if (config.emit_openapi !== false) {
+    app.get('/ahtml/openapi.json', async (c) => {
+      const req = toRequest(c);
+      const url = new URL(req.url);
+      const snaps = await collectSnapshots(config, req);
+      const doc = snapshotsToOpenApi(
+        { title: 'AHTML', baseUrl: `${url.protocol}//${url.host}` },
+        snaps,
+      );
+      return jsonResponse(doc, {
+        'cache-control': 'public, max-age=300, must-revalidate',
+        'x-ahtml-version': '0.1',
+      });
+    });
+  }
+
   app.get('/ahtml/*', snapshotHandler);
   // HEAD: Hono routes by method; `.all` covers HEAD when present. If the
   // host app doesn't expose `.all`, callers can register HEAD themselves
@@ -182,38 +219,6 @@ export function mountAHTML(app: HonoAppLike, config: AHTMLHonoConfig): HonoAppLi
     });
   });
 
-  if (config.emit_mcp !== false) {
-    app.get('/ahtml/mcp.json', async (c) => {
-      const req = toRequest(c);
-      const url = new URL(req.url);
-      const snaps = await collectSnapshots(config, req);
-      const m = snapshotsToMcp(
-        { name: 'ahtml', url: `${url.protocol}//${url.host}` },
-        snaps,
-      );
-      return jsonResponse(m, {
-        'cache-control': 'public, max-age=300, must-revalidate',
-        'x-ahtml-version': '0.1',
-      });
-    });
-  }
-
-  if (config.emit_openapi !== false) {
-    app.get('/ahtml/openapi.json', async (c) => {
-      const req = toRequest(c);
-      const url = new URL(req.url);
-      const snaps = await collectSnapshots(config, req);
-      const doc = snapshotsToOpenApi(
-        { title: 'AHTML', baseUrl: `${url.protocol}//${url.host}` },
-        snaps,
-      );
-      return jsonResponse(doc, {
-        'cache-control': 'public, max-age=300, must-revalidate',
-        'x-ahtml-version': '0.1',
-      });
-    });
-  }
-
   app.get('/llms.txt', (c) => {
     const _req = toRequest(c);
     void _req;
@@ -246,95 +251,119 @@ const _cache = new Map<string, Snapshot>();
 function makeSnapshotHandler(config: AHTMLHonoConfig): HonoHandler {
   return async (c: HonoContextLike): Promise<Response> => {
     const req = toRequest(c);
-
-    const policyDecision = enforcePolicy(req, config);
-    if (policyDecision.deny) return policyDecision.response;
-
     const url = new URL(req.url);
-    const segments = pathSegmentsUnderAhtml(url.pathname);
 
-    let snap: Snapshot | null;
-    try {
-      snap = await config.snapshotBuilder(segments, req);
-    } catch (err) {
-      return errorResponse(500, 'snapshot_build_failed', err);
-    }
-    if (!snap) {
-      return errorResponse(404, 'no_snapshot', `no snapshot for /${segments.join('/')}`);
-    }
+    // OTel spans (no-op when @opentelemetry/api is absent) — same span
+    // names as the Next.js adapter so dashboards work across frameworks.
+    return trace(
+      'ahtml.serve_snapshot',
+      async () => {
+        const policyDecision = await trace(
+          'ahtml.enforce_policy',
+          () => enforcePolicy(req, config),
+          { 'ahtml.url': url.pathname },
+        );
+        if (policyDecision.deny) return policyDecision.response;
 
-    snap = ensureDefaults(snap, config);
+        const segments = pathSegmentsUnderAhtml(url.pathname);
 
-    const etag = snap.etag ?? computeEtag(snap);
-    snap.etag = etag;
+        let snap: Snapshot | null;
+        try {
+          snap = await trace(
+            'ahtml.build_snapshot',
+            () => Promise.resolve(config.snapshotBuilder(segments, req)),
+            { 'ahtml.url': url.pathname },
+          );
+        } catch (err) {
+          return errorResponse(500, 'snapshot_build_failed', err);
+        }
+        if (!snap) {
+          return errorResponse(404, 'no_snapshot', `no snapshot for /${segments.join('/')}`);
+        }
 
-    const cacheKey = snap.url;
-    const encoding = chooseEncoding(req.headers.get('accept-encoding'));
+        snap = ensureDefaults(snap, config);
 
-    // Diff endpoint: GET /ahtml/...?since=W/"abc"
-    const sinceEtag = url.searchParams.get('since');
-    if (sinceEtag) {
-      const prev = _cache.get(cacheKey);
-      if (prev && (prev.etag === sinceEtag || computeEtag(prev) === sinceEtag)) {
-        const d = diff(prev, snap);
-        _cache.set(cacheKey, snap);
-        if (d.changes.length === 0) {
+        const etag = snap.etag ?? computeEtag(snap);
+        snap.etag = etag;
+
+        const cacheKey = snap.url;
+        const encoding = chooseEncoding(req.headers.get('accept-encoding'));
+
+        // Diff endpoint: GET /ahtml/...?since=W/"abc"
+        const sinceEtag = url.searchParams.get('since');
+        if (sinceEtag) {
+          const prev = _cache.get(cacheKey);
+          if (prev && (prev.etag === sinceEtag || computeEtag(prev) === sinceEtag)) {
+            // `const` capture so the closure below sees the narrowed Snapshot.
+            const current = snap;
+            return await trace(
+              'ahtml.serve_diff',
+              async () => {
+                const d = diff(prev, current);
+                _cache.set(cacheKey, current);
+                if (d.changes.length === 0) {
+                  return new Response(null, {
+                    status: 304,
+                    headers: { etag, 'cache-control': cacheControl(current, config) },
+                  });
+                }
+                return await encodedResponse(
+                  JSON.stringify(d),
+                  {
+                    'content-type': 'application/ahtml-diff+json',
+                    etag,
+                    'cache-control': cacheControl(current, config),
+                    'x-ahtml-version': '0.1',
+                  },
+                  encoding,
+                );
+              },
+              { 'ahtml.url': url.pathname, 'ahtml.since': sinceEtag },
+            );
+          }
+          // Fall through to full snapshot if we don't have the prior.
+        }
+
+        // Conditional GET
+        const ifNoneMatch = req.headers.get('if-none-match');
+        if (ifNoneMatch && ifNoneMatch === etag) {
           return new Response(null, {
             status: 304,
             headers: { etag, 'cache-control': cacheControl(snap, config) },
           });
         }
+
+        _cache.set(cacheKey, snap);
+
+        // Streaming path — emit NDJSON record-by-record.
+        if (shouldStream(req, snap, config)) {
+          let stream = toStreamResponse(snap);
+          stream = compressStream(stream, encoding);
+          return new Response(stream, {
+            status: 200,
+            headers: streamHeaders(snap, config, etag, encoding),
+          });
+        }
+
+        const fmt = chooseFormat(req.headers.get('accept') ?? '');
+        const body = fmt === 'json' ? toJson(snap) : toCompact(snap);
         return await encodedResponse(
-          JSON.stringify(d),
+          body,
           {
-            'content-type': 'application/ahtml-diff+json',
+            'content-type':
+              fmt === 'json'
+                ? 'application/ahtml+json'
+                : 'application/ahtml+text; charset=utf-8',
             etag,
             'cache-control': cacheControl(snap, config),
+            'last-modified': new Date(snap.fetched_at).toUTCString(),
             'x-ahtml-version': '0.1',
+            vary: 'Accept, Accept-Encoding',
           },
           encoding,
         );
-      }
-      // Fall through to full snapshot if we don't have the prior.
-    }
-
-    // Conditional GET
-    const ifNoneMatch = req.headers.get('if-none-match');
-    if (ifNoneMatch && ifNoneMatch === etag) {
-      return new Response(null, {
-        status: 304,
-        headers: { etag, 'cache-control': cacheControl(snap, config) },
-      });
-    }
-
-    _cache.set(cacheKey, snap);
-
-    // Streaming path — emit NDJSON record-by-record.
-    if (shouldStream(req, snap, config)) {
-      let stream = toStreamResponse(snap);
-      stream = compressStream(stream, encoding);
-      return new Response(stream, {
-        status: 200,
-        headers: streamHeaders(snap, config, etag, encoding),
-      });
-    }
-
-    const fmt = chooseFormat(req.headers.get('accept') ?? '');
-    const body = fmt === 'json' ? toJson(snap) : toCompact(snap);
-    return await encodedResponse(
-      body,
-      {
-        'content-type':
-          fmt === 'json'
-            ? 'application/ahtml+json'
-            : 'application/ahtml+text; charset=utf-8',
-        etag,
-        'cache-control': cacheControl(snap, config),
-        'last-modified': new Date(snap.fetched_at).toUTCString(),
-        'x-ahtml-version': '0.1',
-        vary: 'Accept, Accept-Encoding',
       },
-      encoding,
+      { 'ahtml.url': url.pathname },
     );
   };
 }

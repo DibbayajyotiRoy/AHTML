@@ -98,4 +98,4 @@ export {
 
 // v0.9.0 — optional OpenTelemetry tracing. `@opentelemetry/api` is a
 // soft peer dep; these helpers no-op when it isn't installed.
-export { trace, addEvent, setStatus } from './otel.js';
+export { trace, traceSync, addEvent, setStatus } from './otel.js';

@@ -1,38 +1,80 @@
 {
   "name": "@ahtmljs/next",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Next.js plugin for AHTML. Turns your existing Next.js app into an MCP server, an OpenAPI provider, a JSON-LD source, and a token-optimal semantic snapshot — all from one plugin. Zero migration.",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/cjs/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     },
     "./handler": {
-      "types": "./dist/handler.d.ts",
-      "import": "./dist/handler.js"
+      "import": {
+        "types": "./dist/handler.d.ts",
+        "default": "./dist/handler.js"
+      },
+      "require": {
+        "types": "./dist/cjs/handler.d.ts",
+        "default": "./dist/cjs/handler.js"
+      }
     },
     "./well-known": {
-      "types": "./dist/well-known.d.ts",
-      "import": "./dist/well-known.js"
+      "import": {
+        "types": "./dist/well-known.d.ts",
+        "default": "./dist/well-known.js"
+      },
+      "require": {
+        "types": "./dist/cjs/well-known.d.ts",
+        "default": "./dist/cjs/well-known.js"
+      }
     },
     "./llms-txt": {
-      "types": "./dist/llms-txt.d.ts",
-      "import": "./dist/llms-txt.js"
+      "import": {
+        "types": "./dist/llms-txt.d.ts",
+        "default": "./dist/llms-txt.js"
+      },
+      "require": {
+        "types": "./dist/cjs/llms-txt.d.ts",
+        "default": "./dist/cjs/llms-txt.js"
+      }
     },
     "./extractors": {
-      "types": "./dist/extractors/index.d.ts",
-      "import": "./dist/extractors/index.js"
+      "import": {
+        "types": "./dist/extractors/index.d.ts",
+        "default": "./dist/extractors/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/extractors/index.d.ts",
+        "default": "./dist/cjs/extractors/index.js"
+      }
     },
     "./mcp": {
-      "types": "./dist/mcp.d.ts",
-      "import": "./dist/mcp.js"
+      "import": {
+        "types": "./dist/mcp.d.ts",
+        "default": "./dist/mcp.js"
+      },
+      "require": {
+        "types": "./dist/cjs/mcp.d.ts",
+        "default": "./dist/cjs/mcp.js"
+      }
     },
     "./openapi": {
-      "types": "./dist/openapi.d.ts",
-      "import": "./dist/openapi.js"
+      "import": {
+        "types": "./dist/openapi.d.ts",
+        "default": "./dist/openapi.js"
+      },
+      "require": {
+        "types": "./dist/cjs/openapi.d.ts",
+        "default": "./dist/cjs/openapi.js"
+      }
     }
   },
   "files": [
@@ -43,7 +85,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.cjs.json && node ../../build-tools/cjs-postbuild.mjs",
     "dev": "tsc -p tsconfig.json --watch",
     "test": "tsx --test src/__tests__/*.test.ts"
   },
@@ -80,7 +122,7 @@
     "crawler"
   ],
   "dependencies": {
-    "@ahtmljs/schema": "0.9.0"
+    "@ahtmljs/schema": "0.9.1"
   },
   "peerDependencies": {
     "next": ">=14"

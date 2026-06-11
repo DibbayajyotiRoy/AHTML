@@ -1,0 +1,23 @@
+{
+  "name": "jaeger-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal AHTML + OpenTelemetry demo: serves snapshots via @ahtmljs/hono and exports every ahtml.* span to a local Jaeger all-in-one over OTLP/HTTP.",
+  "scripts": {
+    "start": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "@ahtmljs/hono": "^0.9.0",
+    "@ahtmljs/schema": "^0.9.0",
+    "@hono/node-server": "^1.13.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.200.0",
+    "@opentelemetry/sdk-node": "^0.200.0",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0"
+  }
+}

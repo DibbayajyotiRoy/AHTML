@@ -19,6 +19,22 @@ export type Encoding = 'br' | 'gzip' | 'identity';
 
 const SUPPORTED: Encoding[] = ['br', 'gzip', 'identity'];
 
+// 'br' in CompressionStream is newer than gzip (Node gained it after 22;
+// browsers in 2025). Probe once, lazily — advertising an encoding we can't
+// produce turns a br-only client into an unhandled throw downstream.
+let brSupported: boolean | null = null;
+
+function supportsBr(): boolean {
+  if (brSupported !== null) return brSupported;
+  try {
+    new (CompressionStream as unknown as new (f: string) => unknown)('br');
+    brSupported = true;
+  } catch {
+    brSupported = false;
+  }
+  return brSupported;
+}
+
 /**
  * Pick the highest-quality encoding the client accepts that this runtime
  * supports. Honors RFC 7231 q-values; defaults to `identity` when the
@@ -38,6 +54,7 @@ export function chooseEncoding(acceptEncoding: string | null | undefined): Encod
   // Try each supported encoding in our own preference order.
   let best: { enc: Encoding; q: number } | null = null;
   for (const enc of SUPPORTED) {
+    if (enc === 'br' && !supportsBr()) continue;
     let q = explicit.get(enc);
     if (q === undefined) q = wildcard;
     if (q === undefined) {

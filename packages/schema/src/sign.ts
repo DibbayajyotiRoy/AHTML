@@ -16,14 +16,16 @@
  * base64url of `toJson(snapshot)` with a `.`, and feeding the resulting
  * bytes to `crypto.subtle.verify`.
  *
- * The whole module talks to `globalThis.crypto.subtle` — no Node-only
- * `node:crypto` imports — so it runs unchanged on Cloudflare Workers,
- * Deno, Bun, browsers, and Node ≥ 20.
+ * The whole module talks to `globalThis.crypto.subtle` — with a guarded
+ * dynamic `node:crypto` fallback that only runs when the global is missing
+ * (bare Node 18) — so it runs unchanged on Cloudflare Workers, Deno, Bun,
+ * browsers, and Node ≥ 18.
  */
 
 import type { Snapshot } from './types.js';
 import { toJson } from './format-json.js';
 import { AHTMLError, DEFAULT_HINTS } from './errors.js';
+import { trace } from './otel.js';
 
 /** Supported JWS algorithms. Each maps to a WebCrypto verify parameter. */
 export type SignAlg = 'ES256' | 'EdDSA' | 'RS256';
@@ -103,12 +105,22 @@ function algParams(alg: SignAlg): AlgorithmIdentifier | EcdsaParams | RsaPssPara
   }
 }
 
-function subtle(): SubtleCrypto {
+let subtleCached: SubtleCrypto | null = null;
+
+async function subtle(): Promise<SubtleCrypto> {
+  if (subtleCached) return subtleCached;
   const c = (globalThis as { crypto?: Crypto }).crypto;
-  if (!c || !c.subtle) {
-    throw new Error('Web Crypto (globalThis.crypto.subtle) is not available in this runtime');
+  if (c?.subtle) return (subtleCached = c.subtle);
+  // Bare Node 18 exposes Web Crypto only behind a flag; load it from
+  // node:crypto. Edge runtimes always have the global, so they never reach
+  // this import.
+  try {
+    const { webcrypto } = await import('node:crypto');
+    if (webcrypto?.subtle) return (subtleCached = webcrypto.subtle as unknown as SubtleCrypto);
+  } catch {
+    /* not Node — fall through to the throw below */
   }
-  return c.subtle;
+  throw new Error('Web Crypto (globalThis.crypto.subtle) is not available in this runtime');
 }
 
 /* -------------------------------------------------------------------------- */
@@ -142,7 +154,7 @@ export async function signSnapshot(
 
   const signingInput = TEXT_ENCODER.encode(`${headerB64}.${payloadB64}`);
 
-  const sigBuf = await subtle().sign(algParams(alg), key.key, signingInput);
+  const sigBuf = await (await subtle()).sign(algParams(alg), key.key, signingInput);
   const sigB64 = base64urlEncode(new Uint8Array(sigBuf));
 
   // Detached form: empty payload segment.
@@ -188,6 +200,18 @@ export async function verifySnapshot(
   jws: string,
   opts: { trustedKeys: VerifyKey[] },
 ): Promise<VerifyResult> {
+  // OTel span (no-op when @opentelemetry/api is absent). Also covers
+  // verifySnapshotStrict, which delegates here.
+  return trace('ahtml.verify_signature', () => verifySnapshotImpl(snap, jws, opts), {
+    'ahtml.url': snap?.url,
+  });
+}
+
+async function verifySnapshotImpl(
+  snap: Snapshot,
+  jws: string,
+  opts: { trustedKeys: VerifyKey[] },
+): Promise<VerifyResult> {
   if (!opts || !Array.isArray(opts.trustedKeys) || opts.trustedKeys.length === 0) {
     throw new Error('verifySnapshot requires at least one trusted key');
   }
@@ -221,7 +245,7 @@ export async function verifySnapshot(
       continue;
     }
     try {
-      const ok = await subtle().verify(
+      const ok = await (await subtle()).verify(
         algParams(candidate.alg),
         candidate.key,
         signatureBytes,

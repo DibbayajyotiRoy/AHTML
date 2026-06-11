@@ -6,12 +6,85 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Planned for `1.0.0-rc.1` (the *stability commitment* release):
-- CJS dual-publish via `tsup` (drops the ESM-only constraint for older
-  Node, Electron, Jest-without-ESM)
-- Node 18 support (engines floor drops from `>=20` to `>=18`)
-- OpenTelemetry metrics + logs (v0.9 shipped traces only)
-- After two-week bake, tag `1.0.0` with API-stability commitment
+Planned for the remaining 0.9.x series (see the version plan):
+- OpenTelemetry metrics + logs (0.9.x ships traces only)
+- After the series completes and bakes two weeks, tag `1.0.0` with the
+  API-stability commitment
+
+## [0.9.1] — 2026-06-11
+
+**Close the v0.9 gate** — nothing new in scope; this release finishes
+what v0.9 promised and fixes everything that would otherwise be frozen
+broken at 1.0. No breaking changes.
+
+### Added — dual ESM + CJS publish (all library packages)
+- `require('@ahtmljs/schema')` (and every other package) now works.
+  Implemented as a second `tsc` emit to `dist/cjs/` with a
+  `{"type":"commonjs"}` marker — *not* per-entry bundling, which would
+  have duplicated `AHTMLError` across entries and broken `instanceof`.
+  ESM output is unchanged; the `dist/` layout is additive.
+- **Fixed broken documented subpaths.** These all threw
+  `ERR_PACKAGE_PATH_NOT_EXPORTED` in 0.9.0 and now resolve in both
+  module systems: `@ahtmljs/schema/{stream,kv,sign}`,
+  `@ahtmljs/schema/emit/{well-known,mcp,openapi,llms-txt}`,
+  `@ahtmljs/schema/http/{accept,conditional}`, `@ahtmljs/agent/sign`
+  (also now re-exported from the `@ahtmljs/agent` root).
+- A `smoke:imports` script verifies every entry point in both module
+  systems; it runs in CI.
+
+### Added — Node 18
+- `engines` floor drops from `>=20` to `>=18` everywhere; CI matrix is
+  now 18 / 20 / 22.
+- `sign.ts` / `did-web.ts` gained a guarded dynamic `node:crypto`
+  fallback for bare Node 18 (no Web Crypto global). Edge runtimes never
+  reach the import.
+
+### Added — shared conformance suite (`tests/conformance/`)
+- One parameterized suite now runs the full wire surface against Next,
+  Vite, and Hono: well-known, compact/JSON negotiation, ETag/304, diff,
+  NDJSON streaming, encodings, policy 403, mcp.json, openapi.json,
+  llms.txt — plus cross-adapter **byte-equality** of emitter outputs.
+
+### Added — performance budgets in CI (`tests/budgets/`)
+- The v0.5–v0.8 budget tables are now failing tests, not prose:
+  round-trip medians/p99, `AHTMLError` construction `< 50 µs`,
+  ES256 sign `< 5 ms` / verify `< 3 ms`, retained-memory ceiling.
+  `BUDGET_SCALE` env guards against shared-runner flake.
+
+### Added — `@ahtmljs/cli` doctor verifies signatures
+- `doctor` now checks `X-AHTML-Signature` (detached JWS) and embedded
+  `provenance.signature`, resolves `did:web` signers, and reports
+  pass/fail with actionable hints. Unsigned snapshots get a WARN, not a
+  FAIL — non-adopters don't regress.
+
+### Added — OpenTelemetry completion
+- New spans: `ahtml.validate`, `ahtml.lint`, `ahtml.verify_signature`
+  (via a new sync-safe `traceSync()` helper — public APIs stay sync),
+  and `ahtml.serve_diff` in the Next handler.
+- `@ahtmljs/hono` is now fully instrumented (it had zero spans).
+- New `examples/jaeger` demo: two commands to see the span tree live.
+
+### Changed — `@ahtmljs/vite` consolidation (the deferred v0.8 half)
+- The Vite plugin now delegates well-known / MCP / OpenAPI / llms.txt /
+  Accept parsing to `@ahtmljs/schema` (411 → 274 LOC). This fixed real
+  drift: a stale `generated_by` field, wrong MCP `server.name`, missing
+  MCP annotations, an **invalid OpenAPI oauth2 securityScheme**, and
+  llms.txt format divergences. Snapshot endpoint bytes were already
+  identical and remain so.
+
+### Fixed
+- **`@ahtmljs/hono`: catalog routes were shadowed on the real router.**
+  `/ahtml/mcp.json` and `/ahtml/openapi.json` were registered after the
+  `/ahtml/*` wildcard; real Hono dispatches in registration order, so
+  both returned snapshot 404s. Specific routes now register first, with
+  regression tests on the real `hono` router (new devDependency).
+- **`chooseEncoding()` advertised `br` on runtimes that can't produce
+  it** (Node ≤ 22), turning a br-only client into an unhandled throw.
+  `br` is now offered only after a one-time `CompressionStream('br')`
+  feature probe.
+- CI now builds and tests `@ahtmljs/vite` and `@ahtmljs/langchain`
+  (both were publish-only — untested code could ship); stale test-count
+  step names removed.
 
 ## [0.9.0] — 2026-06-02
 

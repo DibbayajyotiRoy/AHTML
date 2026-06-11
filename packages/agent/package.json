@@ -1,18 +1,40 @@
 {
   "name": "@ahtmljs/agent",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "AHTML agent SDK — fetch snapshots from any AHTML-emitting site, cache by ETag, run actions with dry-run support, and measure token cost using the industry-standard tokenizers.",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/cjs/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     },
     "./tokens": {
-      "types": "./dist/tokens.d.ts",
-      "import": "./dist/tokens.js"
+      "import": {
+        "types": "./dist/tokens.d.ts",
+        "default": "./dist/tokens.js"
+      },
+      "require": {
+        "types": "./dist/cjs/tokens.d.ts",
+        "default": "./dist/cjs/tokens.js"
+      }
+    },
+    "./sign": {
+      "import": {
+        "types": "./dist/sign.d.ts",
+        "default": "./dist/sign.js"
+      },
+      "require": {
+        "types": "./dist/cjs/sign.d.ts",
+        "default": "./dist/cjs/sign.js"
+      }
     }
   },
   "files": [
@@ -23,7 +45,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.cjs.json && node ../../build-tools/cjs-postbuild.mjs",
     "dev": "tsc -p tsconfig.json --watch",
     "test": "tsx --test src/__tests__/*.test.ts"
   },
@@ -57,7 +79,7 @@
     "crawler"
   ],
   "dependencies": {
-    "@ahtmljs/schema": "0.9.0"
+    "@ahtmljs/schema": "0.9.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0"

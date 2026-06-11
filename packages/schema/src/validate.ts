@@ -9,6 +9,7 @@
 
 import type { Snapshot, Entity, Action } from './types.js';
 import { AHTMLError } from './errors.js';
+import { traceSync } from './otel.js';
 
 export interface Issue {
   path: string;
@@ -43,6 +44,12 @@ const PAGE_TYPES = new Set([
 ]);
 
 export function validate(snap: unknown): Issue[] {
+  // OTel span (no-op when @opentelemetry/api is absent). Sync wrapper —
+  // validate() must stay synchronous.
+  return traceSync('ahtml.validate', () => validateImpl(snap));
+}
+
+function validateImpl(snap: unknown): Issue[] {
   const issues: Issue[] = [];
   if (typeof snap !== 'object' || snap === null) {
     issues.push({ path: '', message: 'snapshot must be an object', severity: 'error' });

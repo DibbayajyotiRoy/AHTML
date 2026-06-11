@@ -12,12 +12,12 @@ concurrency:
 
 jobs:
   build:
-    name: build + typecheck + benchmark
+    name: build + typecheck + test (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        node: ['20', '22']
+        node: ['18', '20', '22']
     steps:
       - uses: actions/checkout@v4
 
@@ -29,11 +29,15 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
-      - name: Build all workspaces
+      # All seven packages, in dependency order. Scoped with -w flags (not the
+      # root build script) so examples/ never enter the package CI contract.
+      - name: Build all packages
         run: |
           npm run build -w @ahtmljs/schema
           npm run build -w @ahtmljs/next
           npm run build -w @ahtmljs/agent
+          npm run build -w @ahtmljs/vite
+          npm run build -w @ahtmljs/langchain
           npm run build -w @ahtmljs/hono
           npm run build -w @ahtmljs/cli
 
@@ -46,26 +50,32 @@ jobs:
       - name: Typecheck — @ahtmljs/agent
         run: cd packages/agent && npx tsc --noEmit -p tsconfig.json
 
+      - name: Typecheck — @ahtmljs/vite
+        run: cd packages/vite && npx tsc --noEmit -p tsconfig.json
+
+      - name: Typecheck — @ahtmljs/langchain
+        run: cd packages/langchain && npx tsc --noEmit -p tsconfig.json
+
       - name: Typecheck — @ahtmljs/hono
         run: cd packages/hono && npx tsc --noEmit -p tsconfig.json
 
       - name: Typecheck — @ahtmljs/cli
         run: cd packages/cli && npx tsc --noEmit -p tsconfig.json
 
-      - name: Typecheck — examples/benchmark
-        run: cd examples/benchmark && npx tsc --noEmit -p tsconfig.json
-
-      - name: Typecheck — examples/landing
-        run: cd examples/landing && npx tsc --noEmit -p tsconfig.json
-
-      - name: Unit tests — @ahtmljs/schema (49 tests)
+      - name: Unit tests — @ahtmljs/schema
         run: cd packages/schema && npm test
 
-      - name: Unit tests — @ahtmljs/next (38 tests)
+      - name: Unit tests — @ahtmljs/next
         run: cd packages/next && npm test
 
-      - name: Unit tests — @ahtmljs/agent (18 tests)
+      - name: Unit tests — @ahtmljs/agent
         run: cd packages/agent && npm test
+
+      - name: Unit tests — @ahtmljs/vite
+        run: cd packages/vite && npm test
+
+      - name: Unit tests — @ahtmljs/langchain
+        run: cd packages/langchain && npm test
 
       - name: Unit tests — @ahtmljs/hono
         run: cd packages/hono && npm test
@@ -73,11 +83,42 @@ jobs:
       - name: Unit tests — @ahtmljs/cli
         run: cd packages/cli && npm test
 
-      - name: UX scenario tests (30 tests — token-saving, action safety, incremental crawl, MCP, zero-config)
+      - name: UX scenario tests
         run: npm run test:ux
 
+      - name: Conformance tests
+        run: npm run test:conformance
+
+      # Resolves every documented entry point in BOTH module systems
+      # (require + import) against the freshly built dist/.
+      - name: Smoke-test CJS + ESM entry points
+        run: npm run smoke:imports
+
+      # Hard numeric limits from PLAN-NEXT-5.md, enforced as tests.
+      # BUDGET_SCALE=2 doubles every limit because shared runners are
+      # noisier than dev machines; the scale-1 contract holds locally.
+      - name: Performance budgets
+        run: npm run test:budgets
+        env:
+          BUDGET_SCALE: '2'
+
+      # ----------------------------------------------------------------
+      # Examples — not part of the package contract. Exercised once, on
+      # Node 22 only: the Next.js landing does not support Node 18.
+      # ----------------------------------------------------------------
+
+      - name: Typecheck — examples/benchmark
+        if: matrix.node == '22'
+        run: cd examples/benchmark && npx tsc --noEmit -p tsconfig.json
+
+      - name: Typecheck — examples/landing
+        if: matrix.node == '22'
+        run: cd examples/landing && npx tsc --noEmit -p tsconfig.json
+
       - name: Run benchmark (with real tokenizers)
+        if: matrix.node == '22'
         run: npm run benchmark
 
       - name: Build the landing (Next.js production build)
+        if: matrix.node == '22'
         run: cd examples/landing && npx next build

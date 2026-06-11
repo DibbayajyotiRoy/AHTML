@@ -17,6 +17,7 @@
  */
 
 import type { Snapshot, Action, Product, Document, Dataset } from './types.js';
+import { traceSync } from './otel.js';
 
 export type LintSeverity = 'warning' | 'info';
 
@@ -82,6 +83,14 @@ const HIGH_RISK_SIDE_EFFECTS = new Set([
  * snapshot-level first, then per entity, then per action.
  */
 export function lint(snap: Snapshot, opts: LintOptions = {}): LintWarning[] {
+  // OTel span (no-op when @opentelemetry/api is absent). Sync wrapper —
+  // lint() must stay synchronous.
+  return traceSync('ahtml.lint', () => lintImpl(snap, opts), {
+    'ahtml.url': snap.url,
+  });
+}
+
+function lintImpl(snap: Snapshot, opts: LintOptions): LintWarning[] {
   const disabled = new Set(opts.disable ?? []);
   const oversizedAt = opts.oversizedContentChars ?? 50_000;
   const out: LintWarning[] = [];

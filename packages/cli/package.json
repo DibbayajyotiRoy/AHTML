@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/cli",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "AHTML auditor CLI — npx @ahtmljs/cli doctor <url> walks the AHTML discovery chain (.well-known + /ahtml + /llms.txt + /ahtml/mcp.json + /ahtml/openapi.json) on a live site and reports what's well-formed, what's missing, and what AI clients can already consume.",
   "type": "module",
   "main": "./dist/cli.js",
@@ -50,11 +50,11 @@
     "diagnostic"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=18"
   },
   "license": "MIT",
   "dependencies": {
-    "@ahtmljs/schema": "0.9.0",
-    "@ahtmljs/agent": "0.9.0"
+    "@ahtmljs/schema": "0.9.1",
+    "@ahtmljs/agent": "0.9.1"
   }
 }

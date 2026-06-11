@@ -109,21 +109,7 @@ export async function trace<T>(
   const otel = await loadOtel();
   if (!otel) return await fn();
 
-  const tracer = otel.trace.getTracer('@ahtmljs/schema', AHTML_VERSION);
-  const span = tracer.startSpan(name);
-  if (attrs) {
-    for (const [k, v] of Object.entries(attrs)) {
-      // OTel attribute values must be primitives or arrays of primitives;
-      // anything else is coerced to JSON to avoid silent drops.
-      const safe =
-        typeof v === 'string' ||
-        typeof v === 'number' ||
-        typeof v === 'boolean'
-          ? v
-          : JSON.stringify(v);
-      span.setAttribute(k, safe as string | number | boolean);
-    }
-  }
+  const span = startSpan(otel, name, attrs);
   try {
     return await otel.context.with(
       otel.trace.setSpan(otel.context.active(), span),
@@ -139,6 +125,72 @@ export async function trace<T>(
   } finally {
     span.end();
   }
+}
+
+/**
+ * Synchronous sibling of {@link trace} for instrumenting sync public
+ * APIs (`validate`, `lint`, …) without making them async.
+ *
+ * Because the OTel module is loaded via a lazy dynamic import, a sync
+ * call site cannot await it. The compromise: the first `traceSync` call
+ * in a process kicks off the (memoized) import and runs `fn` untraced;
+ * once the import has resolved — typically within the same tick — every
+ * subsequent call gets a real span. When `@opentelemetry/api` is not
+ * installed this reduces to two comparisons and a direct `fn()` call:
+ * no tracer, no span, no allocations.
+ */
+export function traceSync<T>(
+  name: string,
+  fn: () => T,
+  attrs?: Record<string, unknown>,
+): T {
+  if (cached === undefined) {
+    // Fire-and-forget: warm the memoized import so later calls trace.
+    void loadOtel();
+  }
+  if (!cached) return fn();
+
+  const otel = cached;
+  const span = startSpan(otel, name, attrs);
+  try {
+    return otel.context.with(
+      otel.trace.setSpan(otel.context.active(), span),
+      fn,
+    );
+  } catch (err) {
+    span.recordException(err as Error);
+    span.setStatus({
+      code: otel.SpanStatusCode.ERROR,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    throw err;
+  } finally {
+    span.end();
+  }
+}
+
+/** Start a span named `name` and write `attrs` onto it. */
+function startSpan(
+  otel: OtelApi,
+  name: string,
+  attrs?: Record<string, unknown>,
+): OtelSpan {
+  const tracer = otel.trace.getTracer('@ahtmljs/schema', AHTML_VERSION);
+  const span = tracer.startSpan(name);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      // OTel attribute values must be primitives or arrays of primitives;
+      // anything else is coerced to JSON to avoid silent drops.
+      const safe =
+        typeof v === 'string' ||
+        typeof v === 'number' ||
+        typeof v === 'boolean'
+          ? v
+          : JSON.stringify(v);
+      span.setAttribute(k, safe as string | number | boolean);
+    }
+  }
+  return span;
 }
 
 /**

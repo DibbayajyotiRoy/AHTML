@@ -1,14 +1,110 @@
 {
   "name": "@ahtmljs/schema",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "AHTML semantic snapshot schema — types, validator, builder, and dual-format serializers (JSON + token-optimal compact text). The agent-readable contract layer for the web.",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/cjs/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./stream": {
+      "import": {
+        "types": "./dist/stream.d.ts",
+        "default": "./dist/stream.js"
+      },
+      "require": {
+        "types": "./dist/cjs/stream.d.ts",
+        "default": "./dist/cjs/stream.js"
+      }
+    },
+    "./kv": {
+      "import": {
+        "types": "./dist/kv.d.ts",
+        "default": "./dist/kv.js"
+      },
+      "require": {
+        "types": "./dist/cjs/kv.d.ts",
+        "default": "./dist/cjs/kv.js"
+      }
+    },
+    "./sign": {
+      "import": {
+        "types": "./dist/sign.d.ts",
+        "default": "./dist/sign.js"
+      },
+      "require": {
+        "types": "./dist/cjs/sign.d.ts",
+        "default": "./dist/cjs/sign.js"
+      }
+    },
+    "./emit/well-known": {
+      "import": {
+        "types": "./dist/emit/well-known.d.ts",
+        "default": "./dist/emit/well-known.js"
+      },
+      "require": {
+        "types": "./dist/cjs/emit/well-known.d.ts",
+        "default": "./dist/cjs/emit/well-known.js"
+      }
+    },
+    "./emit/mcp": {
+      "import": {
+        "types": "./dist/emit/mcp.d.ts",
+        "default": "./dist/emit/mcp.js"
+      },
+      "require": {
+        "types": "./dist/cjs/emit/mcp.d.ts",
+        "default": "./dist/cjs/emit/mcp.js"
+      }
+    },
+    "./emit/openapi": {
+      "import": {
+        "types": "./dist/emit/openapi.d.ts",
+        "default": "./dist/emit/openapi.js"
+      },
+      "require": {
+        "types": "./dist/cjs/emit/openapi.d.ts",
+        "default": "./dist/cjs/emit/openapi.js"
+      }
+    },
+    "./emit/llms-txt": {
+      "import": {
+        "types": "./dist/emit/llms-txt.d.ts",
+        "default": "./dist/emit/llms-txt.js"
+      },
+      "require": {
+        "types": "./dist/cjs/emit/llms-txt.d.ts",
+        "default": "./dist/cjs/emit/llms-txt.js"
+      }
+    },
+    "./http/accept": {
+      "import": {
+        "types": "./dist/http/accept.d.ts",
+        "default": "./dist/http/accept.js"
+      },
+      "require": {
+        "types": "./dist/cjs/http/accept.d.ts",
+        "default": "./dist/cjs/http/accept.js"
+      }
+    },
+    "./http/conditional": {
+      "import": {
+        "types": "./dist/http/conditional.d.ts",
+        "default": "./dist/http/conditional.js"
+      },
+      "require": {
+        "types": "./dist/cjs/http/conditional.d.ts",
+        "default": "./dist/cjs/http/conditional.js"
+      }
     },
     "./schema.json": "./src/schema.json"
   },
@@ -21,7 +117,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.cjs.json && node ../../build-tools/cjs-postbuild.mjs",
     "dev": "tsc -p tsconfig.json --watch",
     "test": "tsx --test src/__tests__/*.test.ts"
   },

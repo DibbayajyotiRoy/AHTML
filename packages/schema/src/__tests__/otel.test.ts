@@ -15,7 +15,16 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { trace, addEvent, setStatus } from '../index.js';
+import {
+  trace,
+  traceSync,
+  addEvent,
+  setStatus,
+  validate,
+  lint,
+  verifySnapshot,
+  snapshot,
+} from '../index.js';
 
 describe('otel — no-op fallback when @opentelemetry/api is absent', () => {
   test('trace() returns the value of a sync fn', async () => {
@@ -71,6 +80,79 @@ describe('otel — no-op fallback when @opentelemetry/api is absent', () => {
   test('setStatus() is a silent no-op when OTel is absent', () => {
     assert.doesNotThrow(() => setStatus('ok'));
     assert.doesNotThrow(() => setStatus('error', 'something broke'));
+  });
+});
+
+describe('otel — traceSync no-op fallback when @opentelemetry/api is absent', () => {
+  test('traceSync() returns the value synchronously (not a Promise)', () => {
+    const result = traceSync('test.sync', () => 42);
+    assert.equal(result, 42);
+    assert.ok(!(result as unknown instanceof Promise));
+  });
+
+  test('traceSync() propagates thrown errors unchanged', () => {
+    const boom = new Error('boom');
+    assert.throws(
+      () =>
+        traceSync('test.throws', () => {
+          throw boom;
+        }),
+      (err) => err === boom,
+    );
+  });
+
+  test('traceSync() accepts attrs without touching them when OTel is absent', () => {
+    const result = traceSync('test.attrs', () => 'ok', {
+      'ahtml.url': 'https://example.com',
+      'ahtml.count': 3,
+      'ahtml.obj': { nested: true },
+    });
+    assert.equal(result, 'ok');
+  });
+});
+
+describe('otel — instrumented entry points (ahtml.validate / ahtml.lint / ahtml.verify_signature)', () => {
+  // These public APIs are wrapped in spans (v0.9.x). With OTel absent the
+  // wrappers must be transparent: same results, same sync-ness, same errors.
+  const snap = snapshot('https://example.com/p/demo', 'product_detail')
+    .ttl(60)
+    .add({
+      id: 'product:demo',
+      type: 'product',
+      name: 'Demo',
+      price: { amount: 1, currency: 'USD' },
+    })
+    .build();
+
+  test('validate() stays synchronous and reports issues through the span wrapper', () => {
+    const ok = validate(snap);
+    assert.ok(Array.isArray(ok));
+    assert.equal(ok.filter((i) => i.severity === 'error').length, 0);
+
+    const bad = validate({ ahtml: 'nope' });
+    assert.ok(Array.isArray(bad));
+    assert.ok(bad.some((i) => i.severity === 'error'));
+  });
+
+  test('lint() stays synchronous and reports warnings through the span wrapper', () => {
+    const warnings = lint(snap);
+    assert.ok(Array.isArray(warnings));
+    // This snapshot has no policy — the linter must still flag it.
+    assert.ok(warnings.some((w) => w.rule === 'no-policy'));
+  });
+
+  test('verifySnapshot() returns structured failures through the span wrapper', async () => {
+    // Malformed JWS fails before any crypto, so the key is never touched.
+    const fakeKey = { alg: 'ES256' as const, key: {} as CryptoKey };
+    const res = await verifySnapshot(snap, 'not-a-jws', { trustedKeys: [fakeKey] });
+    assert.equal(res.ok, false);
+  });
+
+  test('verifySnapshot() propagates programmer errors through the span wrapper', async () => {
+    await assert.rejects(
+      () => verifySnapshot(snap, 'a..b', { trustedKeys: [] }),
+      /at least one trusted key/,
+    );
   });
 });
 

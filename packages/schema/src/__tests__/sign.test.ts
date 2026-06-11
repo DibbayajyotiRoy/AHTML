@@ -8,10 +8,15 @@
  *
  * Keys are generated per-test via `crypto.subtle.generateKey` — no
  * hardcoded key material — so the suite is portable to every WebCrypto
- * runtime we ship to (Node ≥ 20, Workers, Deno, Bun).
+ * runtime we ship to (Node ≥ 18 via the node:crypto binding, Workers, Deno, Bun).
  */
 
 import { test, describe } from 'node:test';
+import { webcrypto } from 'node:crypto';
+
+// Bare Node 18 has no global WebCrypto; tests are Node-only, so bind the
+// node:crypto implementation explicitly where the global is missing.
+const cryptoImpl: Crypto = (globalThis.crypto ?? webcrypto) as Crypto;
 import assert from 'node:assert/strict';
 import {
   snapshot,
@@ -39,7 +44,7 @@ function sampleSnapshot() {
 }
 
 async function makeEs256Key(): Promise<{ sign: SignKey; verify: VerifyKey }> {
-  const pair = (await crypto.subtle.generateKey(
+  const pair = (await cryptoImpl.subtle.generateKey(
     { name: 'ECDSA', namedCurve: 'P-256' },
     false,
     ['sign', 'verify'],
@@ -52,7 +57,7 @@ async function makeEs256Key(): Promise<{ sign: SignKey; verify: VerifyKey }> {
 
 async function tryMakeEdDsaKey(): Promise<{ sign: SignKey; verify: VerifyKey } | null> {
   try {
-    const pair = (await crypto.subtle.generateKey(
+    const pair = (await cryptoImpl.subtle.generateKey(
       { name: 'Ed25519' } as unknown as AlgorithmIdentifier,
       false,
       ['sign', 'verify'],

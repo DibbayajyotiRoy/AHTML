@@ -13,6 +13,11 @@
  */
 
 import { test, describe } from 'node:test';
+import { webcrypto } from 'node:crypto';
+
+// Bare Node 18 has no global WebCrypto; tests are Node-only, so bind the
+// node:crypto implementation explicitly where the global is missing.
+const cryptoImpl: Crypto = (globalThis.crypto ?? webcrypto) as Crypto;
 import assert from 'node:assert/strict';
 import {
   snapshot,
@@ -50,12 +55,12 @@ async function makeEs256Keypair(): Promise<{
   verify: VerifyKey;
   publicJwk: JsonWebKey;
 }> {
-  const pair = (await crypto.subtle.generateKey(
+  const pair = (await cryptoImpl.subtle.generateKey(
     { name: 'ECDSA', namedCurve: 'P-256' },
     true, // extractable — we need to export the public key as JWK for the DID doc.
     ['sign', 'verify'],
   )) as CryptoKeyPair;
-  const publicJwk = await crypto.subtle.exportKey('jwk', pair.publicKey);
+  const publicJwk = await cryptoImpl.subtle.exportKey('jwk', pair.publicKey);
   return {
     sign: { alg: 'ES256', key: pair.privateKey },
     verify: { alg: 'ES256', key: pair.publicKey },

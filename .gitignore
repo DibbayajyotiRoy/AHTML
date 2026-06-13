@@ -18,3 +18,6 @@ PLAN-NEXT-5.md
 PLAN-NEXT-6.md
 scripts/
 examples/landing/DEPLOY.md
+
+# Claude Code project settings (local permissions, not for public repo)
+.claude/settings.json

@@ -5,6 +5,9 @@
     "moduleResolution": "Node10",
     "outDir": "./dist/cjs",
     "declarationMap": false,
-    "sourceMap": false
+    "sourceMap": false,
+    "paths": {
+      "@ahtmljs/schema/extract": ["../schema/dist/extract/index"]
+    }
   }
 }

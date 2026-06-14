@@ -293,6 +293,9 @@ export interface Provenance {
   signature?: string;
   signature_alg?: string;
   fetched_via?: string;
+  /** v0.9.2: indicates whether snapshot data came from a native AHTML
+   * endpoint ('authoritative') or was auto-extracted from HTML ('extracted'). */
+  source?: 'extracted' | 'authoritative';
 }
 
 export interface PaginationLink {

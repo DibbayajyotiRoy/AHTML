@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/agent",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "AHTML agent SDK — fetch snapshots from any AHTML-emitting site, cache by ETag, run actions with dry-run support, and measure token cost using the industry-standard tokenizers.",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -79,7 +79,7 @@
     "crawler"
   ],
   "dependencies": {
-    "@ahtmljs/schema": "0.9.1"
+    "@ahtmljs/schema": "0.9.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0"

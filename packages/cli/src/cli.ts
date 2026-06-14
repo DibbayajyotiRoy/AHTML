@@ -24,6 +24,10 @@ import {
 } from '@ahtmljs/schema';
 import { AHTMLClient } from '@ahtmljs/agent';
 import { doctor, type DoctorReport } from './doctor.js';
+import { runExtract } from './commands/extract.js';
+import { runAnalyze } from './commands/analyze.js';
+import { runScore } from './commands/score.js';
+import { runBenchmark } from './commands/benchmark.js';
 
 /** Minimal ANSI palette — no chalk dependency by design. */
 const ANSI = {
@@ -50,16 +54,25 @@ function paint(text: string, code: string): string {
 const HELP = `${paint('@ahtmljs/cli', ANSI.bold)} — AHTML auditor
 
 ${paint('USAGE', ANSI.bold)}
-  ahtml doctor <url>      Walk the AHTML discovery chain and report green/red.
-  ahtml validate <url>    Validate the snapshot at <url>/ahtml.
+  ahtml doctor <url>        Walk the AHTML discovery chain and report green/red.
+  ahtml validate <url>      Validate the snapshot at <url>/ahtml.
+  ahtml extract <url>       Fetch any URL and extract structured entities.
+  ahtml analyze <url>       Token savings, entity counts, and readiness check.
+  ahtml score <url>         Lighthouse-style grade (0-100) for agent-readiness.
+  ahtml benchmark <url>     Format comparison: raw HTML vs JSON-LD vs AHTML.
 
 ${paint('EXAMPLES', ANSI.bold)}
   npx @ahtmljs/cli doctor https://shop.example.com
   npx @ahtmljs/cli validate https://shop.example.com
+  npx @ahtmljs/cli analyze https://shop.example.com
+  npx @ahtmljs/cli score https://shop.example.com
+  npx @ahtmljs/cli extract https://shop.example.com --json
+  npx @ahtmljs/cli benchmark https://shop.example.com
 
 ${paint('FLAGS', ANSI.bold)}
   --help, -h              Show this message.
   --version, -v           Print version and exit.
+  --json                  Machine-readable JSON output (extract, score).
 `;
 
 const VERSION = '0.9.0';
@@ -76,6 +89,13 @@ async function main(argv: string[]): Promise<number> {
   }
 
   const [cmd, ...rest] = argv;
+
+  // Parse flags from the remaining args
+  const flags = Object.fromEntries(
+    rest.filter((a) => a.startsWith('--')).map((a) => [a.slice(2), true]),
+  ) as Record<string, boolean>;
+  const positional = rest.filter((a) => !a.startsWith('--'));
+
   switch (cmd) {
     case 'doctor': {
       const url = rest[0];
@@ -94,6 +114,42 @@ async function main(argv: string[]): Promise<number> {
         return 1;
       }
       return runValidate(url);
+    }
+    case 'extract': {
+      const url = positional[0];
+      if (!url) {
+        process.stderr.write(paint('error: extract requires a <url> argument\n', ANSI.red));
+        process.stderr.write(HELP);
+        return 1;
+      }
+      return runExtract(url, { json: flags['json'] });
+    }
+    case 'analyze': {
+      const url = positional[0];
+      if (!url) {
+        process.stderr.write(paint('error: analyze requires a <url> argument\n', ANSI.red));
+        process.stderr.write(HELP);
+        return 1;
+      }
+      return runAnalyze(url);
+    }
+    case 'score': {
+      const url = positional[0];
+      if (!url) {
+        process.stderr.write(paint('error: score requires a <url> argument\n', ANSI.red));
+        process.stderr.write(HELP);
+        return 1;
+      }
+      return runScore(url, { json: flags['json'] });
+    }
+    case 'benchmark': {
+      const url = positional[0];
+      if (!url) {
+        process.stderr.write(paint('error: benchmark requires a <url> argument\n', ANSI.red));
+        process.stderr.write(HELP);
+        return 1;
+      }
+      return runBenchmark(url);
     }
     default:
       process.stderr.write(paint(`error: unknown command "${cmd}"\n`, ANSI.red));

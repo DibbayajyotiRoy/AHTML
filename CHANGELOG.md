@@ -11,6 +11,80 @@ Planned for the remaining 0.9.x series (see the version plan):
 - After the series completes and bakes two weeks, tag `1.0.0` with the
   API-stability commitment
 
+## [0.9.2] — 2026-06-14
+
+**The universal web** — every tool works on every site. Value first, adoption second.
+The funnel inverts: `npx @ahtmljs/cli analyze <any-url>` is the release announcement.
+No breaking changes.
+
+### Added — `@ahtmljs/schema/extract` (new subpath)
+
+- **`extractFromSchemaOrg(html)`** — extracts Product and Article/Document entities
+  from inline `<script type="application/ld+json">` blocks. Moved from
+  `@ahtmljs/next` (source of truth now lives in schema).
+- **`extractFromOpenGraph(html)`** — extracts entities from OG/Twitter card meta
+  tags. Moved from `@ahtmljs/next`.
+- **`extractFromDataAttrs(html)`** — extracts entities and actions from
+  `data-ahtml-*` attributes. Moved from `@ahtmljs/next`.
+- **`extractFromMicrodata(html)`** — NEW extractor for HTML Microdata
+  (`itemscope`/`itemprop`). Maps `schema.org/Product` → Product, Article/BlogPosting
+  → Document. Fills the largest extraction-yield gap in the corpus.
+- **`mergeExtractions(extractions)`** — merges multiple extractions in precedence
+  order (data-attrs > schema-org > microdata > opengraph). Moved from `@ahtmljs/next`.
+- **`type Extraction`** — exported from `@ahtmljs/schema/extract`.
+- `Provenance.source?: 'extracted' | 'authoritative'` added to the
+  `Provenance` interface — lets downstream code distinguish hand-authored
+  snapshots from auto-extracted ones without a separate channel.
+
+### Added — `@ahtmljs/next` extractors now re-export from schema
+
+All five files in `packages/next/src/extractors/` are thin re-exports from
+`@ahtmljs/schema/extract`. The public API is unchanged; next consumers
+continue to `import { extractFromSchemaOrg } from '@ahtmljs/next/extractors'`.
+
+### Added — `PageView` + `AHTMLClient.fetchPage()` in `@ahtmljs/agent`
+
+- **`PageView`** — typed view over a snapshot with accessors:
+  `.products`, `.documents`, `.tasks`, `.profiles`, `.entities`, `.actions`,
+  `.provenance` (`'authoritative' | 'extracted'`), `.snapshot`.
+- **`AHTMLClient.fetchPage(url)`** — universal page fetch. Sends
+  `Accept: application/ahtml+text, ..., text/html;q=0.5`. If the site is an
+  AHTML adopter it returns `PageView { provenance: 'authoritative' }`.
+  For any HTML-only site it auto-extracts (schema-org + OG + microdata +
+  data-attrs), builds a snapshot, and returns `PageView { provenance: 'extracted' }`.
+  Extracted snapshots never carry actions (untrusted markup).
+- **`ClientOptions.htmlFallback`** — documents the html-fallback intent for
+  callers using `fetch()` directly (advisory; `fetchPage()` always applies it).
+- Exported: `PageView`, `PageViewOptions`, `ProvenanceSource`.
+
+### Added — CLI commands: extract, analyze, score, benchmark
+
+- **`ahtml extract <url>`** — fetches any URL, runs all four extractors,
+  prints per-extractor yield and the merged compact snapshot. `--json` flag
+  emits `toJson()` output.
+- **`ahtml analyze <url>`** — one-run shareable block: HTML byte size,
+  compact size, token estimates (÷4 est.), savings %, entity counts by type,
+  quick agent-readiness probe (JSON-LD, llms.txt, AHTML well-known), nudge
+  to `score`. This command is the release announcement.
+- **`ahtml score <url> [--json]`** — Lighthouse for agents. Two-tier scoring
+  (0–100, grade A–F): Tier A covers every site (JSON-LD 20pt, OpenGraph 15pt,
+  extraction yield 15pt, token efficiency 10pt, robots AI directives 10pt,
+  llms.txt 10pt); Tier B is AHTML adoption bonus (well-known 10pt, /ahtml 10pt).
+  Output includes a copy-paste fix snippet for the top missing item. Exit 1 if
+  score < 60.
+- **`ahtml benchmark <url>`** — format comparison table: raw HTML vs JSON-LD
+  extract vs AHTML compact vs AHTML JSON, in bytes and token estimates. The
+  screenshot markets itself.
+- Shared `fetch.ts` helper in CLI: 30 s timeout, no new runtime dependencies.
+
+### Fixed — CJS `moduleResolution` for workspace packages using schema subpaths
+
+`packages/agent/tsconfig.cjs.json` and `packages/next/tsconfig.cjs.json` now
+add a `paths` override (`@ahtmljs/schema/extract` → `../schema/dist/extract/index`)
+so the `module: CommonJS` / `moduleResolution: Node10` CJS typecheck pass can
+resolve the new subpath. Runtime `require('@ahtmljs/schema/extract')` continues
+to work via Node's exports map; this fix is compile-time only.
+
 ## [0.9.1] — 2026-06-11
 
 **Close the v0.9 gate** — nothing new in scope; this release finishes

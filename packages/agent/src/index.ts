@@ -10,6 +10,7 @@ export {
   type ClientEvent,
   type RetryPolicy,
 } from './client.js';
+export { PageView, type PageViewOptions, type ProvenanceSource } from './page-view.js';
 export { runAction, ActionRefused, type ActionRunOptions, type ActionResult, type DryRunResult } from './workflow.js';
 export {
   countTokens,

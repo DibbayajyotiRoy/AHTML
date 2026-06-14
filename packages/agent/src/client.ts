@@ -31,6 +31,7 @@ import {
   STREAM_CONTENT_TYPE,
   InMemoryCacheStore,
   trace,
+  snapshot as buildSnapshot,
   type AHTMLErrorCode,
   type CacheStore,
   type Entity,
@@ -39,6 +40,14 @@ import {
   type SnapshotDiff,
   type StreamRecord,
 } from '@ahtmljs/schema';
+import {
+  extractFromSchemaOrg,
+  extractFromOpenGraph,
+  extractFromDataAttrs,
+  extractFromMicrodata,
+  mergeExtractions,
+} from '@ahtmljs/schema/extract';
+import { PageView } from './page-view.js';
 
 /**
  * Retry policy governing transient-failure recovery for a single
@@ -124,6 +133,10 @@ export interface ClientOptions extends FetchOptions {
    * replicas. v0.6 callers pass nothing and inherit the default.
    */
   cache?: CacheStore<CachedSnapshot>;
+  /** When true, fetching a URL that returns text/html runs the auto-extractors
+   * and returns an extracted snapshot rather than throwing COMPACT_PARSE.
+   * Note: `fetchPage()` always performs HTML fallback regardless of this flag. */
+  htmlFallback?: boolean;
 }
 
 const DEFAULT_RETRY: Required<RetryPolicy> = {
@@ -198,6 +211,56 @@ export class AHTMLClient {
       },
       { 'ahtml.url': url, 'ahtml.format': opts?.format ?? 'compact' },
     );
+  }
+
+  /**
+   * v0.9.2: universal fetcher — works against ANY URL, not just AHTML-adopting
+   * sites. If the server responds with AHTML content-type the snapshot is
+   * returned as `provenance: 'authoritative'`. If the server returns regular
+   * HTML the auto-extractors run and produce an extracted snapshot
+   * (`provenance: 'extracted'`). Extracted snapshots never carry `actions`
+   * since the markup source is untrusted.
+   */
+  async fetchPage(url: string, opts: FetchOptions = {}): Promise<PageView> {
+    const o = { ...this.defaults, ...opts };
+    const fetcher = o.fetch ?? globalThis.fetch;
+    const timeoutMs = o.timeout ?? this.defaults.timeout ?? DEFAULT_TIMEOUT_MS;
+    const retry = normalizeRetry(o.retry, this.defaults.retry);
+
+    // Accept AHTML first; fall back to HTML
+    const headers = requestHeaders(
+      'application/ahtml+text, application/ahtml+json;q=0.9, text/html;q=0.5',
+      o,
+    );
+    const res = await this.doFetch(fetcher, url, { headers }, timeoutMs, retry, url);
+    if (!res.ok) throw await httpError(url, res);
+
+    const ct = res.headers.get('content-type') ?? '';
+
+    if (ct.includes('application/ahtml')) {
+      // Site is an AHTML adopter — use normal parsing path
+      const snap = await this.storeFromResponse(url, res);
+      return new PageView(snap, { provenance: 'authoritative' });
+    }
+
+    // HTML fallback path — extract structured data from the page
+    const html = await res.text();
+
+    const merged = mergeExtractions([
+      extractFromDataAttrs(html),
+      extractFromSchemaOrg(html),
+      extractFromMicrodata(html),
+      extractFromOpenGraph(html),
+    ]);
+
+    const pageType = merged.page_type ?? 'other';
+    const builder = buildSnapshot(url, pageType as Parameters<typeof buildSnapshot>[1]);
+    for (const entity of merged.entities) builder.add(entity);
+    // Extracted snapshots do NOT carry actions — untrusted markup
+    const snap = builder.build();
+    snap.provenance = { source: 'extracted' };
+
+    return new PageView(snap, { provenance: 'extracted' });
   }
 
   private async fetchOnce(url: string, o: FetchOptions): Promise<Snapshot> {

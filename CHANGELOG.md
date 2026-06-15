@@ -11,6 +11,38 @@ Planned for the remaining 0.9.x series (see the version plan):
 - After the series completes and bakes two weeks, tag `1.0.0` with the
   API-stability commitment
 
+## [0.9.3] — 2026-06-15
+
+**The agent loop** — AHTML inside Claude/Cursor sessions today. Any site becomes
+typed MCP tools with zero server-side changes. No breaking changes.
+
+### Added — `ahtml mcp <url>` — stdio MCP proxy
+
+- Runs a JSON-RPC 2.0 stdio server compatible with `claude mcp add`, Cursor,
+  Cline, and any MCP client. Works on **any URL** — AHTML adopters or plain HTML.
+- **AHTML adopter path**: probes `/.well-known/ahtml.json` on startup; if found,
+  `fetch_page` proxies to the real `/ahtml/{path}` endpoint (native compact format)
+  and `invoke_action` posts to `execute_url`. The full adoption gradient is live
+  inside the agent's session.
+- **HTML fallback path**: any non-adopter site auto-extracts via schema-org,
+  OpenGraph, microdata, and data-attrs — the same pipeline as `ahtml extract`.
+- **Four MCP tools** (universal): `fetch_page`, `list_pages`, `search`, plus
+  `invoke_action` for adopters.
+- `list_pages` sources from AHTML manifest routes → sitemap.xml → BFS crawl →
+  single page, in preference order, capped at 50.
+- All debug output goes to stderr; stdout is pure JSON-RPC (Claude Desktop safe).
+
+### Added — `ahtml llms <url>` — site crawler → llms.txt
+
+- Crawls any site and emits a spec-compliant `llms.txt` to stdout or `--out <file>`.
+- Source priority: AHTML manifest (curated, typed) → sitemap.xml / sitemap_index.xml
+  (cap 200) → BFS crawl (max 30 pages, depth 3, 500 ms delay, respects noindex) →
+  single page fallback.
+- Respects `robots.txt` `Disallow:` for `User-agent: *` and `User-agent: AhtmlBot`.
+- Zero new dependencies — uses Node's built-in `fs/promises` + global `fetch`.
+
+### Fixed — `VERSION` constant updated to `0.9.3` in CLI entry point.
+
 ## [0.9.2] — 2026-06-14
 
 **The universal web** — every tool works on every site. Value first, adoption second.

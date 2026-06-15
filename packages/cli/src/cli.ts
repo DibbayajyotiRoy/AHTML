@@ -28,6 +28,8 @@ import { runExtract } from './commands/extract.js';
 import { runAnalyze } from './commands/analyze.js';
 import { runScore } from './commands/score.js';
 import { runBenchmark } from './commands/benchmark.js';
+import { runMcp } from './commands/mcp.js';
+import { runLlms } from './commands/llms.js';
 
 /** Minimal ANSI palette — no chalk dependency by design. */
 const ANSI = {
@@ -60,6 +62,8 @@ ${paint('USAGE', ANSI.bold)}
   ahtml analyze <url>       Token savings, entity counts, and readiness check.
   ahtml score <url>         Lighthouse-style grade (0-100) for agent-readiness.
   ahtml benchmark <url>     Format comparison: raw HTML vs JSON-LD vs AHTML.
+  ahtml mcp <url>           Start a stdio MCP server exposing the site as tools.
+  ahtml llms <url>          Crawl a site and produce a valid llms.txt file.
 
 ${paint('EXAMPLES', ANSI.bold)}
   npx @ahtmljs/cli doctor https://shop.example.com
@@ -68,14 +72,18 @@ ${paint('EXAMPLES', ANSI.bold)}
   npx @ahtmljs/cli score https://shop.example.com
   npx @ahtmljs/cli extract https://shop.example.com --json
   npx @ahtmljs/cli benchmark https://shop.example.com
+  npx @ahtmljs/cli mcp https://shop.example.com
+  npx @ahtmljs/cli llms https://shop.example.com
+  npx @ahtmljs/cli llms https://shop.example.com --out llms.txt
 
 ${paint('FLAGS', ANSI.bold)}
   --help, -h              Show this message.
   --version, -v           Print version and exit.
   --json                  Machine-readable JSON output (extract, score).
+  --out <file>            Write output to a file instead of stdout (llms).
 `;
 
-const VERSION = '0.9.0';
+const VERSION = '0.9.3';
 
 /** Entrypoint — parses argv and dispatches to a subcommand. */
 async function main(argv: string[]): Promise<number> {
@@ -150,6 +158,27 @@ async function main(argv: string[]): Promise<number> {
         return 1;
       }
       return runBenchmark(url);
+    }
+    case 'mcp': {
+      const url = positional[0];
+      if (!url) {
+        process.stderr.write(paint('error: mcp requires a <url> argument\n', ANSI.red));
+        process.stderr.write(HELP);
+        return 1;
+      }
+      return runMcp(url);
+    }
+    case 'llms': {
+      const url = positional[0];
+      if (!url) {
+        process.stderr.write(paint('error: llms requires a <url> argument\n', ANSI.red));
+        process.stderr.write(HELP);
+        return 1;
+      }
+      // --out <file> takes a value — extract it from raw rest args
+      const outIdx = rest.indexOf('--out');
+      const outFile = outIdx !== -1 ? rest[outIdx + 1] : undefined;
+      return runLlms(url, { out: outFile });
     }
     default:
       process.stderr.write(paint(`error: unknown command "${cmd}"\n`, ANSI.red));

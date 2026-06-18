@@ -39,6 +39,7 @@
 import {
   toJson,
   toCompact,
+  toMarkdown,
   computeEtag,
   diff,
   toStreamResponse,
@@ -346,18 +347,27 @@ function makeSnapshotHandler(config: AHTMLHonoConfig): HonoHandler {
         }
 
         const fmt = chooseFormat(req.headers.get('accept') ?? '');
-        const body = fmt === 'json' ? toJson(snap) : toCompact(snap);
+        let body: string;
+        let ct: string;
+        if (fmt === 'markdown') {
+          body = toMarkdown(snap);
+          ct = 'text/markdown; charset=utf-8';
+        } else if (fmt === 'json') {
+          body = toJson(snap);
+          ct = 'application/ahtml+json';
+        } else {
+          body = toCompact(snap);
+          ct = 'application/ahtml+text; charset=utf-8';
+        }
         return await encodedResponse(
           body,
           {
-            'content-type':
-              fmt === 'json'
-                ? 'application/ahtml+json'
-                : 'application/ahtml+text; charset=utf-8',
+            'content-type': ct,
             etag,
             'cache-control': cacheControl(snap, config),
             'last-modified': new Date(snap.fetched_at).toUTCString(),
             'x-ahtml-version': '0.1',
+            'x-ahtml-tokens': String(Math.ceil(body.length / 4)),
             vary: 'Accept, Accept-Encoding',
           },
           encoding,

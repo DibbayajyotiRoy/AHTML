@@ -32,25 +32,30 @@ export function parseAcceptEntries(header: string): Array<{ type: string; q: num
 }
 
 /**
- * Choose JSON vs compact from an Accept header, honoring RFC 7231 q-values.
+ * Choose JSON vs compact vs markdown from an Accept header, honoring RFC 7231 q-values.
  *
  * Returns 'json' when the client signals a higher preference for any of
  * `application/ahtml+json` or `application/json`. Returns 'compact' for
- * `application/ahtml+text` or `text/plain`. Wildcards (`* /*`) keep the
- * agent-friendly default (compact). Ties favor JSON, which is the more
- * widely-interoperable format.
+ * `application/ahtml+text` or `text/plain`. Returns 'markdown' for
+ * `text/markdown`. Wildcards (`* /*`) keep the agent-friendly default (compact).
+ * Ties favor JSON, which is the more widely-interoperable format.
  */
-export function chooseFormat(header: string): 'json' | 'compact' {
+export function chooseFormat(header: string): 'json' | 'compact' | 'markdown' {
   if (!header) return 'compact';
   let bestJson = -1;
   let bestCompact = -1;
+  let bestMarkdown = -1;
   for (const m of parseAcceptEntries(header)) {
     if (m.type === 'application/ahtml+json' || m.type === 'application/json') {
       if (m.q > bestJson) bestJson = m.q;
     } else if (m.type === 'application/ahtml+text' || m.type === 'text/plain') {
       if (m.q > bestCompact) bestCompact = m.q;
+    } else if (m.type === 'text/markdown') {
+      if (m.q > bestMarkdown) bestMarkdown = m.q;
     }
   }
-  if (bestJson < 0 && bestCompact < 0) return 'compact';
+  if (bestJson < 0 && bestCompact < 0 && bestMarkdown < 0) return 'compact';
+  const best = Math.max(bestJson, bestCompact, bestMarkdown);
+  if (best === bestMarkdown && bestMarkdown >= 0) return 'markdown';
   return bestJson >= bestCompact ? 'json' : 'compact';
 }

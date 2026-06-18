@@ -1,0 +1,50 @@
+{
+  "name": "@ahtmljs/kv",
+  "version": "0.9.4",
+  "description": "Pluggable KV and cache backends for AHTML — in-memory, Upstash Redis, and Cloudflare KV. Drop-in replacements for AHTMLClient's cache and rate-limiting surfaces.",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+      "require": { "types": "./dist/cjs/index.d.ts", "default": "./dist/cjs/index.js" }
+    },
+    "./memory": {
+      "import": { "types": "./dist/memory.d.ts", "default": "./dist/memory.js" },
+      "require": { "types": "./dist/cjs/memory.d.ts", "default": "./dist/cjs/memory.js" }
+    },
+    "./upstash": {
+      "import": { "types": "./dist/upstash.d.ts", "default": "./dist/upstash.js" },
+      "require": { "types": "./dist/cjs/upstash.d.ts", "default": "./dist/cjs/upstash.js" }
+    },
+    "./cloudflare": {
+      "import": { "types": "./dist/cloudflare.d.ts", "default": "./dist/cloudflare.js" },
+      "require": { "types": "./dist/cjs/cloudflare.d.ts", "default": "./dist/cjs/cloudflare.js" }
+    }
+  },
+  "files": ["dist", "README.md"],
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.cjs.json && node ../../build-tools/cjs-postbuild.mjs",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "tsx --test src/__tests__/*.test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DibbayajyotiRoy/AHTML.git",
+    "directory": "packages/kv"
+  },
+  "keywords": ["ahtml", "kv", "redis", "upstash", "cloudflare", "cache", "rate-limit"],
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "dependencies": { "@ahtmljs/schema": "0.9.4" },
+  "peerDependencies": {
+    "@upstash/redis": "^1.0.0",
+    "@cloudflare/workers-types": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@upstash/redis": { "optional": true },
+    "@cloudflare/workers-types": { "optional": true }
+  }
+}

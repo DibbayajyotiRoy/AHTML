@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/vite",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Vite plugin for AHTML. Wires the AHTML route handler into any Vite-based app (SvelteKit, SolidStart, Astro, vanilla Vite) so your existing site emits MCP, OpenAPI, JSON-LD, llms.txt, and a token-optimal agent snapshot.",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -63,7 +63,7 @@
     "astro"
   ],
   "dependencies": {
-    "@ahtmljs/schema": "0.9.3"
+    "@ahtmljs/schema": "0.9.4"
   },
   "peerDependencies": {
     "vite": ">=5"

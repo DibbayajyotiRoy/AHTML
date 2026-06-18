@@ -1,0 +1,40 @@
+{
+  "name": "@ahtmljs/webmcp",
+  "version": "0.9.4",
+  "description": "Register AHTML page actions as WebMCP browser tools — the bridge between AHTML's structured action contracts and the W3C WebML CG WebMCP API.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./bookmarklet": {
+      "import": {
+        "types": "./dist/bookmarklet.d.ts",
+        "default": "./dist/bookmarklet.js"
+      }
+    }
+  },
+  "files": ["dist", "README.md"],
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "echo 'webmcp: no tests yet'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DibbayajyotiRoy/AHTML.git",
+    "directory": "packages/webmcp"
+  },
+  "keywords": ["ahtml", "webmcp", "mcp", "browser", "agent", "tools", "w3c"],
+  "license": "MIT",
+  "dependencies": {
+    "@ahtmljs/schema": "0.9.4"
+  }
+}

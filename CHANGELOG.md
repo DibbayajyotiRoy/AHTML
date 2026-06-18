@@ -11,6 +11,61 @@ Planned for the remaining 0.9.x series (see the version plan):
 - After the series completes and bakes two weeks, tag `1.0.0` with the
   API-stability commitment
 
+## [0.9.4] — 2026-06-18
+
+**The browser** — AHTML meets the browser tab. Three new surfaces: `Accept: text/markdown`
+negotiation for curl/LLM clients; `@ahtmljs/webmcp` registering AHTML actions as native
+WebMCP tools in Chrome 149+; `@ahtmljs/kv` pluggable KV backends (memory, Upstash, Cloudflare).
+No breaking changes.
+
+### Added — `Accept: text/markdown` content negotiation
+
+- All three adapters (Hono, Next.js, Vite) now serve `text/markdown` responses when
+  `Accept: text/markdown` is the highest-weighted type in the request.
+- `toMarkdown(snap: Snapshot): string` added to `@ahtmljs/schema` — hand-authored
+  structured markdown preserving Products, Documents, Tasks, Profiles, Actions, and
+  Policy in readable sections. Unlike auto-HTML→MD (lossy), this reflects the page's
+  typed AHTML contract.
+- `X-AHTML-Tokens: N` response header on all snapshot endpoints (JSON, compact,
+  markdown). Approximate (`Math.ceil(body.length / 4)`) with no external dependency.
+- `chooseFormat()` return type extended to `'json' | 'compact' | 'markdown'`; RFC 7231
+  q-value precedence fully respected.
+
+### Added — `@ahtmljs/webmcp` (new package)
+
+- `registerAhtmlTools(snapshot, opts?)` — registers all page actions as WebMCP tools,
+  populating `window.__AHTML_TOOLS__` as the stable fallback and trying both proposed
+  native WebMCP API shapes (`navigator.ml.tools.register`, `window.registerMCPTool`)
+  for Chrome 149+ origin trial compatibility.
+- AHTML's richer metadata (cost, reversibility, confirmation, side-effects) surface as
+  `x-ahtml-*` annotations on each tool — more context than plain WebMCP baseline.
+- `unregisterAll()` for SPA route changes.
+- `getBookmarkletHref()` / `getBookmarkletSource()` in `@ahtmljs/webmcp/bookmarklet` —
+  floating dark panel that reads `__AHTML_TOOLS__` and fetches `/.well-known/ahtml.json`.
+  Works in any browser, no origin trial required.
+- ESM-only (browser), < 6 kB min+br.
+
+### Added — `@ahtmljs/kv` (new package)
+
+- `@ahtmljs/kv/memory` — re-exports `InMemoryKvStore` and `InMemoryCacheStore` from
+  schema (test-friendly, zero deps).
+- `@ahtmljs/kv/upstash` — `UpstashKvStore` and `UpstashCacheStore<T>` backed by
+  `@upstash/redis` (optional peer dep). Works in Node.js, Cloudflare Workers, Deno.
+- `@ahtmljs/kv/cloudflare` — `CloudflareKvStore` and `CloudflareCacheStore<T>` backed by
+  a Cloudflare KV namespace binding. No `@cloudflare/workers-types` required at compile
+  time (structural interface).
+- `RateLimiter` (main export) — token-bucket rate limiter built on `KvStore.incr()`,
+  backend-agnostic. `limiter.check(id)` → `{ allowed, remaining, resetAt, limit }`.
+  `limiter.enforce(id)` throws on rate-limit breach.
+- Dual ESM + CJS output.
+
+### Added — Cloudflare Worker example
+
+- `examples/cloudflare-worker/` — end-to-end example: Hono v4 + `@ahtmljs/hono` +
+  `@ahtmljs/kv/cloudflare` rate limiting + snapshot caching + `wrangler.toml`.
+- Demonstrates `Accept: text/markdown` negotiation, per-IP rate limiting from CF KV,
+  and 60-second snapshot cache at the edge.
+
 ## [0.9.3] — 2026-06-15
 
 **The agent loop** — AHTML inside Claude/Cursor sessions today. Any site becomes

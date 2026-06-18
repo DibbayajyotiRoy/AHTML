@@ -31,6 +31,7 @@
 import {
   toJson,
   toCompact,
+  toMarkdown,
   computeEtag,
   diff,
   buildWellKnown,
@@ -228,13 +229,25 @@ async function ahtmlRoute(
 
   cache.set(cacheKey, snap);
   const fmt = chooseFormat(headerObj['accept'] ?? '');
-  const body = fmt === 'json' ? toJson(snap) : toCompact(snap);
+  let body: string;
+  let ct: string;
+  if (fmt === 'markdown') {
+    body = toMarkdown(snap);
+    ct = 'text/markdown; charset=utf-8';
+  } else if (fmt === 'json') {
+    body = toJson(snap);
+    ct = 'application/ahtml+json';
+  } else {
+    body = toCompact(snap);
+    ct = 'application/ahtml+text; charset=utf-8';
+  }
   res.statusCode = 200;
-  res.setHeader('content-type', fmt === 'json' ? 'application/ahtml+json' : 'application/ahtml+text; charset=utf-8');
+  res.setHeader('content-type', ct);
   res.setHeader('etag', etag);
   res.setHeader('cache-control', cacheControl(snap, config));
   res.setHeader('last-modified', new Date(snap.fetched_at).toUTCString());
   res.setHeader('x-ahtml-version', '0.1');
+  res.setHeader('x-ahtml-tokens', String(Math.ceil(body.length / 4)));
   res.setHeader('vary', 'Accept');
   res.end(body);
 }

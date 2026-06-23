@@ -8,6 +8,48 @@ follows [Semantic Versioning](https://semver.org/).
 
 Planned for the remaining 0.9.x series (see the version plan):
 - OpenTelemetry metrics + logs (0.9.x ships traces only)
+
+## [0.9.5] — 2026-06-24
+
+**Verified agents, priced actions** — the trust + economics layer. Signed requests, per-agent
+policy, x402 machine payments, RSL 1.0 licensing, and Content Signals. No breaking changes.
+
+### Added — HTTP Message Signatures (RFC 9421) — agent request signing
+
+- `signHttpRequest(request, key, agent, opts?)` in `@ahtmljs/schema` — signs any HTTP Request
+  with `Signature` + `Signature-Input` + `X-AHTML-Agent` headers per RFC 9421 subset.
+  Covers `@method`, `@authority`, `@target-uri`, `content-type`, `date`.
+- `verifyHttpSignature(request, keys, opts?)` — verifies incoming agent signatures; returns
+  `AgentVerifyResult` with parsed `AgentIdentity` (`id`, `did`, `version`).
+- `signRequest` / `verifyAgentSignature` / `buildAgentHeader` re-exported from `@ahtmljs/agent`.
+- Hono + Next.js adapters: new `verifyAgents` + `agentKeys` config options. When enabled,
+  unverified agents hitting `policy.verified_agents_only: true` snapshots get a restricted
+  snapshot (actions stripped). `X-AHTML-Agent-Verified` + `X-AHTML-Agent-Id` headers on
+  all responses. Zero overhead when disabled.
+
+### Added — x402 machine payments + policy presets
+
+- `buildX402Response(action, opts?)` in `@ahtmljs/schema` — builds a standards-compliant
+  `402 Payment Required` response with `x-payment-required` (base64url-encoded x402/0.2
+  payload), `accept-payment-request: x402/0.2`, and optional `x-checkout-url`.
+- `hasPaymentToken(req)` / `extractPaymentToken(req)` — helpers for verifying paid retries.
+- `ActionCost.rails?: ('x402' | 'acp')[]` + `ActionCost.checkout_url?` — new fields in types.
+- `Policy.verified_agents_only?` + `Policy.per_agent_policy?` + `Policy.content_signals?` — new
+  policy fields for agent tiering and crawl signal declarations.
+- **5 policy presets** in `@ahtmljs/schema`: `publicReadOnly`, `rateLimited`, `authRequired`,
+  `paidAction`, `trainDeny` — and `POLICY_PRESETS` named map.
+- `withPaymentGuard(actions, handler)` middleware for Next.js action route handlers — auto-returns
+  402 when an action requires x402 payment and `X-Payment` is absent.
+
+### Added — RSL 1.0 emitter + Content Signals
+
+- `toRsl(snap, opts?)` / `policyToRsl(policy, siteUrl, opts?)` in `@ahtmljs/schema` — emits
+  a standards-compliant RSL 1.0 file (`/rsl.txt`) from a snapshot's policy. Sections:
+  `[RSL]` (version, license, republication, attribution) + `[content-signals]` (search,
+  ai-input, ai-train). Defaults to conservative signals when `content_signals` is unset.
+- `/.well-known/ahtml.json` manifest now includes `rsl_url` and `content_signals` when set.
+- `buildLlmsTxt` emits YAML front-matter Content Signals at the top of `llms.txt` when
+  `config.policy.content_signals` is set, per the contentsignals.org spec.
 - After the series completes and bakes two weeks, tag `1.0.0` with the
   API-stability commitment
 

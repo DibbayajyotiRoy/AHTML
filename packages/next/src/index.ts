@@ -27,7 +27,7 @@
  *   export const { GET } = createWellKnownRoute();
  */
 
-import type { Policy } from '@ahtmljs/schema';
+import type { Policy, VerifyKey } from '@ahtmljs/schema';
 
 export interface AHTMLConfig {
   site: string;
@@ -40,6 +40,10 @@ export interface AHTMLConfig {
   emit_mcp?: boolean;
   /** Emit OpenAPI at /ahtml/openapi.json — default true. */
   emit_openapi?: boolean;
+  /** v0.9.5: when true, agents without a valid HTTP Message Signature get policy downgrade. */
+  verifyAgents?: boolean;
+  /** v0.9.5: keys used to verify incoming agent HTTP Message Signatures. */
+  agentKeys?: VerifyKey[];
 }
 
 let _config: AHTMLConfig | undefined;
@@ -66,3 +70,5 @@ export function getConfig(): AHTMLConfig {
 }
 
 export type { Policy };
+
+export { withPaymentGuard } from './policy.js';

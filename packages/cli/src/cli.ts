@@ -83,7 +83,7 @@ ${paint('FLAGS', ANSI.bold)}
   --out <file>            Write output to a file instead of stdout (llms).
 `;
 
-const VERSION = '0.9.4';
+const VERSION = '0.9.5';
 
 /** Entrypoint — parses argv and dispatches to a subcommand. */
 async function main(argv: string[]): Promise<number> {

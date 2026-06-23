@@ -235,6 +235,10 @@ export interface ActionCost {
   unit?: 'request' | 'token' | 'credit' | 'message' | 'item';
   category: 'free' | 'purchase' | 'subscription' | 'rate_limited' | 'compute';
   notes?: string;
+  /** v0.9.5: payment rails supported for this action. */
+  rails?: ('x402' | 'acp')[];
+  /** URL to initiate ACP or hosted checkout for this action. */
+  checkout_url?: string;
 }
 
 export interface Reversibility {
@@ -275,6 +279,13 @@ export interface Action {
   category?: ActionCategory;
 }
 
+/** v0.9.5: RSL 1.0 / Cloudflare Content Signals directives. */
+export interface ContentSignals {
+  search?: 'allowed' | 'denied';
+  ai_input?: 'allowed' | 'denied';
+  ai_train?: 'allowed' | 'denied';
+}
+
 export interface Policy {
   agents_welcome: boolean;
   license?: string;
@@ -285,6 +296,12 @@ export interface Policy {
   attribution_required?: boolean;
   republish?: 'allowed' | 'denied' | 'attribution_only';
   caching?: { ttl?: number; allowed?: boolean };
+  /** v0.9.5: if true, agents without a valid HTTP Message Signature are denied or downgraded. */
+  verified_agents_only?: boolean;
+  /** v0.9.5: per-agent policy overrides keyed by agent id (did:web or opaque string). */
+  per_agent_policy?: Record<string, Partial<Omit<Policy, 'per_agent_policy'>>>;
+  /** v0.9.5: RSL 1.0 / Content Signals crawl permissions. */
+  content_signals?: ContentSignals;
 }
 
 export interface Provenance {

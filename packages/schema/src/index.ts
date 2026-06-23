@@ -86,6 +86,9 @@ export {
   type LegacyLlmsTxtConfig,
 } from './emit/llms-txt.js';
 
+// v0.9.5 — RSL 1.0 (rslstandard.org) emitter. Serve output at /rsl.txt.
+export { toRsl, policyToRsl, type RslOptions } from './emit/rsl.js';
+
 // v0.8.0 — pure HTTP helpers used by every framework adapter.
 export {
   chooseFormat,
@@ -96,6 +99,36 @@ export {
   notModifiedResponse,
   weakEtagOf,
 } from './http/conditional.js';
+
+// v0.9.5 — HTTP Message Signatures (RFC 9421) for agent request authentication.
+export {
+  signHttpRequest,
+  verifyHttpSignature,
+  type AgentIdentity,
+  type AgentVerifyResult,
+  type RequestSignOptions,
+  type VerifyOptions as HttpVerifyOptions,
+} from './http/request-sign.js';
+
+// v0.9.5 — x402 machine-micropayment protocol helpers.
+export {
+  buildX402Response,
+  hasPaymentToken,
+  extractPaymentToken,
+  type X402PaymentDetails,
+  type X402Options,
+} from './http/payment.js';
+
+// v0.9.5 — built-in policy presets for common agent access patterns.
+export {
+  POLICY_PRESETS,
+  publicReadOnly,
+  rateLimited,
+  authRequired,
+  paidAction,
+  trainDeny,
+  type PolicyPreset,
+} from './policy-presets.js';
 
 // v0.9.0 — optional OpenTelemetry tracing. `@opentelemetry/api` is a
 // soft peer dep; these helpers no-op when it isn't installed.

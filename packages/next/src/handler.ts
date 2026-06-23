@@ -30,6 +30,7 @@ import {
   compressStream,
   compressBuffer,
   trace,
+  verifyHttpSignature,
   STREAM_CONTENT_TYPE,
   type Snapshot,
   type Encoding,
@@ -171,6 +172,19 @@ export function createAHTMLRoute(
 
         cacheSet(cacheKey, snap);
 
+        // v0.9.5 — agent signature verification. Zero overhead when disabled.
+        const agentExtraHeaders: Record<string, string> = {};
+        if (config.verifyAgents && config.agentKeys?.length) {
+          const agentResult = await verifyHttpSignature(req, config.agentKeys);
+          if (!agentResult.ok && snap.policy?.verified_agents_only) {
+            snap = { ...snap, actions: [], policy: { ...snap.policy, agents_welcome: false } };
+          }
+          agentExtraHeaders['x-ahtml-agent-verified'] = agentResult.ok ? 'true' : 'false';
+          if (agentResult.ok && agentResult.agent?.id) {
+            agentExtraHeaders['x-ahtml-agent-id'] = agentResult.agent.id;
+          }
+        }
+
         // Streaming path — emit NDJSON record-by-record. Cannot honor JSON / compact
         // content negotiation since the wire format is its own type. Caller opts in
         // via routeOpts.stream or via `Accept: application/ahtml+json-seq`.
@@ -179,7 +193,7 @@ export function createAHTMLRoute(
           stream = compressStream(stream, encoding);
           return new Response(stream, {
             status: 200,
-            headers: streamHeaders(snap, config, etag, encoding),
+            headers: { ...streamHeaders(snap, config, etag, encoding), ...agentExtraHeaders },
           });
         }
 
@@ -206,6 +220,7 @@ export function createAHTMLRoute(
             'x-ahtml-version': '0.1',
             'x-ahtml-tokens': String(Math.ceil(body.length / 4)),
             vary: 'Accept, Accept-Encoding',
+            ...agentExtraHeaders,
           },
           encoding,
         );

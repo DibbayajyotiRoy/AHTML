@@ -23,7 +23,7 @@
  *   - [Page title](url): one-line description
  */
 
-import type { Snapshot } from '../types.js';
+import type { Snapshot, Policy } from '../types.js';
 
 /** Route entry as accepted by {@link buildLlmsTxt}. */
 export interface LlmsTxtRouteInput {
@@ -41,6 +41,12 @@ export interface LlmsTxtConfig {
   description?: string;
   /** Declared site routes (path + AHTML page_type). */
   routes?: LlmsTxtRouteInput[];
+  /**
+   * v0.9.5: Site policy. When `policy.content_signals` is set, emits a
+   * YAML front-matter block at the top of the llms.txt file per the
+   * contentsignals.org specification.
+   */
+  policy?: Policy;
 }
 
 /**
@@ -90,6 +96,20 @@ export function buildLlmsTxt(
   const description = config.description ?? 'AHTML-enabled site';
 
   const lines: string[] = [];
+
+  // v0.9.5: Content Signals YAML front-matter (contentsignals.org).
+  // Emitted at the top of llms.txt when policy.content_signals is set.
+  const cs = config.policy?.content_signals;
+  if (cs) {
+    lines.push('---');
+    lines.push('content-signals:');
+    if (cs.search !== undefined) lines.push(`  search: ${cs.search}`);
+    if (cs.ai_input !== undefined) lines.push(`  ai-input: ${cs.ai_input}`);
+    if (cs.ai_train !== undefined) lines.push(`  ai-train: ${cs.ai_train}`);
+    lines.push('---');
+    lines.push('');
+  }
+
   lines.push(`# ${title}`);
   lines.push('');
   lines.push(`> ${description}`);

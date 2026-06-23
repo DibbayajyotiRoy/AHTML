@@ -53,9 +53,11 @@ import {
   buildLlmsTxt,
   chooseFormat,
   trace,
+  verifyHttpSignature,
   type Snapshot,
   type Policy,
   type Encoding,
+  type VerifyKey,
 } from '@ahtmljs/schema';
 
 /**
@@ -131,6 +133,10 @@ export interface AHTMLHonoConfig {
    * Clients can also opt-in via `Accept: application/ahtml+json-seq`.
    */
   stream?: boolean | number;
+  /** v0.9.5: when true, agents without a valid HTTP Message Signature get policy downgrade. */
+  verifyAgents?: boolean;
+  /** v0.9.5: keys used to verify incoming agent HTTP Message Signatures. */
+  agentKeys?: VerifyKey[];
 }
 
 /**
@@ -336,13 +342,26 @@ function makeSnapshotHandler(config: AHTMLHonoConfig): HonoHandler {
 
         _cache.set(cacheKey, snap);
 
+        // v0.9.5 — agent signature verification. Zero overhead when disabled.
+        const agentExtraHeaders: Record<string, string> = {};
+        if (config.verifyAgents && config.agentKeys?.length) {
+          const agentResult = await verifyHttpSignature(req, config.agentKeys);
+          if (!agentResult.ok && snap.policy?.verified_agents_only) {
+            snap = { ...snap, actions: [], policy: { ...snap.policy, agents_welcome: false } };
+          }
+          agentExtraHeaders['x-ahtml-agent-verified'] = agentResult.ok ? 'true' : 'false';
+          if (agentResult.ok && agentResult.agent?.id) {
+            agentExtraHeaders['x-ahtml-agent-id'] = agentResult.agent.id;
+          }
+        }
+
         // Streaming path — emit NDJSON record-by-record.
         if (shouldStream(req, snap, config)) {
           let stream = toStreamResponse(snap);
           stream = compressStream(stream, encoding);
           return new Response(stream, {
             status: 200,
-            headers: streamHeaders(snap, config, etag, encoding),
+            headers: { ...streamHeaders(snap, config, etag, encoding), ...agentExtraHeaders },
           });
         }
 
@@ -369,6 +388,7 @@ function makeSnapshotHandler(config: AHTMLHonoConfig): HonoHandler {
             'x-ahtml-version': '0.1',
             'x-ahtml-tokens': String(Math.ceil(body.length / 4)),
             vary: 'Accept, Accept-Encoding',
+            ...agentExtraHeaders,
           },
           encoding,
         );

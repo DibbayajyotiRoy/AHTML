@@ -16,6 +16,8 @@
  * — AHTML just publishes the *contract* that says auth is required.
  */
 
+import { buildX402Response, hasPaymentToken } from '@ahtmljs/schema';
+import type { Action } from '@ahtmljs/schema';
 import type { AHTMLConfig } from './index.js';
 
 interface Bucket {
@@ -95,4 +97,46 @@ function parseRateLimit(s: string | undefined): { tokens: number; windowMs: numb
   const unit = m[2]!.toLowerCase();
   const windowMs = unit.startsWith('s') ? 1_000 : unit.startsWith('m') ? 60_000 : 3_600_000;
   return { tokens, windowMs };
+}
+
+// ---------------------------------------------------------------------------
+// x402 payment guard
+// ---------------------------------------------------------------------------
+
+type NextRouteHandler = (req: Request, ctx: { params: Record<string, string> }) => Promise<Response>;
+
+/**
+ * Wraps a Next.js route handler with x402 payment enforcement.
+ *
+ * Usage (app/api/actions/[id]/route.ts):
+ *   import { withPaymentGuard } from '@ahtmljs/next/policy';
+ *   import { myActions } from '@/lib/ahtml';
+ *
+ *   export const POST = withPaymentGuard(myActions, async (req, action) => {
+ *     // action is pre-validated; payment was verified
+ *     return Response.json({ ok: true });
+ *   });
+ *
+ * If the matched action has `cost.rails` including 'x402' and the request
+ * has no X-Payment header, returns 402 immediately.
+ */
+export function withPaymentGuard(
+  actions: Action[],
+  handler: (req: Request, action: Action) => Promise<Response>,
+): NextRouteHandler {
+  return async (req: Request, ctx: { params: Record<string, string> }) => {
+    const actionId = ctx.params['id'] ?? ctx.params['action'];
+    const action = actions.find(a => a.id === actionId);
+
+    if (!action) {
+      return Response.json({ error: 'action_not_found' }, { status: 404 });
+    }
+
+    // x402 gate
+    if (action.cost?.rails?.includes('x402') && !hasPaymentToken(req)) {
+      return buildX402Response(action);
+    }
+
+    return handler(req, action);
+  };
 }

@@ -20,3 +20,4 @@ export {
   type TokenMeasurement,
 } from './tokens.js';
 export * from './sign.js';
+export { signRequest, verifyAgentSignature, buildAgentHeader, type AgentIdentity, type AgentVerifyResult } from './request-sign.js';

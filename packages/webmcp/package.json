@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/webmcp",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "description": "Register AHTML page actions as WebMCP browser tools — the bridge between AHTML's structured action contracts and the W3C WebML CG WebMCP API.",
   "type": "module",
   "main": "./dist/index.js",
@@ -35,6 +35,6 @@
   "keywords": ["ahtml", "webmcp", "mcp", "browser", "agent", "tools", "w3c"],
   "license": "MIT",
   "dependencies": {
-    "@ahtmljs/schema": "0.9.4"
+    "@ahtmljs/schema": "0.9.5"
   }
 }

@@ -43,6 +43,8 @@ export interface WellKnownManifest {
   ahtml: '0.1';
   site: string;
   policy: Record<string, unknown>;
+  /** v0.9.5: URL to the RSL 1.0 declaration. Present when policy has content_signals or license. */
+  rsl_url?: string;
   snapshot_url_template: string;
   routes?: Array<{ path: string; page_type: string; snapshot_url: string }>;
   endpoints: {
@@ -65,10 +67,26 @@ export interface WellKnownManifest {
 export function buildWellKnown(config: WellKnownConfig): WellKnownManifest {
   const base = config.site.replace(/\/$/, '');
   const snapshotTemplate = `${base}/ahtml/{path}`;
+  const policy = config.policy ?? { agents_welcome: true };
+  const policyOut: Record<string, unknown> = {
+    agents_welcome: policy.agents_welcome,
+    ...(policy.license ? { license: policy.license } : {}),
+    ...(policy.rate_limit ? { rate_limit: policy.rate_limit } : {}),
+    ...(policy.actions_require ? { actions_require: policy.actions_require } : {}),
+    ...(policy.contact ? { contact: policy.contact } : {}),
+    ...(policy.terms_url ? { terms_url: policy.terms_url } : {}),
+    ...(policy.attribution_required !== undefined ? { attribution_required: policy.attribution_required } : {}),
+    ...(policy.republish ? { republish: policy.republish } : {}),
+    ...(policy.caching ? { caching: policy.caching } : {}),
+    ...(policy.verified_agents_only !== undefined ? { verified_agents_only: policy.verified_agents_only } : {}),
+    ...(policy.per_agent_policy ? { per_agent_policy: policy.per_agent_policy } : {}),
+    ...(policy.content_signals ? { content_signals: policy.content_signals } : {}),
+  };
   return {
     ahtml: '0.1',
     site: base,
-    policy: (config.policy as unknown as Record<string, unknown>) ?? { agents_welcome: true },
+    policy: policyOut,
+    ...(policy.content_signals || policy.license ? { rsl_url: `${base}/rsl.txt` } : {}),
     snapshot_url_template: snapshotTemplate,
     routes: config.routes?.map((r) => ({
       path: r.path,

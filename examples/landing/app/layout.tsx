@@ -83,7 +83,7 @@ export const metadata: Metadata = {
     },
   },
   other: {
-    'x-ahtml-version': '0.9.0',
+    'x-ahtml-version': '0.9.5',
   },
 };
 
@@ -97,7 +97,7 @@ const softwareJsonLd = {
     'Open-source npm packages that make any Next.js, Vite, SvelteKit, or Hono site speak MCP, OpenAPI, JSON-LD, and llms.txt automatically.',
   url: SITE_URL,
   downloadUrl: 'https://www.npmjs.com/package/@ahtmljs/next',
-  softwareVersion: '0.9.0',
+  softwareVersion: '0.9.5',
   license: 'https://opensource.org/licenses/MIT',
   author: { '@type': 'Person', name: 'Dibbayajyoti Roy', url: 'https://dibbayajyoti.com/about' },
   creator: { '@type': 'Person', name: 'Dibbayajyoti Roy', url: 'https://dibbayajyoti.com/about' },

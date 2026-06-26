@@ -120,6 +120,46 @@ const PACKAGES = [
     ),
   },
   {
+    id: 'kv',
+    layer: 'Infrastructure',
+    name: '@ahtmljs/kv',
+    role: 'Pluggable KV & cache backends. Same caching from one server to an edge fleet.',
+    install: 'npm install @ahtmljs/kv',
+    forWho: 'Sites that cache snapshots or rate-limit agents across multiple instances.',
+    bullets: [
+      'Drop-in backends for the AHTMLClient cache and rate-limiting surfaces',
+      'In-memory, Upstash Redis, and Cloudflare KV adapters',
+      'Same snapshot caching + token-bucket policy on one server or an edge fleet',
+      'Tiny, dependency-light; bring your own store',
+    ],
+    snippet: (
+      <>
+        <span className="keyword">import</span> {'{ UpstashKV }'} <span className="keyword">from</span>{' '}
+        <span className="string">'@ahtmljs/kv'</span>;
+      </>
+    ),
+  },
+  {
+    id: 'webmcp',
+    layer: 'Consumer',
+    name: '@ahtmljs/webmcp',
+    role: 'WebMCP bridge. Expose page actions as native browser tools.',
+    install: 'npm install @ahtmljs/webmcp',
+    forWho: 'Sites that want an in-page agent to discover and run their typed actions.',
+    bullets: [
+      'Registers AHTML page actions as WebMCP browser tools',
+      'Bridges AHTML action contracts to the W3C WebML CG WebMCP API',
+      'In-page agents discover and invoke typed actions as native tools',
+      'Reuses the same action schema your snapshot already declares',
+    ],
+    snippet: (
+      <>
+        <span className="keyword">import</span> {'{ registerWebMCP }'} <span className="keyword">from</span>{' '}
+        <span className="string">'@ahtmljs/webmcp'</span>;
+      </>
+    ),
+  },
+  {
     id: 'cli',
     layer: 'Tooling',
     name: '@ahtmljs/cli',
@@ -145,11 +185,12 @@ export default function Packages() {
     <section className="section" id="packages">
       <div className="container">
         <div className="kicker">The packages</div>
-        <h2 style={{ marginTop: 12, marginBottom: 12 }}>Seven packages, one contract.</h2>
+        <h2 style={{ marginTop: 12, marginBottom: 12 }}>Nine packages, one contract.</h2>
         <p className="lede" style={{ marginBottom: 12 }}>
-          The <code className="inline">@ahtmljs/*</code> scope splits cleanly into four layers — one
-          schema everyone shares, three server adapters that emit it, two clients that consume it,
-          and a CLI that validates the whole chain.
+          The <code className="inline">@ahtmljs/*</code> scope splits cleanly into five layers — one
+          schema everyone shares, three server adapters that emit it, clients that consume it
+          (agent, LangChain, and a WebMCP browser bridge), pluggable cache backends, and a CLI that
+          validates the whole chain.
         </p>
         <p style={{ color: 'var(--ink-3)', marginBottom: 40, fontSize: 14 }}>
           Full per-package endpoints, download counters, and STAR breakdowns in{' '}

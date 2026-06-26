@@ -73,7 +73,7 @@ export default function Hero() {
 
         <div className="hero-cta">
           <a className="btn btn-primary" href="#packages">
-            <span>Browse the 7 packages</span>
+            <span>Browse the 9 packages</span>
             <span className="btn-arrow" aria-hidden>→</span>
           </a>
           <a className="btn btn-secondary" href="#quickstart">

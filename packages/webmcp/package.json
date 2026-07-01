@@ -25,7 +25,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "test": "echo 'webmcp: no tests yet'"
+    "test": "tsx --test src/__tests__/*.test.ts"
   },
   "repository": {
     "type": "git",

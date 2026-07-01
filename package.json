@@ -15,6 +15,7 @@
     "test:web-reality": "tsx --test tests/web-reality/__tests__/*.test.ts",
     "benchmark:llm": "bash scripts/run-llm-benchmark.sh",
     "benchmark": "npm run start --workspace examples/benchmark",
+    "benchmark:why": "npm run start --workspace examples/why-ahtml",
     "demo": "npm run dev --workspace examples/landing",
     "test:conformance": "tsx --test tests/conformance/*.test.ts",
     "test:budgets": "tsx --test tests/budgets/*.test.ts",

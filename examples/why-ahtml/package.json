@@ -1,0 +1,20 @@
+{
+  "name": "ahtml-why-benchmark",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The competitive 'why AHTML' benchmark. One flagship product page in four formats — measured with real OpenAI + Anthropic tokenizers — plus executed capability proofs (MCP, detached JWS, x402, RFC 9421 verified agents, RSL 1.0) that markdown and llms.txt structurally cannot match.",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "report": "tsx src/index.ts --write-report"
+  },
+  "dependencies": {
+    "@ahtmljs/schema": "0.9.5",
+    "gpt-tokenizer": "^3.0.1",
+    "@anthropic-ai/tokenizer": "^0.0.4"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "@types/node": "^22.0.0"
+  }
+}

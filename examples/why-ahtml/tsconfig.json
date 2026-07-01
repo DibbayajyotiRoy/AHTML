@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "@ahtmljs/schema": ["../../packages/schema/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

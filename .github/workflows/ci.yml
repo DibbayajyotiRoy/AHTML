@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
-      # All seven packages, in dependency order. Scoped with -w flags (not the
+      # All nine packages, in dependency order. Scoped with -w flags (not the
       # root build script) so examples/ never enter the package CI contract.
       - name: Build all packages
         run: |
@@ -40,6 +40,8 @@ jobs:
           npm run build -w @ahtmljs/langchain
           npm run build -w @ahtmljs/hono
           npm run build -w @ahtmljs/cli
+          npm run build -w @ahtmljs/kv
+          npm run build -w @ahtmljs/webmcp
 
       - name: Typecheck — @ahtmljs/schema
         run: cd packages/schema && npx tsc --noEmit -p tsconfig.json
@@ -62,6 +64,12 @@ jobs:
       - name: Typecheck — @ahtmljs/cli
         run: cd packages/cli && npx tsc --noEmit -p tsconfig.json
 
+      - name: Typecheck — @ahtmljs/kv
+        run: cd packages/kv && npx tsc --noEmit -p tsconfig.json
+
+      - name: Typecheck — @ahtmljs/webmcp
+        run: cd packages/webmcp && npx tsc --noEmit -p tsconfig.json
+
       - name: Unit tests — @ahtmljs/schema
         run: cd packages/schema && npm test
 
@@ -82,6 +90,12 @@ jobs:
 
       - name: Unit tests — @ahtmljs/cli
         run: cd packages/cli && npm test
+
+      - name: Unit tests — @ahtmljs/kv
+        run: cd packages/kv && npm test
+
+      - name: Unit tests — @ahtmljs/webmcp
+        run: cd packages/webmcp && npm test
 
       - name: UX scenario tests
         run: npm run test:ux
@@ -111,6 +125,10 @@ jobs:
         if: matrix.node == '22'
         run: cd examples/benchmark && npx tsc --noEmit -p tsconfig.json
 
+      - name: Typecheck — examples/why-ahtml
+        if: matrix.node == '22'
+        run: cd examples/why-ahtml && npx tsc --noEmit -p tsconfig.json
+
       - name: Typecheck — examples/landing
         if: matrix.node == '22'
         run: cd examples/landing && npx tsc --noEmit -p tsconfig.json
@@ -118,6 +136,12 @@ jobs:
       - name: Run benchmark (with real tokenizers)
         if: matrix.node == '22'
         run: npm run benchmark
+
+      # Doubles as an end-to-end smoke test: exits non-zero if any 0.9.5
+      # capability proof (MCP / signing / x402 / RFC 9421 / RSL) fails to run.
+      - name: Run the "why AHTML" competitive benchmark
+        if: matrix.node == '22'
+        run: npm run benchmark:why
 
       - name: Build the landing (Next.js production build)
         if: matrix.node == '22'

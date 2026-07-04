@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/kv",
-  "version": "0.9.5",
+  "version": "1.0.0",
   "description": "Pluggable KV and cache backends for AHTML — in-memory, Upstash Redis, and Cloudflare KV. Drop-in replacements for AHTMLClient's cache and rate-limiting surfaces.",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -38,7 +38,7 @@
   "keywords": ["ahtml", "kv", "redis", "upstash", "cloudflare", "cache", "rate-limit"],
   "license": "MIT",
   "engines": { "node": ">=18" },
-  "dependencies": { "@ahtmljs/schema": "0.9.5" },
+  "dependencies": { "@ahtmljs/schema": "1.0.0" },
   "peerDependencies": {
     "@upstash/redis": "^1.0.0",
     "@cloudflare/workers-types": "^4.0.0"

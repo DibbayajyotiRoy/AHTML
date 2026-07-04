@@ -172,6 +172,32 @@ ${tasks.map((t) => `- [${t.state}] ${t.title} (${t.priority})`).join('\n')}
 }
 
 // =====================================================================
+// Markdown (auto) — simulates CDN-style lossy HTML→markdown conversion
+// (e.g. Cloudflare's `Accept: text/markdown`). Deliberately naive: it
+// keeps visible text structure and drops <script> (including JSON-LD),
+// <meta>, and data-* attributes — exactly what auto-conversion loses.
+// =====================================================================
+
+function htmlToMarkdown(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<head[\s\S]*?<\/head>/gi, '')
+    .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, '\n# $1\n')
+    .replace(/<h([2-4])[^>]*>([\s\S]*?)<\/h\1>/gi, (_, l, t) => `\n${'#'.repeat(Number(l) + 1)} ${t}\n`)
+    .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n')
+    .replace(/<tr[^>]*>([\s\S]*?)<\/tr>/gi, (_, row: string) => '| ' + row.replace(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi, '$1 | ').replace(/<[^>]+>/g, '').trim() + '\n')
+    .replace(/<(p|div|article|section|main|header|footer|form|table|thead|tbody|nav|br)[^>]*\/?>/gi, '\n')
+    .replace(/<a [^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, '[$2]($1)')
+    .replace(/<button[^>]*>([\s\S]*?)<\/button>/gi, '[$1]')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim() + '\n';
+}
+
+// =====================================================================
 // Main runner
 // =====================================================================
 
@@ -197,13 +223,14 @@ async function runAll(opts: { mock: boolean; withLLM: boolean }): Promise<RunRes
     }
   }
 
-  const formats = ['HTML', 'llms.txt', 'AHTML compact', 'AHTML JSON'] as const;
+  const formats = ['HTML', 'Markdown (auto)', 'llms.txt', 'AHTML compact', 'AHTML JSON'] as const;
   const results: RunResult[] = [];
 
   for (const task of TASKS) {
     const fixture = fixtures[task.archetype];
     const contents: Record<typeof formats[number], string> = {
       'HTML': fixture.html,
+      'Markdown (auto)': htmlToMarkdown(fixture.html),
       'llms.txt': fixture.llmsTxt,
       'AHTML compact': fixture.compact,
       'AHTML JSON': fixture.json,
@@ -267,6 +294,7 @@ function renderReport(results: RunResult[]): string {
   L.push('');
   L.push('- Tokenizers: `gpt-tokenizer` (OpenAI tiktoken) and `@anthropic-ai/tokenizer` (Claude). No char/4 approximations.');
   L.push('- Mock mode uses regex heuristics on each format to simulate LLM extraction.');
+  L.push('- `Markdown (auto)` is a deliberately naive HTML→markdown auto-conversion (CDN-style, e.g. `Accept: text/markdown`): visible text survives; JSON-LD, meta tags, and data-attributes are lost.');
   L.push('- Real mode calls four providers at temperature=0, max_tokens=64:');
   L.push('  - **OpenAI** gpt-4o-mini  (env `OPENAI_API_KEY`)');
   L.push('  - **Anthropic** claude-haiku-4.5  (env `ANTHROPIC_API_KEY`)');

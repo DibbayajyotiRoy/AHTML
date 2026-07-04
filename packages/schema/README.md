@@ -190,8 +190,10 @@ The chunk id is deterministic across runtimes, which is what makes "how to cite 
 The well-known descriptor, MCP tool list, OpenAPI 3.1 spec, and `llms.txt` emitters used to live in `@ahtmljs/next`. As of v0.8 they are extracted here under `@ahtmljs/schema/emit/*` and re-exported by adapters. Use them directly in any framework.
 
 ```ts
-import { emitWellKnown, emitMcp, emitOpenApi, emitLlmsTxt }
-  from '@ahtmljs/schema/emit';
+import { emitWellKnown } from '@ahtmljs/schema/emit/well-known';
+import { emitMcp } from '@ahtmljs/schema/emit/mcp';
+import { emitOpenApi } from '@ahtmljs/schema/emit/openapi';
+import { emitLlmsTxt } from '@ahtmljs/schema/emit/llms-txt';
 
 const wellKnown = emitWellKnown({ origin: 'https://shop.com', routes });
 const mcpTools  = emitMcp({ snapshots });           // MCP spec 2025-11-25

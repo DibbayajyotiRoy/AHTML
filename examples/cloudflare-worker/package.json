@@ -10,9 +10,9 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@ahtmljs/hono": "0.9.5",
-    "@ahtmljs/kv": "0.9.5",
-    "@ahtmljs/schema": "0.9.5",
+    "@ahtmljs/hono": "1.0.0",
+    "@ahtmljs/kv": "1.0.0",
+    "@ahtmljs/schema": "1.0.0",
     "hono": "^4.0.0"
   },
   "devDependencies": {

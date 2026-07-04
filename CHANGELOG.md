@@ -6,8 +6,41 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Planned for the remaining 0.9.x series (see the version plan):
-- OpenTelemetry metrics + logs (0.9.x ships traces only)
+Planned post-1.0:
+- OpenTelemetry metrics + logs (1.0 ships traces only)
+
+## [1.0.0] — 2026-07-05
+
+**Stability** — the API freeze. Everything shipped through 0.9.5 is stable for the
+1.x line; breaking changes now require a full deprecation cycle. No new features.
+
+### Changed
+
+- **SPEC.md is stable.** The canonical-JSON serialization rules are now normative
+  (§1.1: fixed top-level key order, no insignificant whitespace, UTF-8, signing
+  input definition), and the detached-JWS signing profile (§6) is documented as
+  the normative profile it became in v0.8.
+- **`docs/compare.md` rewritten against the July 2026 field** — new sections for
+  WebMCP, Cloudflare `Accept: text/markdown`, Firecrawl/Jina (the typed-output
+  axis), and RSL 1.0 / Content Signals; MCP and llms.txt sections updated with
+  current adoption data; decision tree covers non-adopter sites.
+- **LLM benchmark now includes a `Markdown (auto)` column** — CDN-style lossy
+  HTML→markdown auto-conversion — answering "why not just let the CDN convert?"
+  in numbers. Report regenerated; reproduce with `bash scripts/run-llm-benchmark.sh`.
+
+### Added
+
+- **Doc-import test** (`npm run test:docs`): every `@ahtmljs/*` import specifier
+  documented in README/SPEC/docs/package READMEs is resolved against the real
+  `exports` maps (import + require conditions) in CI. Two broken documented
+  imports found and fixed (`@ahtmljs/schema/emit`, `@ahtmljs/schema/canonical`).
+
+### Stability commitment
+
+The snapshot wire format (`ahtml: "0.1"`), the canonical-JSON form, the compact
+text serialization, the discovery chain, and all documented package entry points
+are frozen for 1.x. Additive changes only; removals require deprecation in a
+minor release and removal no earlier than 2.0.
 
 ## [0.9.5] — 2026-06-24
 

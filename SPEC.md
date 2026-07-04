@@ -1,6 +1,6 @@
 # AHTML Snapshot Format — v0.1 Specification
 
-*Status: Working draft. May 2026.*
+*Status: Stable — 1.0, July 2026. Sections marked normative use RFC 2119 keywords.*
 *JSON Schema: [`packages/schema/src/schema.json`](packages/schema/src/schema.json)*
 
 This document describes the wire format of an **AHTML snapshot** — the
@@ -33,6 +33,40 @@ fields are bold.
 | `links` | [Links](#7-links) | | Pagination + relationships. |
 | `schemas` | `Record<string, JsonSchema>` | | Referenced schemas for action input/output. |
 | `meta` | Record | | Free-form analytics. `html_bytes`, `snapshot_bytes`, `compression_ratio` recommended. |
+
+### 1.1 Canonical JSON serialization (normative)
+
+The canonical JSON form (`application/ahtml+json`) is the byte sequence
+that ETags and detached-JWS signatures are computed over. Producers MUST
+emit it as follows; two semantically identical snapshots then serialize
+byte-identically across producers and round-trips.
+
+1. **Top-level key order is fixed.** Keys present on the snapshot are
+   emitted in exactly this order, and absent (undefined) keys are omitted
+   entirely:
+
+   `ahtml`, `url`, `fetched_at`, `ttl`, `etag`, `page_type`, `policy`,
+   `provenance`, `entities`, `actions`, `links`, `schemas`, `meta`
+
+   Top-level keys not in this list MUST NOT be emitted.
+2. **Nested objects preserve producer key order.** Within `policy`,
+   `provenance`, entities, actions, `links`, `schemas`, and `meta`, keys
+   are serialized in the order the producer constructed them (standard
+   `JSON.stringify` semantics). Producers that need cross-producer byte
+   equality below the top level MUST construct nested objects in the
+   field order given by this specification's tables.
+3. **No insignificant whitespace.** The canonical form contains no
+   whitespace outside string values (`JSON.stringify` with no indent).
+   A pretty-printed variant (2-space indent, trailing newline) MAY be
+   served for human consumption but is NOT the signing/ETag input.
+4. **Encoding is UTF-8** with no byte-order mark. String escaping follows
+   RFC 8259 as produced by `JSON.stringify`.
+5. **Signing input.** The detached-JWS profile (§6) signs the canonical
+   form defined here: the JWS signing input is
+   `base64url(protected-header) || '.' || base64url(canonical-json)`.
+
+The reference implementation is `toJson()` in
+`@ahtmljs/schema` (`packages/schema/src/format-json.ts`).
 
 ## 2. Identifiers
 
@@ -270,8 +304,13 @@ and SHOULD NOT fire any actions. Implementations MAY return HTTP 403.
 }
 ```
 
-In v0.1 signing is optional and informational. A normative signing
-profile ships in v0.2 (detached JWS over the canonical JSON form).
+Signing is optional. When present, it follows the **normative signing
+profile** (shipped in v0.8): a detached JWS (RFC 7515 Compact
+Serialization, Appendix F — `<protected-header>..<signature>`) computed
+over the canonical JSON form defined in §1.1. Supported algorithms:
+`ES256`, `EdDSA`, `RS256`. The JWS travels in the `X-AHTML-Signature`
+response header or in `provenance.signature`; issuer keys resolve via
+`did:web` (see `docs/signing.md` and `docs/did-web.md`).
 
 ## 7. Links
 

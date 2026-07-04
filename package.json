@@ -9,9 +9,10 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present && npm run test:ux",
+    "test": "npm run test --workspaces --if-present && npm run test:ux && npm run test:docs",
     "test:unit": "npm run test --workspaces --if-present",
     "test:ux": "tsx --test tests/ux/*.test.ts",
+    "test:docs": "tsx --test tests/docs/*.test.ts",
     "test:web-reality": "tsx --test tests/web-reality/__tests__/*.test.ts",
     "benchmark:llm": "bash scripts/run-llm-benchmark.sh",
     "benchmark": "npm run start --workspace examples/benchmark",

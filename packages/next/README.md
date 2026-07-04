@@ -186,7 +186,7 @@ const ok = await verifySnapshot(snap, sig, { trustedKeys: [publicKey] });
 if (!ok) throw new Error('SIGNATURE_INVALID');
 ```
 
-The signature is **detached** — it travels in the `AHTML-Signature` header so the JSON body byte-for-byte matches what was hashed. Canonical-JSON serialization is provided by `@ahtmljs/schema/canonical`.
+The signature is **detached** — it travels in the `AHTML-Signature` header so the JSON body byte-for-byte matches what was hashed. Canonical-JSON serialization is handled internally by `@ahtmljs/schema/sign`.
 
 Emitter consolidation: in 0.8 the well-known / MCP / OpenAPI / llms.txt emitters live in `@ahtmljs/schema/emit/*` and are re-exported by `@ahtmljs/next`, `@ahtmljs/vite`, and `@ahtmljs/langchain`. The public API of this package is unchanged.
 

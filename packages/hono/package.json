@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/hono",
-  "version": "0.9.5",
+  "version": "1.0.0",
   "description": "AHTML adapter for Hono — mount /ahtml, /.well-known/ahtml.json, /ahtml/mcp.json, /ahtml/openapi.json, and /llms.txt on any Hono app. Runs on Node, Bun, Deno, Cloudflare Workers, and AWS Lambda.",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -65,7 +65,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@ahtmljs/schema": "0.9.5"
+    "@ahtmljs/schema": "1.0.0"
   },
   "peerDependencies": {
     "hono": ">=4"

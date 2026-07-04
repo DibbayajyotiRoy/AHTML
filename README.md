@@ -417,7 +417,7 @@ The 0.9.x series and the 1.0.0 cut are sequenced and dated in
 | **v0.9.3** | The agent loop — `ahtml mcp` stdio proxy + `ahtml llms` crawler | shipped |
 | **v0.9.4** | The browser — WebMCP + `Accept: text/markdown` negotiation + `@ahtmljs/kv` | shipped |
 | **v0.9.5** | Verified agents, priced actions — RFC 9421 signing + x402 + RSL 1.0 + Content Signals | shipped |
-| **v1.0.0** | Stability — API freeze + public benchmark + 2026 comparison | next (~2026-10-03) |
+| **v1.0.0** | Stability — API freeze + public benchmark + 2026 comparison | **current** |
 
 Performance budgets are enforced in CI per release — the benchmark is a
 failing test, not a paragraph. See [`PLAN-NEXT-6.md`](PLAN-NEXT-6.md) for

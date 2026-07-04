@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/next",
-  "version": "0.9.5",
+  "version": "1.0.0",
   "description": "Next.js plugin for AHTML. Turns your existing Next.js app into an MCP server, an OpenAPI provider, a JSON-LD source, and a token-optimal semantic snapshot — all from one plugin. Zero migration.",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -122,7 +122,7 @@
     "crawler"
   ],
   "dependencies": {
-    "@ahtmljs/schema": "0.9.5"
+    "@ahtmljs/schema": "1.0.0"
   },
   "peerDependencies": {
     "next": ">=14"

@@ -195,7 +195,10 @@ In v0.8 the well-known, MCP, OpenAPI, and llms.txt emitters were extracted from 
 If you imported emitters directly from `@ahtmljs/next` in a custom Vite middleware, update to:
 
 ```ts
-import { emitWellKnown, emitMcp, emitOpenApi, emitLlmsTxt } from '@ahtmljs/schema/emit';
+import { emitWellKnown } from '@ahtmljs/schema/emit/well-known';
+import { emitMcp } from '@ahtmljs/schema/emit/mcp';
+import { emitOpenApi } from '@ahtmljs/schema/emit/openapi';
+import { emitLlmsTxt } from '@ahtmljs/schema/emit/llms-txt';
 ```
 
 The re-exports from `@ahtmljs/vite` continue to work unchanged.

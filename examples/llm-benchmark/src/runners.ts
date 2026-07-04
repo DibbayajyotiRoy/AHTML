@@ -13,7 +13,7 @@ import type { Task } from './tasks.js';
 
 export interface RunResult {
   task: Task;
-  format: 'HTML' | 'llms.txt' | 'AHTML compact' | 'AHTML JSON';
+  format: 'HTML' | 'Markdown (auto)' | 'llms.txt' | 'AHTML compact' | 'AHTML JSON';
   model: 'gpt-4o-mini' | 'claude-haiku-4.5' | 'gemini-2.5-flash' | 'llama-3.3-70b' | 'mock';
   answer: string;
   tokens_input: number;

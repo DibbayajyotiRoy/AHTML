@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node10",
+    "outDir": "./dist/cjs",
+    "declarationMap": false,
+    "sourceMap": false,
+    "paths": {
+      "@ahtmljs/schema/extract": [
+        "../schema/dist/extract/index"
+      ]
+    }
+  }
+}

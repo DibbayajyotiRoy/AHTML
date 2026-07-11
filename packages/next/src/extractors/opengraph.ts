@@ -1,1 +1,1 @@
-export { extractFromOpenGraph } from '@ahtmljs/schema/extract';
+export { extractFromOpenGraph } from '@ahtmljs/extract';

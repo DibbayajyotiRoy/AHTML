@@ -15,7 +15,7 @@ import {
   extractFromDataAttrs,
   extractFromMicrodata,
   mergeExtractions,
-} from '@ahtmljs/schema/extract';
+} from '@ahtmljs/extract';
 import { fetchHtml, headOk } from '../fetch.js';
 
 const USE_COLOR =

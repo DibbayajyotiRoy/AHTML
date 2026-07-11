@@ -1,0 +1,18 @@
+{
+  "implementation": "ahtml-py",
+  "version": "1.0.0",
+  "commands": {
+    "canonical-json": "python3 python/tests/shim_py.py canonical-json {input}",
+    "to-compact": "python3 python/tests/shim_py.py to-compact {input}",
+    "parse-compact": "python3 python/tests/shim_py.py parse-compact {input}",
+    "etag": "python3 python/tests/shim_py.py etag {input}",
+    "diff": "python3 python/tests/shim_py.py diff {from} {to}",
+    "validate": "python3 python/tests/shim_py.py validate {input}",
+    "verify": "python3 python/tests/shim_py.py verify {snapshot} {jws} {jwk}",
+    "action-gate": "python3 python/tests/shim_py.py action-gate {input}",
+    "dryrun-gate": "python3 python/tests/shim_py.py dryrun-gate {input}"
+  },
+  "waivers": {
+    "negotiation-table": "consumer-only SDK (ADR-0001): no HTTP server surface; the client-side Accept negotiation is covered by python/tests/test_client_cache.py"
+  }
+}

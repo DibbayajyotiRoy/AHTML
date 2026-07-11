@@ -1,0 +1,29 @@
+@ahtml 0.1
+@url https://corpus.example.com/p/widget
+@fetched 2026-01-01T00:00:00.000Z
+@ttl 300
+@etag W/"corpus-1"
+@page_type product_detail
+
+@policy
+  agents_welcome: yes
+  license: MIT
+  rate_limit: 100/min
+
+[product:widget]
+  name: Corpus Widget — “canonical” ünicode ✓
+  brand: Corpus
+  price: 19.99 USD
+  stock: in_stock (7)
+  rating: 4.2 (37)
+
+(action) purchase
+  category: transact
+  target: product:widget
+  method: POST
+  execute: /api/checkout
+  auth: required
+  cost: 19.99 USD purchase
+  reversible: P30D full_refund
+  side_effects: charge_card
+  confirmation: required

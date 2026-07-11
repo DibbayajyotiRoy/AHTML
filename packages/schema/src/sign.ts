@@ -161,6 +161,45 @@ export async function signSnapshot(
   return `${headerB64}..${sigB64}`;
 }
 
+/**
+ * Detached JWS over arbitrary payload bytes — the same profile
+ * `signSnapshot` uses, for non-snapshot payloads (SPEC §4.7 simulated
+ * responses, conformance attestations). Additive export (1.1).
+ */
+export async function signBytes(payload: Uint8Array, key: SignKey, opts: SignOptions = {}): Promise<string> {
+  const alg = opts.algorithm ?? key.alg;
+  const kid = opts.kid ?? key.kid;
+  const headerObj: { alg: SignAlg; kid?: string } = { alg };
+  if (kid !== undefined) headerObj.kid = kid;
+  const headerB64 = base64urlEncodeString(JSON.stringify(headerObj));
+  const payloadB64 = base64urlEncode(payload);
+  const signingInput = TEXT_ENCODER.encode(`${headerB64}.${payloadB64}`);
+  const sigBuf = await (await subtle()).sign(algParams(alg), key.key, signingInput);
+  return `${headerB64}..${base64urlEncode(new Uint8Array(sigBuf))}`;
+}
+
+/** Verify a detached JWS produced by {@link signBytes}. Additive (1.1). */
+export async function verifyBytes(
+  payload: Uint8Array,
+  jws: string,
+  keys: VerifyKey[],
+): Promise<boolean> {
+  const parsed = parseDetachedJws(jws);
+  if ('error' in parsed) return false;
+  const signingInput = TEXT_ENCODER.encode(`${parsed.headerB64}.${base64urlEncode(payload)}`);
+  const sig = base64urlDecode(parsed.sigB64);
+  for (const key of keys) {
+    if (parsed.header.alg && parsed.header.alg !== key.alg) continue;
+    try {
+      const ok = await (await subtle()).verify(algParams(key.alg), key.key, sig, signingInput);
+      if (ok) return true;
+    } catch {
+      /* try the next key */
+    }
+  }
+  return false;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Verify                                                                     */
 /* -------------------------------------------------------------------------- */

@@ -1,9 +1,15 @@
 # AHTML
 
+> **AHTML is an open-source (MIT) snapshot format and TypeScript toolkit
+> that lets any website publish an agent-readable, token-efficient view of
+> each page — typed entities plus typed actions with explicit cost,
+> reversibility, auth, and side-effects — and auto-emit MCP, OpenAPI 3.1,
+> JSON-LD, llms.txt, RSL, and Markdown from that single source, while
+> browsers keep the same HTML.**
+>
 > The contract layer of the agent web. One config in, every agent-readable
-> protocol out — MCP, OpenAPI 3.1, JSON-LD, llms.txt, RSL, Markdown, and a
-> token-optimal snapshot — plus signed provenance, verified-agent auth, and
-> priced actions.
+> protocol out — plus signed provenance, verified-agent auth, and priced
+> actions.
 
 [![npm version](https://img.shields.io/npm/v/@ahtmljs/next.svg?style=flat-square&label=%40ahtmljs%2Fnext)](https://www.npmjs.com/package/@ahtmljs/next)
 [![npm version](https://img.shields.io/npm/v/@ahtmljs/schema.svg?style=flat-square&label=%40ahtmljs%2Fschema)](https://www.npmjs.com/package/@ahtmljs/schema)
@@ -14,6 +20,25 @@
 [![JSON Schema 2020-12](https://img.shields.io/badge/JSON%20Schema-2020--12-1b3a82?style=flat-square)](https://json-schema.org/draft/2020-12)
 [![Provenance](https://img.shields.io/badge/npm-provenance-2dba4e?style=flat-square&logo=github)](https://docs.npmjs.com/generating-provenance-statements)
 [![tests](https://img.shields.io/badge/tests-454%20passing-2dba4e?style=flat-square)](TESTING.md)
+
+**At a glance — every number below is measured in this repo, not estimated:**
+
+- **5.6× fewer tokens** than the HTML a browser loads on the flagship
+  benchmark page (4.5–7.3× across the product / article / dashboard
+  corpus, real OpenAI + Anthropic tokenizers) — [`WHY-AHTML.md`](WHY-AHTML.md),
+  [`benchmark-results.md`](benchmark-results.md)
+- **Fact-extraction accuracy rises from 91% on raw HTML to 100% on AHTML
+  JSON** in a real multi-model benchmark — 146 runs, 20 tasks, across
+  `gpt-4o-mini`, `claude-haiku-4.5`, `gemini-2.5-flash`, and
+  `llama-3.3-70b` — [`benchmark-results-llm.md`](benchmark-results-llm.md)
+- **6/6 capability proofs executed live** — MCP tools emitted, detached-JWS
+  snapshot signed + verified, x402 `402` payment flow built, RFC 9421 agent
+  request verified, RSL 1.0 license emitted, Markdown negotiation —
+  [`WHY-AHTML.md`](WHY-AHTML.md)
+- **Nine npm packages** under [`@ahtmljs`](https://www.npmjs.com/org/ahtmljs),
+  all at **v1.0.0**, MIT, released with npm provenance, 454 tests passing
+
+**30-second quickstart:**
 
 ```bash
 npm install @ahtmljs/next @ahtmljs/schema
@@ -51,7 +76,15 @@ view over content negotiation, and a token-optimal agent snapshot at
 
 ---
 
-## What is AHTML
+## What is AHTML?
+
+AHTML is a web standard for AI agents: an **agent-readable web** layer that
+makes your existing site's content legible — and safely actionable — for
+LLM-powered assistants. If you are searching for a **token-efficient HTML
+alternative**, an **llms.txt alternative with typed actions**, **MCP
+integration for an existing website**, or a way to publish **web content
+for LLMs** without running a second server, that is exactly the problem
+AHTML solves.
 
 The web that browsers see and the web that agents see are diverging. Browsers
 render pixels. Agents pay for tokens. A modern product page can ship 300 KB of
@@ -210,6 +243,27 @@ x402 `402` built, an RFC 9421 agent request verified) — see
 
 ## Comparison
 
+### Why AHTML vs llms.txt / MCP / raw HTML
+
+The short version, sourced from the measured benchmarks and
+[`docs/compare.md`](docs/compare.md):
+
+| | Raw HTML | llms.txt | MCP server (hand-built) | **AHTML** |
+|---|---|---|---|---|
+| What it is | The page browsers render | Markdown sitemap for LLMs | Separate tool-calling process | Typed per-page snapshot that **emits** MCP + llms.txt |
+| Tokens, benchmark product page (o200k) | 4,269 | 187 | n/a (not a page format) | **581 compact** (7.3× fewer than HTML) |
+| Fact-extraction accuracy (146-run LLM benchmark) | 91% | 89% | n/a | **100% (AHTML JSON)** |
+| Typed entities (price, stock, SKU) | implicit | text only | per-tool, hand-written | yes |
+| Typed actions (cost / reversibility / side-effects / confirmation) | no | no | annotations, hand-written | yes |
+| Deployment | already there | static file | parallel server, parallel auth, parallel deploy | your existing app, same auth, one deploy |
+| Freshness (TTL, ETag, diff endpoint) | partial | no | no | yes |
+| Cryptographic provenance (detached JWS) | no | no | no | yes |
+| Verified-agent auth (RFC 9421) / priced actions (x402) | no | no | no | yes |
+
+AHTML is not a competitor to MCP or llms.txt — it **emits both** from one
+config. Use a hand-built MCP server for a purpose-built tool surface with
+no website behind it; use AHTML when you already have a website.
+
 ### vs Firecrawl / ScrapingBee / Jina Reader / r.jina.ai / Spider / Browserbase / Diffbot / Cloudflare auto-markdown
 
 These convert *somebody else's* HTML into LLM-friendly markdown by scraping
@@ -264,7 +318,10 @@ Signals — is in [`docs/compare.md`](docs/compare.md).
 
 ---
 
-## Install in 3 minutes (Next.js App Router)
+## Install in 3 minutes
+
+Next.js App Router shown; the same three steps apply to
+[`@ahtmljs/vite`](packages/vite) and [`@ahtmljs/hono`](packages/hono).
 
 **1. Install.**
 
@@ -400,6 +457,102 @@ Desktop, Claude on the web, ChatGPT (Apps SDK + Connectors), Cursor,
 Continue, Cline, Aider, Microsoft Copilot (M365, GitHub), Gemini API +
 Vertex AI Agent Builder, Goose, Witsy, Zed AI, and any framework with MCP
 support (LangGraph, CrewAI, AutoGen).
+
+---
+
+## Certified implementations
+
+Any implementation can certify against the language-agnostic
+[conformance corpus](packages/conformance/corpus/1.0/README.md) and publish a
+signed attestation — see [docs/conformance.md](docs/conformance.md).
+
+| Implementation | Language | Corpus | Result |
+| --- | --- | --- | --- |
+| `@ahtmljs` (reference) | TypeScript | 1.0 | 16/17 pass, 1 waived (wire-level negotiation asserted in adapter tests) |
+| `ahtml-py` | Python | 1.0 | 16/17 pass, 1 waived (consumer-only SDK, no HTTP server surface) |
+
+## FAQ
+
+Longer, categorized version in [`docs/faq.md`](docs/faq.md).
+
+### What is AHTML?
+
+AHTML is an open-source (MIT) snapshot format and TypeScript toolkit that
+lets any website publish an agent-readable, token-efficient view of each
+page — typed entities plus typed actions with explicit cost, reversibility,
+auth, and side-effects — and auto-emit MCP, OpenAPI 3.1, JSON-LD, llms.txt,
+RSL, and Markdown from that single source, while browsers keep the same HTML.
+
+### Is AHTML a replacement for MCP?
+
+No — AHTML **emits** MCP. MCP is the agent's tool-calling protocol; AHTML is
+the per-page contract that auto-generates an MCP manifest at
+`/ahtml/mcp.json` from your existing site, so you don't run a separate MCP
+server with parallel auth and deploys.
+
+### How is AHTML different from llms.txt?
+
+llms.txt is unstructured markdown — useful as a sitemap for IDE agents,
+but it can't express typed entities or executable actions. AHTML auto-emits
+llms.txt as a compatibility shim and adds the typed contract; in the
+real-LLM benchmark llms.txt scored 89% on fact extraction vs 100% for AHTML
+JSON.
+
+### How many tokens does AHTML save vs raw HTML?
+
+Measured with the real OpenAI and Anthropic tokenizers: 4.5–7.3× fewer
+tokens on the lean benchmark corpus (5.6× on the flagship page in
+[`WHY-AHTML.md`](WHY-AHTML.md)). On production-bloat pages (200–500 KB of
+HTML) the ratio scales toward 50–100×, because the snapshot stays near ~2 KB.
+
+### Does AHTML make LLM agents more accurate?
+
+Yes — in the multi-model benchmark ([`benchmark-results-llm.md`](benchmark-results-llm.md),
+146 runs, 20 fact-extraction tasks across `gpt-4o-mini`, `claude-haiku-4.5`,
+`gemini-2.5-flash`, `llama-3.3-70b`), accuracy rose from 91% on raw HTML to
+100% on AHTML JSON.
+
+### Do I need to migrate my site to use AHTML?
+
+No. AHTML is additive: it adds endpoints (`/ahtml/*`,
+`/.well-known/ahtml.json`, `/llms.txt`) next to your existing routes, and
+the HTML you serve to browsers is unchanged.
+
+### Which frameworks does AHTML support?
+
+Next.js 14+/15 App Router (`@ahtmljs/next`), Vite-based apps including
+SvelteKit, SolidStart, and Astro (`@ahtmljs/vite`), and Hono on Node, Bun,
+Deno, Cloudflare Workers, and AWS Lambda (`@ahtmljs/hono`) — or use
+`@ahtmljs/schema` directly with hand-rolled routes in any framework.
+
+### Does AHTML work on sites that haven't adopted it?
+
+Yes. `@ahtmljs/cli` and `@ahtmljs/agent` extract typed snapshots from
+ordinary HTML (schema.org + OpenGraph + microdata + data-attributes), and
+`npx @ahtmljs/cli mcp <url>` turns **any** URL into MCP tools today.
+
+### How do agents know an AHTML snapshot wasn't tampered with?
+
+Snapshots can carry a detached JWS signature over the canonical JSON form
+(shipped in v0.8), verifiable against a `did:web` identity — and sites can
+require verified agents via RFC 9421 signed requests.
+
+### Can I charge AI agents for actions or license my content?
+
+Yes. Actions declare typed `cost` with `rails: ['x402']` and a
+standards-compliant HTTP `402` payment flow, and sites emit an RSL 1.0
+license file plus Content Signals declarations (all shipped in v0.9.5).
+
+### Will AHTML slow down my site?
+
+No. Snapshots are shaped at request time from data your route already has —
+no parsing or scraping — and ETag-conditional GET plus the `?since=<etag>`
+diff endpoint keep repeat fetches cheap.
+
+### How much does AHTML cost?
+
+Nothing — all nine packages are MIT-licensed npm libraries that run inside
+your own app. There is no SaaS, no per-request pricing, and no lock-in.
 
 ---
 

@@ -1,0 +1,46 @@
+name: publish-py
+
+# PyPI Trusted Publishing (OIDC) — no long-lived tokens. Requires a one-time
+# human action before the first release: register this repo + workflow as a
+# trusted publisher for the `ahtml` project at
+# https://pypi.org/manage/account/publishing/ (see TASKS.md T2.10).
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Publish target'
+        type: choice
+        options: [testpypi, pypi]
+        default: testpypi
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install build twine
+      - run: python -m build python/
+      - run: twine check python/dist/*
+      - uses: actions/upload-artifact@v4
+        with: { name: dist, path: python/dist/ }
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # OIDC trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: dist, path: dist/ }
+      - name: Publish to TestPyPI
+        if: github.event_name == 'workflow_dispatch' && inputs.target == 'testpypi'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with: { repository-url: 'https://test.pypi.org/legacy/' }
+      - name: Publish to PyPI
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.target == 'pypi')
+        uses: pypa/gh-action-pypi-publish@release/v1

@@ -30,6 +30,7 @@ import { runScore } from './commands/score.js';
 import { runBenchmark } from './commands/benchmark.js';
 import { runMcp } from './commands/mcp.js';
 import { runLlms } from './commands/llms.js';
+import { runInit } from './commands/init.js';
 
 /** Minimal ANSI palette — no chalk dependency by design. */
 const ANSI = {
@@ -179,6 +180,86 @@ async function main(argv: string[]): Promise<number> {
       const outIdx = rest.indexOf('--out');
       const outFile = outIdx !== -1 ? rest[outIdx + 1] : undefined;
       return runLlms(url, { out: outFile });
+    }
+    case 'submit': {
+      const url = positional[0];
+      if (!url) {
+        process.stderr.write(paint('error: submit requires a <url> argument\n', ANSI.red));
+        process.stderr.write(HELP);
+        return 1;
+      }
+      const idxFlag = rest.indexOf('--index');
+      const service = idxFlag !== -1 ? rest[idxFlag + 1]! : 'https://index.ahtmljs.com';
+      const res = await fetch(`${service}/api/submit`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      const body = (await res.json()) as {
+        ok: boolean;
+        reason?: string;
+        issues?: Array<{ path: string; message: string; severity: string }>;
+        entry?: { score: number; grade: string; signatureStatus: string };
+      };
+      if (body.ok) {
+        process.stdout.write(
+          paint(`indexed ${url}\n`, ANSI.green) +
+            `  score ${body.entry!.score}/100 (${body.entry!.grade}), signature: ${body.entry!.signatureStatus}\n`,
+        );
+        return 0;
+      }
+      process.stderr.write(paint(`rejected: ${body.reason ?? 'unknown'}\n`, ANSI.red));
+      for (const issue of body.issues ?? []) {
+        process.stderr.write(`  ${issue.severity.toUpperCase()} ${issue.path}: ${issue.message}\n`);
+      }
+      return 1;
+    }
+    case 'conformance': {
+      const manifest = positional[0];
+      if (!manifest) {
+        process.stderr.write(paint('error: conformance requires a <manifest> argument\n', ANSI.red));
+        process.stderr.write(HELP);
+        return 1;
+      }
+      // Lazy import: @ahtmljs/conformance is a devDependency-grade package;
+      // the CLI must not hard-fail for users who never certify.
+      const { runConformance, signAttestation } = await import('@ahtmljs/conformance');
+      const attestation = await runConformance(manifest);
+      const signed = await signAttestation(attestation);
+      process.stdout.write(JSON.stringify(signed, null, 2) + '\n');
+      const { pass, fail, waived, skipped, total } = attestation.summary;
+      process.stderr.write(
+        `\n${attestation.implementation}: ${pass}/${total} pass` +
+          ` (${fail} fail, ${waived} waived, ${skipped} skipped)\n`,
+      );
+      return fail === 0 ? 0 : 1;
+    }
+    case 'badge': {
+      const url = positional[0];
+      if (!url) {
+        process.stderr.write(paint('error: badge requires a <url> argument\n', ANSI.red));
+        process.stderr.write(HELP);
+        return 1;
+      }
+      const svcIdx = rest.indexOf('--service');
+      const service = svcIdx !== -1 ? rest[svcIdx + 1]! : 'https://badge.ahtmljs.com';
+      const badge = `${service}/badge?url=${encodeURIComponent(url)}`;
+      const report = `${service}/report?url=${encodeURIComponent(url)}`;
+      process.stdout.write(
+        `README-embeddable badge for ${url}:\n\n` +
+          `[![AHTML score](${badge})](${report})\n`,
+      );
+      return 0;
+    }
+    case 'init': {
+      const dir = positional[0] ?? process.cwd();
+      // --html <file> and --site <url> take values — extract from raw rest args
+      const htmlIdx = rest.indexOf('--html');
+      const siteIdx = rest.indexOf('--site');
+      return runInit(dir, {
+        html: htmlIdx !== -1 ? rest[htmlIdx + 1] : undefined,
+        site: siteIdx !== -1 ? rest[siteIdx + 1] : undefined,
+      });
     }
     default:
       process.stderr.write(paint(`error: unknown command "${cmd}"\n`, ANSI.red));

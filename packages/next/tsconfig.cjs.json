@@ -7,7 +7,12 @@
     "declarationMap": false,
     "sourceMap": false,
     "paths": {
-      "@ahtmljs/schema/extract": ["../schema/dist/extract/index"]
+      "@ahtmljs/schema/extract": [
+        "../schema/dist/extract/index"
+      ],
+      "@ahtmljs/extract": [
+        "../extract/dist/index"
+      ]
     }
   }
 }

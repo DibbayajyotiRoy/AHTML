@@ -1,0 +1,13 @@
+@ahtml 0.1
+@url https://blog.example.com/essay
+@fetched 2026-01-01T00:00:00.000Z
+@page_type document
+
+[document:essay-1]
+  title: Why Agents Need AHTML
+  author: Dibbayajyoti Roy
+  published: 2026-05-12T00:00:00.000Z
+  summary: A short argument.
+  word_count: 184
+  language: en
+  tags: agents, web

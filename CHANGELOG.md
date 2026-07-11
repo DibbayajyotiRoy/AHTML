@@ -9,6 +9,78 @@ follows [Semantic Versioning](https://semver.org/).
 Planned post-1.0:
 - OpenTelemetry metrics + logs (1.0 ships traces only)
 
+## [1.1.0] — unreleased (series 1.1: reach the other half of the agent world)
+
+### Added
+
+- **`ahtml-py`** (`python/`) — Python consumer SDK mirroring `@ahtmljs/agent`:
+  `from_json`/`from_compact` byte-identical to the TS reference, `AHTMLClient`
+  with ETag/TTL caching, detached-JWS + `did:web` verification, `run_action`
+  with the same `ActionRefused` gates, token counting, LangChain loader.
+  46+ tests including cross-implementation byte-parity; PyPI trusted-publishing
+  workflow ready (project registration pending).
+- **`@ahtmljs/extract`** — the extractor pipeline behind every adapter, now a
+  stable plugin API: `definePlugin({ match, extract, priority })` over a
+  framework-neutral `PageModel`. Equal priorities and duplicate names are hard
+  errors. `@ahtmljs/next` re-exports unchanged (freeze holds); the CLI consumes
+  it; a <100-LOC third-party recipe plugin (`examples/recipe-plugin`) proves the
+  contract, budget-enforced in CI.
+- **`@ahtmljs/astro`** and **`@ahtmljs/sveltekit`** — full adapters
+  (`.well-known`, snapshot routes with negotiation/304/diff, MCP/OpenAPI,
+  llms.txt) with zero framework dependency, both passing the shared adapter
+  matrix (extract → validate → sign → serve → agent-consume) identically to Next.
+
+## [1.2.0] — unreleased (series 1.2: 10-minute, visibly-rewarded adoption)
+
+### Added
+
+- **`ahtml init`** — detects Next/Vite/Hono/Astro/SvelteKit, wires the adapter,
+  generates a validateStrict-clean starter snapshot via the universal extractor.
+  Idempotent; unsupported frameworks exit non-zero leaving the tree untouched.
+- **`ahtml badge <url>`** + **`@ahtmljs/badge`** — hosted score badge service
+  (Cloudflare-Worker-shaped) serving an SVG + linked report; score is the
+  CLI's `computeScore` imported, byte-identical to local `ahtml score`;
+  TTL-honoring cache + per-IP rate limit (deployment pending).
+- **`@ahtmljs/insights`** — agent-traffic analytics: RFC 9421-verified agent
+  classification (unverifiable ≠ verified, ever), KV-backed event recording
+  with a tested zero-PII guarantee, ≤1 ms p95 middleware overhead
+  (CI-budgeted), offline single-file HTML dashboard, OTel export.
+
+## [1.3.0] — unreleased (series 1.3: protocol with a network effect)
+
+### Added
+
+- **`@ahtmljs/conformance`** — language-agnostic corpus (20 fixtures: canonical
+  round-trips, ETag, diff, signature vectors incl. negatives, validateStrict
+  negatives, dry-run gates) with CI-enforced RFC-2119 MUST traceability, a
+  runner-manifest contract, signed result attestations, and
+  `ahtml conformance <manifest>`. Both the TS reference and `ahtml-py` pass
+  100% through the same runner — two independent implementations.
+- **`@ahtmljs/index`** — the AHTML Index: opt-in submission (validate + score +
+  signature check, rejects with the lint report), TTL/ETag-honoring re-crawl
+  (unchanged sites cost one 304), RSL/policy opt-out delisting within one
+  cycle, per-entry signature status that never upgrades unsigned content, MCP
+  query surface (`search_sites`, `sites_with_action`) reusing `snapshotsToMcp`,
+  and a dogfood snapshot that scores 100/100 (public deployment pending).
+- **`ahtml submit <url>`** — CLI submission to the index.
+
+## [1.4.0] — unreleased (series 1.4: safe to transact)
+
+### Added
+
+- **SPEC §4.7 dry-run addendum** (ADR-0003, additive — pinned 1.0.0 clients
+  proven unaffected): actions may declare `dry_run.url`; simulated responses
+  MUST carry `simulated: true`, MUST NOT mutate or charge, and sign like real
+  ones.
+- **`@ahtmljs/schema/simulate`** — `createSimulateHandler` (framework-neutral
+  producer side) + `signBytes`/`verifyBytes`.
+- **`@ahtmljs/agent`**: `POLICY_PRESETS` (`strict` requires a prior
+  same-parameters dry-run within TTL before irreversible+priced actions),
+  `DryRunLedger`, and anti-spoofing refusals in both directions — mirrored 1:1
+  in `ahtml-py` (`RUN_POLICY_PRESETS`). 100×-dry-run e2e proves zero side
+  effects and zero x402 charges; conformance corpus gained the dry-run gates in
+  the same release.
+
 ## [1.0.0] — 2026-07-05
 
 **Stability** — the API freeze. Everything shipped through 0.9.5 is stable for the

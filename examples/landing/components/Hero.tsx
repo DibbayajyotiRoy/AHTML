@@ -23,21 +23,24 @@ export default function Hero() {
   return (
     <section className="hero">
       <div className="container">
-        <div className="eyebrow">v0.4.0 — May 2026 · MIT</div>
+        <div className="eyebrow">v1.0.0 · MIT</div>
         <h1>
           The HTML of <em>the agent web</em>.
         </h1>
         <p className="lede">
-          One snapshot — five machine surfaces. AHTML collapses MCP, OpenAPI 3.1,
-          JSON-LD, <code className="hero-inline">llms.txt</code> and a token-optimal
-          semantic snapshot into a single declarative artifact that lives next to
-          your existing HTML. Browsers still see pixels. Agents see typed
-          entities, typed actions, signable provenance.
+          AHTML is an open-source (MIT) snapshot format and TypeScript toolkit
+          that lets any website publish an agent-readable, token-efficient view
+          of each page — typed entities plus typed actions with explicit cost,
+          reversibility, auth, and side-effects — and auto-emit MCP, OpenAPI 3.1,
+          JSON-LD, <code className="hero-inline">llms.txt</code>, RSL, and
+          Markdown from that single source, while browsers keep the same HTML.
+          Measured: 5.6× fewer tokens than raw HTML, and LLM fact-extraction
+          accuracy up from 91% to 100%.
         </p>
 
         <div className="hero-stack">
           <div className="hero-stack-row">
-            <span className="hero-stack-num">5</span>
+            <span className="hero-stack-num">9</span>
             <span className="hero-stack-label">
               packages under <code className="hero-inline">@ahtmljs/*</code>
             </span>

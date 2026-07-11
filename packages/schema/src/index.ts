@@ -52,6 +52,8 @@ export {
   signSnapshot,
   verifySnapshot,
   verifySnapshotStrict,
+  signBytes,
+  verifyBytes,
   type SignKey,
   type VerifyKey,
   type SignOptions,

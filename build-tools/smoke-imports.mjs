@@ -6,6 +6,7 @@ const require = createRequire(import.meta.url);
 
 const subpaths = {
   '@ahtmljs/schema': [
+    '/simulate',
     '',
     '/stream',
     '/kv',
@@ -18,10 +19,22 @@ const subpaths = {
     '/http/conditional',
   ],
   '@ahtmljs/agent': ['', '/tokens', '/sign'],
+  '@ahtmljs/extract': [''],
   '@ahtmljs/next': ['', '/handler', '/well-known', '/llms-txt', '/extractors', '/mcp', '/openapi'],
   '@ahtmljs/vite': [''],
   '@ahtmljs/hono': [''],
+  '@ahtmljs/astro': [''],
+  '@ahtmljs/sveltekit': [''],
+  '@ahtmljs/insights': [''],
+  '@ahtmljs/index': [''],
   '@ahtmljs/langchain': [''],
+};
+
+// ESM-only packages (workers / tooling that depend on ESM-only exports):
+// asserted under `import` alone — a CJS require failure here is by design.
+const esmOnly = {
+  '@ahtmljs/badge': [''],
+  '@ahtmljs/conformance': [''],
 };
 
 let failures = 0;
@@ -34,6 +47,18 @@ for (const [pkg, subs] of Object.entries(subpaths)) {
       failures++;
       console.error(`CJS FAIL ${id} — ${e.code ?? e.message}`);
     }
+    try {
+      await import(id);
+    } catch (e) {
+      failures++;
+      console.error(`ESM FAIL ${id} — ${e.code ?? e.message}`);
+    }
+  }
+}
+
+for (const [pkg, subs] of Object.entries(esmOnly)) {
+  for (const sub of subs) {
+    const id = pkg + sub;
     try {
       await import(id);
     } catch (e) {

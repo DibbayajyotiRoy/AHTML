@@ -1,1 +1,1 @@
-export { mergeExtractions, type Extraction } from '@ahtmljs/schema/extract';
+export { mergeExtractions, type Extraction } from '@ahtmljs/extract';

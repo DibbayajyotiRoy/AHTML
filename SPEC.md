@@ -270,6 +270,43 @@ Open vocabulary. Common values:
 Agents MUST NOT execute an action with `"confirmation": "required"`
 without explicit user confirmation.
 
+### 4.7 Dry-run (additive addendum, 2026-07 — ADR-0003)
+
+An action MAY declare a dry-run capability:
+
+```json
+{
+  "id": "subscribe",
+  "execute_url": "/api/subscribe",
+  "dry_run": { "url": "/ahtml/actions/subscribe/dry-run" }
+}
+```
+
+Semantics (normative for producers that declare `dry_run`):
+
+- The dry-run endpoint MUST NOT mutate state, charge any payment rail, or
+  emit any of the action's declared `side_effects`.
+- Its response MUST carry `"simulated": true` at the top level, and SHOULD
+  itemize: `predicted_output`, `would_charge` (Money), and `reversal`
+  (Reversibility describing how the real action would be undone).
+- Simulated responses are signed exactly like snapshots when the site signs
+  (detached JWS per §6) — a rehearsal is worth exactly as much as its
+  signature.
+- A real execution response MUST NOT carry `"simulated": true`.
+
+Consumer requirements:
+
+- Consumers MUST reject an execute-path response that claims
+  `"simulated": true` (a real result masquerading as a rehearsal), and MUST
+  reject a dry-run response from a `dry_run`-declaring action that omits the
+  flag (a rehearsal that may have been real).
+- 1.0 consumers ignore the `dry_run` field entirely (unknown-field rule,
+  §12) — the addendum is additive.
+
+Legacy note: `preview_url` (§4) predates this addendum and remains valid;
+`dry_run.url` differs in that its response contract (`simulated: true`,
+no-mutation) is normative and conformance-tested.
+
 ## 5. Policy
 
 Site-level rules for agents. Static within the snapshot; may also be

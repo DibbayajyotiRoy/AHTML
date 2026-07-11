@@ -20,7 +20,7 @@ export default function CTA() {
           <a className="btn ghost" href="/integrations/next">Next.js guide</a>
         </div>
         <div style={{ marginTop: 16, fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-3)' }}>
-          MIT licensed · zero migration · v0.1 May 2026
+          MIT licensed · zero migration · v1.0.0
         </div>
       </div>
     </section>

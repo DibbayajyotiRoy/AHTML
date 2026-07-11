@@ -1,0 +1,65 @@
+{
+  "spec": "SPEC.md v0.1",
+  "musts": [
+    {
+      "id": "MUST-001",
+      "line": 40,
+      "section": "1.1 Canonical JSON serialization (normative)",
+      "text": "that ETags and detached-JWS signatures are computed over. Producers MUST emit it as follows; two semantically identical snapshots then serialize"
+    },
+    {
+      "id": "MUST-002",
+      "line": 51,
+      "section": "1.1 Canonical JSON serialization (normative)",
+      "text": "Top-level keys not in this list MUST NOT be emitted. 2. **Nested objects preserve producer key order.** Within `policy`,"
+    },
+    {
+      "id": "MUST-003",
+      "line": 56,
+      "section": "1.1 Canonical JSON serialization (normative)",
+      "text": "equality below the top level MUST construct nested objects in the field order given by this specification's tables."
+    },
+    {
+      "id": "MUST-004",
+      "line": 270,
+      "section": "4.6 Confirmation",
+      "text": "Agents MUST NOT execute an action with `\"confirmation\": \"required\"` without explicit user confirmation."
+    },
+    {
+      "id": "MUST-005",
+      "line": 287,
+      "section": "4.7 Dry-run (additive addendum, 2026-07 — ADR-0003)",
+      "text": "- The dry-run endpoint MUST NOT mutate state, charge any payment rail, or emit any of the action's declared `side_effects`."
+    },
+    {
+      "id": "MUST-006",
+      "line": 289,
+      "section": "4.7 Dry-run (additive addendum, 2026-07 — ADR-0003)",
+      "text": "- Its response MUST carry `\"simulated\": true` at the top level, and SHOULD itemize: `predicted_output`, `would_charge` (Money), and `reversal`"
+    },
+    {
+      "id": "MUST-007",
+      "line": 295,
+      "section": "4.7 Dry-run (additive addendum, 2026-07 — ADR-0003)",
+      "text": "- A real execution response MUST NOT carry `\"simulated\": true`."
+    },
+    {
+      "id": "MUST-008",
+      "line": 299,
+      "section": "4.7 Dry-run (additive addendum, 2026-07 — ADR-0003)",
+      "text": "- Consumers MUST reject an execute-path response that claims `\"simulated\": true` (a real result masquerading as a rehearsal), and MUST"
+    },
+    {
+      "id": "MUST-009",
+      "line": 300,
+      "section": "4.7 Dry-run (additive addendum, 2026-07 — ADR-0003)",
+      "text": "`\"simulated\": true` (a real result masquerading as a rehearsal), and MUST reject a dry-run response from a `dry_run`-declaring action that omits the"
+    },
+    {
+      "id": "MUST-010",
+      "line": 467,
+      "section": "11. Content negotiation",
+      "text": "Implementations MUST set `Vary: Accept`."
+    }
+  ]
+}

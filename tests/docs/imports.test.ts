@@ -23,7 +23,7 @@ const PACKAGES_DIR = join(ROOT, 'packages');
 // True false-positives only: prose mentions of packages that are explicitly
 // documented as planned / roadmap items, not importable code.
 const IGNORE: string[] = [
-  '@ahtmljs/astro',              // packages/vite/README.md — "in development"
+  // @ahtmljs/astro is now a real package (1.1) — no longer ignored.
   '@ahtmljs/nuxt',               // packages/vite/README.md — "on the roadmap"
   '@ahtmljs/next-language',      // LANGUAGE.md — planned framework binding
   '@ahtmljs/vite-language',      // LANGUAGE.md — planned framework binding

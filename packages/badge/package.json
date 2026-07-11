@@ -1,0 +1,58 @@
+{
+  "name": "@ahtmljs/badge",
+  "version": "1.1.0",
+  "description": "Hosted AHTML score badge service — re-runs the canonical ahtml score against any URL and serves a README-embeddable SVG badge with a linked score report. Deployable as a Cloudflare Worker or any fetch-handler runtime.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "tsx --test src/__tests__/*.test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DibbayajyotiRoy/AHTML.git",
+    "directory": "packages/badge"
+  },
+  "homepage": "https://github.com/DibbayajyotiRoy/AHTML#readme",
+  "bugs": {
+    "url": "https://github.com/DibbayajyotiRoy/AHTML/issues",
+    "email": "rdibbayajyoti@gmail.com"
+  },
+  "author": {
+    "name": "Dibbayajyoti Roy",
+    "email": "rdibbayajyoti@gmail.com",
+    "url": "https://github.com/DibbayajyotiRoy"
+  },
+  "keywords": [
+    "ahtml",
+    "badge",
+    "agent-web",
+    "ai"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@ahtmljs/cli": "1.0.0",
+    "@ahtmljs/extract": "0.1.0",
+    "@ahtmljs/schema": "1.0.0"
+  }
+}

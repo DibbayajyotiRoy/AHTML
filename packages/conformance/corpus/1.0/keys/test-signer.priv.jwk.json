@@ -1,0 +1,11 @@
+{
+  "key_ops": [
+    "sign"
+  ],
+  "ext": true,
+  "kty": "EC",
+  "x": "1kGu1JkNdaRY8xE9WAEvTuroJFPJ8hqRjTJWMnMnHUw",
+  "y": "9S-ROsX9HFzP3xpRnkEgXB6eaHYt94xsW2wTPEPxC0o",
+  "crv": "P-256",
+  "d": "3VsXCIGkgGThx8OmLzXctH3rhTjCDckzcNqK6US7jVQ"
+}

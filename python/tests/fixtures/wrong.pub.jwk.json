@@ -1,0 +1,11 @@
+{
+  "key_ops": [
+    "verify"
+  ],
+  "ext": true,
+  "kty": "EC",
+  "x": "c5cv0bacKJdSXHKyd5roSTz0lkfDKImAJDv3SCTSgsg",
+  "y": "j1BgyFCIDAYwIkiRljxHR4bDSqfX5a3OKI2I1AC7BpI",
+  "crv": "P-256",
+  "alg": "ES256"
+}

@@ -137,3 +137,59 @@ curl -s "https://api.github.com/repos/DibbayajyotiRoy/AHTML/tags" \
 - **Task:** Turn any AHTML-emitting site into LangChain `Document[]` in one call, with chunks pre-computed deterministically and citations preserved.
 - **Action:** Built `AHTMLLoader` against the LangChain.js loader contract; split `Document.chunks` into per-chunk records preserving anchors, byte ranges, and source metadata.
 - **Result:** 5 passing tests including chunk-boundary fidelity and metadata propagation; consumers go from URL → embeddings in three lines. Published as `@ahtmljs/langchain@0.2.0`.
+
+---
+
+## Post-1.0 packages (series 1.1–1.4, unreleased)
+
+Five packages joined the original set on the post-1.0 roadmap (see
+ROADMAP.md and CHANGELOG.md for detail; each is 5-line-summarized here):
+
+### `@ahtmljs/extract`
+1. The framework-neutral extractor pipeline behind every adapter.
+2. Stable plugin API: `definePlugin({ match, extract, priority })` over a `PageModel`.
+3. Built-ins carry the canonical precedence: data-attrs › schema.org › microdata › OpenGraph.
+4. Equal priorities and duplicate plugin names are hard registration errors — no silent drift.
+5. `@ahtmljs/next` re-exports it unchanged; a <100-LOC community recipe plugin proves the contract.
+
+### `@ahtmljs/astro` / `@ahtmljs/sveltekit`
+1. Full AHTML adapters for Astro and SvelteKit.
+2. `.well-known/ahtml.json`, snapshot routes (negotiation, ETag/304, diff), MCP, OpenAPI, llms.txt.
+3. Zero framework dependency — structural typing, like `@ahtmljs/hono`.
+4. Both pass the shared adapter matrix byte-for-byte with Next.
+5. CI-enforced LOC budget keeps them thinner than the hono reference.
+
+### `@ahtmljs/insights`
+1. Agent-traffic analytics for publishers.
+2. Classifies verified agents (RFC 9421), declared bots, and humans — unverifiable is never "verified".
+3. Records snapshot fetches, formats, and action invoked/refused/paid outcomes behind `@ahtmljs/kv`.
+4. Zero-PII by construction, proven by a canary-grep test; ≤1 ms p95 overhead, CI-budgeted.
+5. Ships `summarize()`, an offline single-file HTML dashboard, and OTel export.
+
+### `@ahtmljs/conformance`
+1. The language-agnostic conformance corpus + runner (ESM-only tooling package).
+2. 20 fixtures covering every RFC-2119 MUST in SPEC.md, traceability CI-enforced.
+3. Runner-manifest contract certifies any implementation (Go, Rust, PHP, …).
+4. Emits signed result attestations; waivers travel visibly inside them.
+5. TS reference and `ahtml-py` both pass 100% through the same runner.
+
+### `@ahtmljs/index`
+1. The AHTML Index — public registry + crawler (network-effect flywheel).
+2. Opt-in submission: validate + score + signature check; invalid sites get the lint report.
+3. Re-crawl honors TTL/ETag — an unchanged site costs exactly one 304.
+4. Opt-outs (removed .well-known, `agents_welcome: false`) delist within one cycle.
+5. MCP query surface reuses `snapshotsToMcp`; dogfood snapshot scores 100/100.
+
+### `@ahtmljs/badge`
+1. Hosted score-badge service (ESM-only, worker-shaped).
+2. `GET /badge?url=…` → README-embeddable SVG; `/report` → the full score JSON.
+3. Score is `computeScore` imported from the CLI — one implementation, byte-identical results.
+4. Per-URL cache honors the target snapshot's own TTL; per-IP rate limiting.
+5. `ahtml badge <url>` prints the embeddable markdown.
+
+### `ahtml` (PyPI)
+1. Python consumer SDK — the other half of the agent world (ADR-0001: consumer-only).
+2. Parses both serializations byte-identically to the TypeScript reference.
+3. ETag/TTL-aware client, detached-JWS + did:web verification, LangChain loader.
+4. `run_action` ports the ActionRefused safety gate and dry-run sandbox 1:1.
+5. Certifies against the conformance corpus through the same runner as TS.

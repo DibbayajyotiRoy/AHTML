@@ -1,0 +1,37 @@
+@ahtml 0.1
+@url https://shop.example.com/p/mbp-14-m3
+@fetched 2026-01-01T00:00:00.000Z
+@ttl 300
+@etag W/"f4c2"
+@page_type product_detail
+
+@policy
+  agents_welcome: yes
+  license: MIT
+  rate_limit: 100/min
+  contact: agents@shop.example.com
+
+@provenance
+  issuer: did:web:shop.example.com
+  signed: no
+
+[product:mbp-14-m3]
+  name: MacBook Pro 14" M3
+  brand: Apple
+  price: 1999 USD
+  list_price: 2199 USD
+  stock: in_stock (42)
+  sku: MBP14-M3-512-SB
+  rating: 4.7 (1284)
+
+(action) purchase
+  label: Buy now
+  category: transact
+  target: product:mbp-14-m3
+  method: POST
+  execute: /api/checkout
+  auth: required
+  cost: 1999 USD purchase
+  reversible: P30D full_refund
+  side_effects: charge_card, email_buyer, decrement_stock
+  confirmation: required

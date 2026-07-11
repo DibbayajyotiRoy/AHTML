@@ -20,10 +20,12 @@
     "demo": "npm run dev --workspace examples/landing",
     "test:conformance": "tsx --test tests/conformance/*.test.ts",
     "test:budgets": "tsx --test tests/budgets/*.test.ts",
-    "smoke:imports": "node build-tools/smoke-imports.mjs"
+    "smoke:imports": "node build-tools/smoke-imports.mjs",
+    "check:roadmap": "node scripts/roadmap-coverage.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "ahtml-agent-pinned-1-0-0": "npm:@ahtmljs/agent@^1.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   },

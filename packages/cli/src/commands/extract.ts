@@ -17,7 +17,7 @@ import {
   extractFromMicrodata,
   mergeExtractions,
   type Extraction,
-} from '@ahtmljs/schema/extract';
+} from '@ahtmljs/extract';
 import { fetchHtml } from '../fetch.js';
 
 /** Minimal ANSI helpers — intentionally not imported from cli.ts. */

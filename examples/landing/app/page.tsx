@@ -10,6 +10,7 @@ import Quickstart from '@/components/Quickstart';
 import Features from '@/components/Features';
 import Comparison from '@/components/Comparison';
 import DemoStrip from '@/components/DemoStrip';
+import FAQ from '@/components/FAQ';
 import Roadmap from '@/components/Roadmap';
 import CTA from '@/components/CTA';
 import Footer from '@/components/Footer';
@@ -30,6 +31,7 @@ export default function Page() {
       <Features />
       <Comparison />
       <DemoStrip />
+      <FAQ />
       <Roadmap />
       <CTA />
       <Footer />

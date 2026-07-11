@@ -19,7 +19,7 @@ import {
   extractFromDataAttrs,
   extractFromMicrodata,
   mergeExtractions,
-} from '@ahtmljs/schema/extract';
+} from '@ahtmljs/extract';
 import { fetchHtml } from '../fetch.js';
 
 // ── Types ────────────────────────────────────────────────────────────────────

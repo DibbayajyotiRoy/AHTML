@@ -1,1 +1,1 @@
-export { extractFromDataAttrs } from '@ahtmljs/schema/extract';
+export { extractFromDataAttrs } from '@ahtmljs/extract';

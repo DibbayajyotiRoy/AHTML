@@ -1,0 +1,30 @@
+@ahtml 0.1
+@url https://app.example.com/board
+@fetched 2026-01-01T00:00:00.000Z
+@page_type task_list
+
+[task:t-1]
+  title: Ship 1.1
+  state: in_progress
+  priority: high
+  labels: release
+
+[profile:roy]
+  name: Roy
+  kind: person
+  handle: @roy
+  verified: yes
+
+[dataset:sales]
+  name: Q1 Sales
+  row_count_total: 90
+  columns: date:Date:datetime
+  rows:
+    - ["2026-01-01"]
+
+[conversation:thread-1]
+  title: Support
+  participants: profile:roy
+  message_count_total: 1
+  messages:
+    - {"id":"m1","author":"profile:roy","posted_at":"2026-01-01T00:00:00.000Z","content":"hi"}

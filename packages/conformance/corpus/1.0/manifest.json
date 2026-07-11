@@ -1,0 +1,238 @@
+{
+  "corpus": "1.0",
+  "spec": "SPEC.md v0.1",
+  "fixtures": [
+    {
+      "id": "roundtrip-product",
+      "kind": "roundtrip",
+      "files": {
+        "input": "roundtrip/product.input.json",
+        "expectJson": "roundtrip/product.expect.json",
+        "expectCompact": "roundtrip/product.expect.compact.txt",
+        "expectFromCompact": "roundtrip/product.expect.fromcompact.json",
+        "expectEtag": "roundtrip/product.expect.etag.txt",
+        "expectMarkdown": "roundtrip/product.expect.md"
+      },
+      "mustIds": [
+        "MUST-001",
+        "MUST-002",
+        "MUST-003"
+      ]
+    },
+    {
+      "id": "roundtrip-document",
+      "kind": "roundtrip",
+      "files": {
+        "input": "roundtrip/document.input.json",
+        "expectJson": "roundtrip/document.expect.json",
+        "expectCompact": "roundtrip/document.expect.compact.txt",
+        "expectFromCompact": "roundtrip/document.expect.fromcompact.json",
+        "expectEtag": "roundtrip/document.expect.etag.txt",
+        "expectMarkdown": "roundtrip/document.expect.md"
+      },
+      "mustIds": [
+        "MUST-001",
+        "MUST-002",
+        "MUST-003"
+      ]
+    },
+    {
+      "id": "roundtrip-empty",
+      "kind": "roundtrip",
+      "files": {
+        "input": "roundtrip/empty.input.json",
+        "expectJson": "roundtrip/empty.expect.json",
+        "expectCompact": "roundtrip/empty.expect.compact.txt",
+        "expectFromCompact": "roundtrip/empty.expect.fromcompact.json",
+        "expectEtag": "roundtrip/empty.expect.etag.txt",
+        "expectMarkdown": "roundtrip/empty.expect.md"
+      },
+      "mustIds": [
+        "MUST-001",
+        "MUST-002",
+        "MUST-003"
+      ]
+    },
+    {
+      "id": "diff-price-change",
+      "kind": "diff",
+      "files": {
+        "from": "diff/price-change.from.json",
+        "to": "diff/price-change.to.json",
+        "expect": "diff/price-change.expect.json"
+      },
+      "mustIds": []
+    },
+    {
+      "id": "invalid-missing-url",
+      "kind": "validate-negative",
+      "files": {
+        "input": "invalid/missing-url.json"
+      },
+      "mustIds": [
+        "MUST-002"
+      ]
+    },
+    {
+      "id": "invalid-bad-version",
+      "kind": "validate-negative",
+      "files": {
+        "input": "invalid/bad-version.json"
+      },
+      "mustIds": [
+        "MUST-002"
+      ]
+    },
+    {
+      "id": "invalid-bad-page-type",
+      "kind": "validate-negative",
+      "files": {
+        "input": "invalid/bad-page-type.json"
+      },
+      "mustIds": [
+        "MUST-002"
+      ]
+    },
+    {
+      "id": "invalid-missing-entity-id",
+      "kind": "validate-negative",
+      "files": {
+        "input": "invalid/missing-entity-id.json"
+      },
+      "mustIds": [
+        "MUST-002"
+      ]
+    },
+    {
+      "id": "invalid-duplicate-entity-id",
+      "kind": "validate-negative",
+      "files": {
+        "input": "invalid/duplicate-entity-id.json"
+      },
+      "mustIds": [
+        "MUST-002"
+      ]
+    },
+    {
+      "id": "invalid-bad-fetched-at",
+      "kind": "validate-negative",
+      "files": {
+        "input": "invalid/bad-fetched-at.json"
+      },
+      "mustIds": [
+        "MUST-002"
+      ]
+    },
+    {
+      "id": "invalid-entities-not-array",
+      "kind": "validate-negative",
+      "files": {
+        "input": "invalid/entities-not-array.json"
+      },
+      "mustIds": [
+        "MUST-002"
+      ]
+    },
+    {
+      "id": "sig-valid",
+      "kind": "verify-positive",
+      "files": {
+        "snapshot": "signature/signed.json",
+        "jws": "signature/signed.jws",
+        "jwk": "keys/test-signer.pub.jwk.json"
+      },
+      "mustIds": [
+        "MUST-003"
+      ]
+    },
+    {
+      "id": "sig-tampered",
+      "kind": "verify-negative",
+      "files": {
+        "snapshot": "signature/tampered.json",
+        "jws": "signature/signed.jws",
+        "jwk": "keys/test-signer.pub.jwk.json"
+      },
+      "mustIds": [
+        "MUST-003"
+      ]
+    },
+    {
+      "id": "sig-wrong-key",
+      "kind": "verify-negative",
+      "files": {
+        "snapshot": "signature/signed.json",
+        "jws": "signature/signed.jws",
+        "jwk": "keys/wrong.pub.jwk.json"
+      },
+      "mustIds": [
+        "MUST-003"
+      ]
+    },
+    {
+      "id": "sig-malformed",
+      "kind": "verify-negative",
+      "files": {
+        "snapshot": "signature/signed.json",
+        "jws": "signature/malformed.jws.txt",
+        "jwk": "keys/test-signer.pub.jwk.json"
+      },
+      "mustIds": [
+        "MUST-003"
+      ]
+    },
+    {
+      "id": "negotiation-table",
+      "kind": "negotiation",
+      "files": {
+        "expectations": "negotiation/expectations.json"
+      },
+      "mustIds": [
+        "MUST-010"
+      ]
+    },
+    {
+      "id": "dryrun-honest-rehearsal",
+      "kind": "dryrun-gate",
+      "files": {
+        "input": "dryrun/honest-rehearsal.json"
+      },
+      "mustIds": [
+        "MUST-005",
+        "MUST-006"
+      ]
+    },
+    {
+      "id": "dryrun-spoof-dry-run",
+      "kind": "dryrun-gate",
+      "files": {
+        "input": "dryrun/spoof-dry-run.json"
+      },
+      "mustIds": [
+        "MUST-006",
+        "MUST-009"
+      ]
+    },
+    {
+      "id": "dryrun-spoof-execute",
+      "kind": "dryrun-gate",
+      "files": {
+        "input": "dryrun/spoof-execute.json"
+      },
+      "mustIds": [
+        "MUST-007",
+        "MUST-008"
+      ]
+    },
+    {
+      "id": "behavioral-confirmation",
+      "kind": "action-gate",
+      "files": {
+        "input": "behavioral/confirmation-required.json"
+      },
+      "mustIds": [
+        "MUST-004"
+      ]
+    }
+  ]
+}

@@ -1,1 +1,1 @@
-export { extractFromSchemaOrg } from '@ahtmljs/schema/extract';
+export { extractFromSchemaOrg } from '@ahtmljs/extract';

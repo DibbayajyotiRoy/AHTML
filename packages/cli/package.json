@@ -55,6 +55,27 @@
   "license": "MIT",
   "dependencies": {
     "@ahtmljs/schema": "1.0.0",
-    "@ahtmljs/agent": "1.0.0"
+    "@ahtmljs/agent": "1.0.0",
+    "@ahtmljs/extract": "0.1.0"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "default": "./dist/cli.js"
+      }
+    },
+    "./score": {
+      "import": {
+        "types": "./dist/commands/score.d.ts",
+        "default": "./dist/commands/score.js"
+      }
+    },
+    "./init": {
+      "import": {
+        "types": "./dist/commands/init.d.ts",
+        "default": "./dist/commands/init.js"
+      }
+    },
+    "./dist/*": "./dist/*"
   }
 }

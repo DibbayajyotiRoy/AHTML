@@ -1,0 +1,48 @@
+{
+  "snapshot": {
+    "ahtml": "0.1",
+    "url": "https://corpus.example.com/pricing",
+    "fetched_at": "2026-01-01T00:00:00.000Z",
+    "ttl": 60,
+    "page_type": "product_detail",
+    "policy": {
+      "agents_welcome": true
+    },
+    "entities": [
+      {
+        "id": "product:plan",
+        "type": "product",
+        "name": "Plan"
+      }
+    ],
+    "actions": [
+      {
+        "id": "subscribe",
+        "category": "transact",
+        "method": "POST",
+        "execute_url": "https://corpus.example.com/api/subscribe",
+        "auth": "none",
+        "cost": {
+          "amount": 144,
+          "currency": "USD",
+          "category": "subscription"
+        },
+        "reversible": {
+          "reversible": false
+        },
+        "side_effects": [
+          "charge_card"
+        ],
+        "dry_run": {
+          "url": "https://corpus.example.com/ahtml/actions/subscribe/dry-run"
+        }
+      }
+    ]
+  },
+  "action": "subscribe",
+  "phase": "dry_run",
+  "response": {
+    "subscription_id": "sub_REAL"
+  },
+  "expect": "refuse"
+}

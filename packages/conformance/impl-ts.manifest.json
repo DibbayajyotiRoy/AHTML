@@ -1,0 +1,18 @@
+{
+  "implementation": "@ahtmljs (TypeScript reference)",
+  "version": "1.0.0",
+  "commands": {
+    "canonical-json": "npx tsx packages/conformance/src/shim-ts.ts canonical-json {input}",
+    "to-compact": "npx tsx packages/conformance/src/shim-ts.ts to-compact {input}",
+    "parse-compact": "npx tsx packages/conformance/src/shim-ts.ts parse-compact {input}",
+    "etag": "npx tsx packages/conformance/src/shim-ts.ts etag {input}",
+    "diff": "npx tsx packages/conformance/src/shim-ts.ts diff {from} {to}",
+    "validate": "npx tsx packages/conformance/src/shim-ts.ts validate {input}",
+    "verify": "npx tsx packages/conformance/src/shim-ts.ts verify {snapshot} {jws} {jwk}",
+    "action-gate": "npx tsx packages/conformance/src/shim-ts.ts action-gate {input}",
+    "dryrun-gate": "npx tsx packages/conformance/src/shim-ts.ts dryrun-gate {input}"
+  },
+  "waivers": {
+    "negotiation-table": "asserted at the wire level by tests/conformance + the adapter matrix across next/vite/hono/astro/sveltekit"
+  }
+}

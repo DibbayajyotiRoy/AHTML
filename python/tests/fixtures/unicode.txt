@@ -1,0 +1,8 @@
+@ahtml 0.1
+@url https://example.com/i18n
+@fetched 2026-01-01T00:00:00.000Z
+@page_type document
+
+[document:i18n]
+  title: café — 日本語 — العربية — 🚀 "quoted" \backslash\
+  summary: Ünïcödé edge cases:	tab, newline handling, and — em dash.

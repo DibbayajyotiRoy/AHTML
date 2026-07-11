@@ -1,0 +1,24 @@
+{
+  "note": "Wire-level expectations for servers. Declarative: runners with an HTTP surface assert them; library-only implementations record a documented waiver.",
+  "cases": [
+    {
+      "accept": "application/ahtml+text",
+      "contentType": "application/ahtml+text"
+    },
+    {
+      "accept": "application/ahtml+json",
+      "contentType": "application/ahtml+json"
+    },
+    {
+      "accept": "*/*",
+      "contentType": "application/ahtml+text"
+    },
+    {
+      "accept": "application/json",
+      "contentType": "application/ahtml+json"
+    }
+  ],
+  "requiredHeaders": {
+    "vary": "Accept"
+  }
+}

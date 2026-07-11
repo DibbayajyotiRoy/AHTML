@@ -1,0 +1,215 @@
+{
+  "@ahtmljs/schema": [
+    "AHTMLError",
+    "AHTML_VERSION",
+    "DEFAULT_HINTS",
+    "InMemoryCacheStore",
+    "InMemoryKvStore",
+    "InvalidDiffError",
+    "POLICY_PRESETS",
+    "STREAM_CONTENT_TYPE",
+    "SnapshotBuilder",
+    "addEvent",
+    "applyDiff",
+    "authRequired",
+    "buildLlmsTxt",
+    "buildWellKnown",
+    "buildX402Response",
+    "chooseEncoding",
+    "chooseFormat",
+    "compressBuffer",
+    "compressStream",
+    "computeEtag",
+    "didWebToUrl",
+    "diff",
+    "extractPaymentToken",
+    "fromCompact",
+    "fromJson",
+    "fromStream",
+    "hasPaymentToken",
+    "isNotModified",
+    "isValid",
+    "lint",
+    "makeError",
+    "notModifiedResponse",
+    "paidAction",
+    "parseAcceptEntries",
+    "parseStream",
+    "policyToRsl",
+    "publicReadOnly",
+    "rateLimited",
+    "resolveDidWeb",
+    "setStatus",
+    "signBytes",
+    "signHttpRequest",
+    "signSnapshot",
+    "snapshot",
+    "snapshotsToMcp",
+    "snapshotsToOpenApi",
+    "toCompact",
+    "toJson",
+    "toMarkdown",
+    "toRsl",
+    "toStream",
+    "toStreamResponse",
+    "trace",
+    "traceSync",
+    "trainDeny",
+    "validate",
+    "validateAction",
+    "validateEntity",
+    "validateStrict",
+    "verifyBytes",
+    "verifyHttpSignature",
+    "verifySnapshot",
+    "verifySnapshotStrict",
+    "verifySnapshotWithDidWeb",
+    "weakEtagOf"
+  ],
+  "@ahtmljs/schema/stream": [
+    "STREAM_CONTENT_TYPE",
+    "fromStream",
+    "parseStream",
+    "toStream",
+    "toStreamResponse"
+  ],
+  "@ahtmljs/schema/kv": [
+    "InMemoryCacheStore",
+    "InMemoryKvStore"
+  ],
+  "@ahtmljs/schema/sign": [
+    "signBytes",
+    "signSnapshot",
+    "verifyBytes",
+    "verifySnapshot",
+    "verifySnapshotStrict"
+  ],
+  "@ahtmljs/schema/extract": [
+    "extractFromDataAttrs",
+    "extractFromMicrodata",
+    "extractFromOpenGraph",
+    "extractFromSchemaOrg",
+    "mergeExtractions"
+  ],
+  "@ahtmljs/schema/emit/well-known": [
+    "buildWellKnown"
+  ],
+  "@ahtmljs/schema/emit/mcp": [
+    "snapshotsToMcp"
+  ],
+  "@ahtmljs/schema/emit/openapi": [
+    "snapshotsToOpenApi"
+  ],
+  "@ahtmljs/schema/emit/llms-txt": [
+    "buildLlmsTxt"
+  ],
+  "@ahtmljs/schema/simulate": [
+    "createSimulateHandler"
+  ],
+  "@ahtmljs/schema/http/accept": [
+    "chooseFormat",
+    "parseAcceptEntries"
+  ],
+  "@ahtmljs/schema/http/conditional": [
+    "isNotModified",
+    "notModifiedResponse",
+    "weakEtagOf"
+  ],
+  "@ahtmljs/agent": [
+    "AHTMLClient",
+    "AHTMLError",
+    "ActionRefused",
+    "DryRunLedger",
+    "POLICY_PRESETS",
+    "PageView",
+    "buildAgentHeader",
+    "countTokens",
+    "countTokensClaude",
+    "countTokensGpt",
+    "measure",
+    "runAction",
+    "signRequest",
+    "signSnapshot",
+    "verifyAgentSignature",
+    "verifySnapshot",
+    "verifySnapshotStrict"
+  ],
+  "@ahtmljs/agent/tokens": [
+    "countTokens",
+    "countTokensClaude",
+    "countTokensGpt",
+    "measure"
+  ],
+  "@ahtmljs/agent/sign": [
+    "signSnapshot",
+    "verifySnapshot",
+    "verifySnapshotStrict"
+  ],
+  "@ahtmljs/next": [
+    "getConfig",
+    "withAHTML",
+    "withPaymentGuard"
+  ],
+  "@ahtmljs/next/handler": [
+    "chooseFormat",
+    "createAHTMLRoute",
+    "setSnapshotCache"
+  ],
+  "@ahtmljs/next/well-known": [
+    "buildManifest",
+    "createWellKnownRoute"
+  ],
+  "@ahtmljs/next/llms-txt": [
+    "buildLlmsTxt",
+    "createLlmsTxtRoute"
+  ],
+  "@ahtmljs/next/extractors": [
+    "extractFromDataAttrs",
+    "extractFromMicrodata",
+    "extractFromOpenGraph",
+    "extractFromSchemaOrg",
+    "mergeExtractions"
+  ],
+  "@ahtmljs/next/mcp": [
+    "createMcpRoute",
+    "snapshotsToMcp"
+  ],
+  "@ahtmljs/next/openapi": [
+    "createOpenApiRoute",
+    "snapshotsToOpenApi"
+  ],
+  "@ahtmljs/vite": [
+    "ahtml"
+  ],
+  "@ahtmljs/hono": [
+    "mountAHTML"
+  ],
+  "@ahtmljs/langchain": [
+    "AHTMLLoader"
+  ],
+  "@ahtmljs/kv": [
+    "InMemoryCacheStore",
+    "InMemoryKvStore",
+    "RateLimiter"
+  ],
+  "@ahtmljs/kv/memory": [
+    "InMemoryCacheStore",
+    "InMemoryKvStore"
+  ],
+  "@ahtmljs/kv/cloudflare": [
+    "CloudflareCacheStore",
+    "CloudflareKvStore"
+  ],
+  "@ahtmljs/kv/upstash": [
+    "UpstashCacheStore",
+    "UpstashKvStore"
+  ],
+  "@ahtmljs/webmcp": [
+    "registerAhtmlTools",
+    "unregisterAll"
+  ],
+  "@ahtmljs/webmcp/bookmarklet": [
+    "getBookmarkletHref",
+    "getBookmarkletSource"
+  ]
+}

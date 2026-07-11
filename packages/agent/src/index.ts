@@ -11,7 +11,7 @@ export {
   type RetryPolicy,
 } from './client.js';
 export { PageView, type PageViewOptions, type ProvenanceSource } from './page-view.js';
-export { runAction, ActionRefused, type ActionRunOptions, type ActionResult, type DryRunResult } from './workflow.js';
+export { runAction, ActionRefused, POLICY_PRESETS, DryRunLedger, type AgentRunPolicy, type ActionRunOptions, type ActionResult, type DryRunResult } from './workflow.js';
 export {
   countTokens,
   countTokensClaude,

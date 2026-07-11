@@ -21,3 +21,8 @@ examples/landing/DEPLOY.md
 
 # Claude Code project settings (local permissions, not for public repo)
 .claude/settings.json
+
+# python SDK build artifacts
+python/dist/
+python/**/__pycache__/
+python/**/*.egg-info/

@@ -116,7 +116,17 @@
         "default": "./dist/cjs/http/conditional.js"
       }
     },
-    "./schema.json": "./src/schema.json"
+    "./schema.json": "./src/schema.json",
+    "./simulate": {
+      "import": {
+        "types": "./dist/simulate.d.ts",
+        "default": "./dist/simulate.js"
+      },
+      "require": {
+        "types": "./dist/cjs/simulate.d.ts",
+        "default": "./dist/cjs/simulate.js"
+      }
+    }
   },
   "files": [
     "dist",

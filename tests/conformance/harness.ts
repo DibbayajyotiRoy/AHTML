@@ -170,7 +170,7 @@ export interface ConformanceResponse {
 }
 
 export interface AdapterUnderTest {
-  name: 'next' | 'vite' | 'hono';
+  name: 'next' | 'vite' | 'hono' | 'astro' | 'sveltekit';
   /**
    * Features this adapter has never supported. Only populated when the
    * adapter's own test suite + source prove the feature never existed;

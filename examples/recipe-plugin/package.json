@@ -1,0 +1,16 @@
+{
+  "name": "ahtml-example-recipe-plugin",
+  "private": true,
+  "type": "module",
+  "description": "Third-party extractor plugin demo (TASKS.md T1.5): schema.org/Recipe → AHTML document, <100 LOC, imports only @ahtmljs/extract.",
+  "scripts": {
+    "test": "tsx --test src/__tests__/*.test.ts"
+  },
+  "dependencies": {
+    "@ahtmljs/extract": "0.1.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "@types/node": "^22.0.0"
+  }
+}

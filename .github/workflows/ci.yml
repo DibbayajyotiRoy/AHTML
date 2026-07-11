@@ -33,15 +33,7 @@ jobs:
       # root build script) so examples/ never enter the package CI contract.
       - name: Build all packages
         run: |
-          npm run build -w @ahtmljs/schema
-          npm run build -w @ahtmljs/next
-          npm run build -w @ahtmljs/agent
-          npm run build -w @ahtmljs/vite
-          npm run build -w @ahtmljs/langchain
-          npm run build -w @ahtmljs/hono
-          npm run build -w @ahtmljs/cli
-          npm run build -w @ahtmljs/kv
-          npm run build -w @ahtmljs/webmcp
+          npm run build:packages
 
       - name: Typecheck — @ahtmljs/schema
         run: cd packages/schema && npx tsc --noEmit -p tsconfig.json
@@ -96,6 +88,27 @@ jobs:
 
       - name: Unit tests — @ahtmljs/webmcp
         run: cd packages/webmcp && npm test
+
+      - name: Test — @ahtmljs/extract
+        run: cd packages/extract && npm test
+
+      - name: Test — @ahtmljs/astro
+        run: cd packages/astro && npm test
+
+      - name: Test — @ahtmljs/sveltekit
+        run: cd packages/sveltekit && npm test
+
+      - name: Test — @ahtmljs/insights
+        run: cd packages/insights && npm test
+
+      - name: Test — @ahtmljs/index
+        run: cd packages/index && npm test
+
+      - name: Test — @ahtmljs/badge
+        run: cd packages/badge && npm test
+
+      - name: Test — @ahtmljs/conformance
+        run: cd packages/conformance && npm test
 
       - name: UX scenario tests
         run: npm run test:ux

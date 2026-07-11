@@ -24,7 +24,7 @@ jobs:
       # The TS reference implementation generates the cross-implementation
       # fixtures the Python suite asserts byte-identity against.
       - run: npm ci
-      - run: npm run build
+      - run: npm run build:packages
       - run: node python/tests/_gen_fixtures.mjs
       - run: node python/tests/_gen_signed.mjs
 

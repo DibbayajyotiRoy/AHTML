@@ -54,8 +54,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@ahtmljs/schema": "1.0.0",
-    "@ahtmljs/agent": "1.0.0",
+    "@ahtmljs/schema": "1.1.0",
+    "@ahtmljs/agent": "1.1.0",
     "@ahtmljs/extract": "0.1.0"
   },
   "exports": {

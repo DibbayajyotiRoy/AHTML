@@ -21,7 +21,8 @@
     "test:conformance": "tsx --test tests/conformance/*.test.ts",
     "test:budgets": "tsx --test tests/budgets/*.test.ts",
     "smoke:imports": "node build-tools/smoke-imports.mjs",
-    "check:roadmap": "node scripts/roadmap-coverage.mjs"
+    "check:roadmap": "node scripts/roadmap-coverage.mjs",
+    "build:packages": "npm run build -w @ahtmljs/schema && npm run build -w @ahtmljs/extract && npm run build -w @ahtmljs/kv && npm run build -w @ahtmljs/agent && npm run build -w @ahtmljs/next && npm run build -w @ahtmljs/vite && npm run build -w @ahtmljs/hono && npm run build -w @ahtmljs/astro && npm run build -w @ahtmljs/sveltekit && npm run build -w @ahtmljs/langchain && npm run build -w @ahtmljs/webmcp && npm run build -w @ahtmljs/conformance && npm run build -w @ahtmljs/cli && npm run build -w @ahtmljs/insights && npm run build -w @ahtmljs/index && npm run build -w @ahtmljs/badge"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

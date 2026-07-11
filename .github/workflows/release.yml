@@ -65,13 +65,7 @@ jobs:
 
       - name: Build (dependency order)
         run: |
-          npm run build -w @ahtmljs/schema
-          npm run build -w @ahtmljs/next
-          npm run build -w @ahtmljs/agent
-          npm run build -w @ahtmljs/vite
-          npm run build -w @ahtmljs/langchain
-          npm run build -w @ahtmljs/hono
-          npm run build -w @ahtmljs/cli
+          npm run build:packages
 
       - name: Typecheck
         run: |
@@ -121,6 +115,51 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Publish @ahtmljs/extract (with provenance)
+        run: cd packages/extract && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ahtmljs/astro (with provenance)
+        run: cd packages/astro && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ahtmljs/sveltekit (with provenance)
+        run: cd packages/sveltekit && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ahtmljs/kv (with provenance)
+        run: cd packages/kv && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ahtmljs/webmcp (with provenance)
+        run: cd packages/webmcp && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ahtmljs/insights (with provenance)
+        run: cd packages/insights && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ahtmljs/conformance (with provenance)
+        run: cd packages/conformance && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ahtmljs/index (with provenance)
+        run: cd packages/index && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ahtmljs/badge (with provenance)
+        run: cd packages/badge && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -134,6 +173,13 @@ jobs:
             - [`@ahtmljs/agent@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/agent/v/${{ github.ref_name }})
             - [`@ahtmljs/vite@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/vite/v/${{ github.ref_name }})
             - [`@ahtmljs/langchain@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/langchain/v/${{ github.ref_name }})
+            - [`@ahtmljs/extract`](https://www.npmjs.com/package/@ahtmljs/extract)
+            - [`@ahtmljs/astro`](https://www.npmjs.com/package/@ahtmljs/astro)
+            - [`@ahtmljs/sveltekit`](https://www.npmjs.com/package/@ahtmljs/sveltekit)
+            - [`@ahtmljs/insights`](https://www.npmjs.com/package/@ahtmljs/insights)
+            - [`@ahtmljs/conformance`](https://www.npmjs.com/package/@ahtmljs/conformance)
+            - [`@ahtmljs/index`](https://www.npmjs.com/package/@ahtmljs/index)
+            - [`@ahtmljs/badge`](https://www.npmjs.com/package/@ahtmljs/badge)
             - [`@ahtmljs/hono@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/hono/v/${{ github.ref_name }})
             - [`@ahtmljs/cli@${{ github.ref_name }}`](https://www.npmjs.com/package/@ahtmljs/cli/v/${{ github.ref_name }})
 

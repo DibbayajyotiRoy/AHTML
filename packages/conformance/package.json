@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/conformance",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "Language-agnostic AHTML conformance corpus and runner — versioned fixtures covering every RFC-2119 MUST in SPEC.md, with signed result attestations for third-party implementations.",
   "type": "module",
   "main": "./dist/index.js",

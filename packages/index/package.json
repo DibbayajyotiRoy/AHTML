@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/index",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "AHTML Index — public registry and crawler for AHTML-enabled sites: submission with validate+score+signature checks, TTL/ETag-respecting re-crawl, RSL/robots-honoring delisting, and an MCP query surface.",
   "type": "module",
   "main": "./dist/cjs/index.js",

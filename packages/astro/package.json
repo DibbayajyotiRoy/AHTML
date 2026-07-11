@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/astro",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "AHTML adapter for Astro — .well-known/ahtml.json, snapshot routes with content negotiation, MCP emission, and llms.txt for any Astro site. Built on the @ahtmljs/extract plugin API.",
   "type": "module",
   "main": "./dist/cjs/index.js",

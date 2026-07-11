@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/badge",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "Hosted AHTML score badge service — re-runs the canonical ahtml score against any URL and serves a README-embeddable SVG badge with a linked score report. Deployable as a Cloudflare Worker or any fetch-handler runtime.",
   "type": "module",
   "main": "./dist/index.js",

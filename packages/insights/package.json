@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/insights",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "Agent-traffic analytics for AHTML publishers — classifies verified agents (RFC 9421), bots, and humans; records snapshot fetches, action outcomes, and x402 payments behind the @ahtmljs/kv abstraction.",
   "type": "module",
   "main": "./dist/cjs/index.js",

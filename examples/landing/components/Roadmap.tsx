@@ -1,8 +1,28 @@
-const PHASES = [
-  { id: 'P0', name: 'Phase 0 — Prototype', state: 'shipping now', body: 'TypeScript schema + Next.js plugin + agent SDK + benchmark. The artifact you are looking at.' },
-  { id: 'P1', name: 'Phase 1 — Rust core', state: 'months 4–9', body: 'Port parser, validator, serializer, signer, and LSP to Rust via napi-rs and wasm-bindgen. 10×+ faster internals; same npm API.' },
-  { id: 'P2', name: 'Phase 2 — .ahtml language', state: 'months 6–12', body: 'Real .ahtml files. Chumsky parser. Tower-LSP server. Tree-sitter grammar. VS Code extension. Neovim + Helix + Zed via tree-sitter.' },
-  { id: 'P3', name: 'Phase 3 — Ecosystem & SaaS', state: 'months 10–18', body: 'Component compilers (React / Solid / Svelte). Signed snapshots. Streaming + diff subscriptions. Hosted snapshot CDN with edge cache + agent-readiness scoring.' },
+const SERIES = [
+  {
+    id: '1.1',
+    name: 'Reach the other half',
+    state: 'shipped',
+    body: 'Python SDK on PyPI with byte-identical parsing, the extractor plugin API, and native Astro + SvelteKit adapters.',
+  },
+  {
+    id: '1.2',
+    name: 'Ten-minute adoption',
+    state: 'shipped',
+    body: 'ahtml init scaffolds any supported framework; the score badge and agent-traffic insights reward publishing.',
+  },
+  {
+    id: '1.3',
+    name: 'Protocol, certified',
+    state: 'shipped',
+    body: 'A language-agnostic conformance corpus with signed attestations, and the AHTML Index so agents can find adopters.',
+  },
+  {
+    id: '1.4',
+    name: 'Safe to transact',
+    state: 'shipped',
+    body: 'The dry-run sandbox: agents rehearse priced, irreversible actions and see signed predicted costs before money moves.',
+  },
 ];
 
 export default function Roadmap() {
@@ -10,9 +30,9 @@ export default function Roadmap() {
     <section className="section">
       <div className="container">
         <div className="kicker">Roadmap</div>
-        <h2 style={{ marginTop: 12, marginBottom: 40 }}>Where this goes.</h2>
+        <h2 style={{ marginTop: 12, marginBottom: 40 }}>Where this went, and goes.</h2>
         <div className="grid cols-2">
-          {PHASES.map((p) => (
+          {SERIES.map((p) => (
             <div key={p.id} className="card">
               <div className="step">
                 {p.id} · {p.state}
@@ -23,10 +43,14 @@ export default function Roadmap() {
           ))}
         </div>
         <p className="legalish" style={{ marginTop: 32 }}>
-          Full plan with risk register, prior art, and tech selections in{' '}
-          <a href="https://github.com/DibbayajyotiRoy/AHTML/blob/main/PLAN.md" style={{ color: 'inherit', borderBottomColor: 'var(--rule)' }}>
-            PLAN.md
-          </a>.
+          The full post-1.0 plan, with acceptance criteria mapped to CI tests, lives in{' '}
+          <a
+            href="https://github.com/DibbayajyotiRoy/AHTML/blob/main/ROADMAP.md"
+            style={{ color: 'inherit', borderBottomColor: 'var(--rule)' }}
+          >
+            ROADMAP.md
+          </a>
+          .
         </p>
       </div>
     </section>

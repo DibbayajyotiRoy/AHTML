@@ -2,15 +2,15 @@ const ROWS = [
   ['Token efficiency for agents', 'baseline', 'good', 'best', 'good'],
   ['Typed entities', 'implicit', 'text only', '✓', '✓'],
   ['Typed actions', 'implicit', 'text only', '✓', '✓'],
-  ['Cost / reversibility', '—', '—', '✓', '✓'],
-  ['Side-effect declarations', '—', '—', '✓', '✓'],
-  ['Site-wide policy', '—', 'partial', '✓', '✓'],
-  ['Freshness / TTL', '—', '—', '✓', '✓'],
-  ['Conditional fetch (ETag)', 'partial', '—', '✓', '✓'],
-  ['Pagination semantics', '—', '—', '✓', '✓'],
-  ['MCP-emittable', '—', '—', '✓', '✓'],
-  ['OpenAPI-emittable', '—', '—', '✓', '✓'],
-  ['Cryptographically signable', '—', '—', 'digest', '✓'],
+  ['Cost / reversibility', '✕', '✕', '✓', '✓'],
+  ['Side-effect declarations', '✕', '✕', '✓', '✓'],
+  ['Site-wide policy', '✕', 'partial', '✓', '✓'],
+  ['Freshness / TTL', '✕', '✕', '✓', '✓'],
+  ['Conditional fetch (ETag)', 'partial', '✕', '✓', '✓'],
+  ['Pagination semantics', '✕', '✕', '✓', '✓'],
+  ['MCP-emittable', '✕', '✕', '✓', '✓'],
+  ['OpenAPI-emittable', '✕', '✕', '✓', '✓'],
+  ['Cryptographically signable', '✕', '✕', 'digest', '✓'],
 ] as const;
 
 const FORMAT_LABELS = ['HTML', 'llms.txt', 'AHTML compact', 'AHTML JSON'] as const;
@@ -19,7 +19,7 @@ function isWinValue(v: string) {
   return v === '✓' || v === 'best' || v === 'digest';
 }
 function isMissValue(v: string) {
-  return v === '—';
+  return v === '✕';
 }
 
 export default function Comparison() {
@@ -32,7 +32,7 @@ export default function Comparison() {
         </h2>
         <p className="lede" style={{ marginBottom: 32 }}>
           We&apos;re not a competitor to any of them. AHTML compiles <em>to</em>{' '}
-          MCP, OpenAPI, JSON-LD, and llms.txt — and ingests from schema.org as
+          MCP, OpenAPI, JSON-LD, and llms.txt, and ingests from schema.org as
           a free Level-0 source.
         </p>
 

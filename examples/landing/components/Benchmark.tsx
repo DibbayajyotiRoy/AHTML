@@ -44,9 +44,9 @@ async function tokens_claude(text: string): Promise<number | undefined> {
 
 function llmsTxtFor(): string {
   return [
-    '# AHTML — the HTML of the agent web',
+    '# AHTML: the HTML of the agent web',
     '',
-    '> Write your page once. AHTML emits MCP, OpenAPI, JSON-LD, llms.txt, and a token-optimal semantic snapshot — from your existing Next.js app.',
+    '> Write your page once. AHTML emits MCP, OpenAPI, JSON-LD, llms.txt, and a token-optimal semantic snapshot from your existing Next.js app.',
     '',
     '## Site',
     '- Name: AHTML',
@@ -118,7 +118,7 @@ export default async function Benchmark() {
         <h2 style={{ marginTop: 12, marginBottom: 24 }}>The receipts.</h2>
         <p className="lede" style={{ marginBottom: 24 }}>
           Same content. Four serializations. Measured with the same
-          tokenizers OpenAI and Anthropic use internally —{' '}
+          tokenizers OpenAI and Anthropic use internally,{' '}
           <code className="inline">gpt-tokenizer</code> and{' '}
           <code className="inline">@anthropic-ai/tokenizer</code>.
           No <code className="inline">text.length / 4</code> guesswork.
@@ -150,17 +150,17 @@ export default async function Benchmark() {
                   <td className="num">{r.bytes.toLocaleString()}</td>
                   <td className="num">{r.bytes_gzip.toLocaleString()}</td>
                   <td className="num">
-                    {r.tokens_o200k != null ? r.tokens_o200k.toLocaleString() : '—'}
+                    {r.tokens_o200k != null ? r.tokens_o200k.toLocaleString() : '·'}
                   </td>
                   <td className="num">
-                    {r.tokens_claude != null ? r.tokens_claude.toLocaleString() : '—'}
+                    {r.tokens_claude != null ? r.tokens_claude.toLocaleString() : '·'}
                   </td>
                   <td className="num">
                     {ratio
                       ? ratio >= 10
                         ? `${ratio.toFixed(0)}×`
                         : `${ratio.toFixed(1)}×`
-                      : '—'}
+                      : '·'}
                   </td>
                 </tr>
               );
@@ -210,13 +210,13 @@ export default async function Benchmark() {
                 <div className="bench-stats">
                   <div className="bench-stat">
                     <div className="bench-stat-num">
-                      {r.tokens_o200k != null ? r.tokens_o200k.toLocaleString() : '—'}
+                      {r.tokens_o200k != null ? r.tokens_o200k.toLocaleString() : '·'}
                     </div>
                     <div className="bench-stat-lbl">o200k tokens</div>
                   </div>
                   <div className="bench-stat">
                     <div className="bench-stat-num">
-                      {r.tokens_claude != null ? r.tokens_claude.toLocaleString() : '—'}
+                      {r.tokens_claude != null ? r.tokens_claude.toLocaleString() : '·'}
                     </div>
                     <div className="bench-stat-lbl">Claude tokens</div>
                   </div>
@@ -241,7 +241,7 @@ export default async function Benchmark() {
           </code>
           . If <code className="inline">gpt-tokenizer</code> or{' '}
           <code className="inline">@anthropic-ai/tokenizer</code> is not installed, the
-          corresponding column shows "—" rather than a fudged estimate.
+          corresponding column shows "·" rather than a fudged estimate.
         </p>
       </div>
     </section>

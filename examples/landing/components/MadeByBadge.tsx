@@ -5,7 +5,7 @@ export default function MadeByBadge() {
       href="https://dibbayajyoti.com"
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Made by Dibbayajyoti Roy — opens portfolio in a new tab"
+      aria-label="Made by Dibbayajyoti Roy, opens portfolio in a new tab"
     >
       <span className="made-by-badge-dot" aria-hidden />
       <span className="made-by-badge-text">

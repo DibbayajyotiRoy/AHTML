@@ -47,7 +47,7 @@ export default function AgentView() {
               {compactBytes.toLocaleString()}<sup> bytes</sup>
             </div>
             <div style={{ marginTop: 4, fontSize: 13, opacity: 0.7, fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>
-              {ratio.toFixed(1)}× smaller — and includes typed actions HTML never had.
+              {ratio.toFixed(1)}× smaller, and it includes typed actions HTML never had.
             </div>
           </div>
         </div>

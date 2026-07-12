@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Fraunces, JetBrains_Mono } from 'next/font/google';
+import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
@@ -11,11 +11,10 @@ const inter = Inter({
   variable: '--inter',
   display: 'swap',
 });
-const fraunces = Fraunces({
+const grotesk = Space_Grotesk({
   subsets: ['latin'],
-  variable: '--fraunces',
+  variable: '--grotesk',
   display: 'swap',
-  axes: ['opsz', 'SOFT'],
 });
 const mono = JetBrains_Mono({
   subsets: ['latin'],
@@ -149,7 +148,7 @@ const orgJsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${fraunces.variable} ${mono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${grotesk.variable} ${mono.variable}`}>
       <head>
         <link rel="alternate" type="application/ahtml+text" href="/ahtml" />
         <link rel="alternate" type="application/ahtml+json" href="/ahtml?fmt=json" />

@@ -9,18 +9,18 @@ export default function CTA() {
           Your next visitor might be Claude.
         </h2>
         <p className="lede" style={{ margin: '0 auto 40px', textAlign: 'center' }}>
-          Three files. Three minutes. Your existing app speaks the agent web.
+          One command. It detects Next, Astro, SvelteKit, Vite, or Hono and wires everything.
         </p>
         <div style={{ display: 'inline-block' }}>
           <CopyableInstall />
         </div>
         <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <a className="btn ghost" href="/tools/agent-readiness">Score your site first</a>
+          <a className="btn ghost" href="/tools/agent-readiness">Score your site</a>
           <a className="btn ghost" href="/vs/llms-txt">Compare to llms.txt</a>
           <a className="btn ghost" href="/integrations/next">Next.js guide</a>
         </div>
         <div style={{ marginTop: 16, fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-3)' }}>
-          MIT licensed · zero migration · v1.0.0
+          MIT licensed · zero migration · v1.1.0
         </div>
       </div>
     </section>

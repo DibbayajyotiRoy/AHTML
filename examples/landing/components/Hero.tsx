@@ -1,97 +1,115 @@
 const ROLES = [
   {
     label: 'I run a site',
-    sub: 'emit AHTML',
-    target: '#pkg-next',
-    hint: 'next / vite',
+    sub: 'publish AHTML',
+    target: '#quickstart',
+    hint: 'npx @ahtmljs/cli init',
   },
   {
     label: 'I build an agent',
-    sub: 'consume AHTML',
+    sub: 'consume any site',
     target: '#pkg-agent',
-    hint: 'agent',
+    hint: 'npm i @ahtmljs/agent',
+  },
+  {
+    label: 'I work in Python',
+    sub: 'same client, PyPI',
+    target: '#pkg-agent',
+    hint: 'pip install ahtml',
   },
   {
     label: 'I do RAG',
-    sub: 'ingest AHTML',
+    sub: 'cite pages, not scrapes',
     target: '#pkg-langchain',
-    hint: 'langchain',
+    hint: 'npm i @ahtmljs/langchain',
   },
 ];
 
+/**
+ * The artifact panel shows this page's OWN compact snapshot (abridged):
+ * a real product output, served live at /ahtml, not a mocked screenshot.
+ */
+const SNAPSHOT_LINES = [
+  ['@ahtml', ' 0.1'],
+  ['@url', ' https://ahtml.dev/'],
+  ['@page_type', ' home'],
+  ['@ttl', ' 300'],
+  ['', ''],
+  ['@policy', ''],
+  ['', '  agents_welcome: yes'],
+  ['', '  license: MIT'],
+  ['', ''],
+  ['[document:why-ahtml]', ''],
+  ['', '  title: The HTML of the agent web'],
+  ['', '  summary: 5.6x fewer tokens, 91% to 100% accuracy'],
+  ['', ''],
+  ['(action) score_site', ''],
+  ['', '  category: read'],
+  ['', '  cost: free'],
+] as const;
+
 export default function Hero() {
   return (
-    <section className="hero">
-      <div className="container">
-        <div className="eyebrow">v1.0.0 · MIT</div>
-        <h1>
-          The HTML of <em>the agent web</em>.
-        </h1>
-        <p className="lede">
-          AHTML is an open-source (MIT) snapshot format with TypeScript and Python toolkits
-          that lets any website publish an agent-readable, token-efficient view
-          of each page — typed entities plus typed actions with explicit cost,
-          reversibility, auth, and side-effects — and auto-emit MCP, OpenAPI 3.1,
-          JSON-LD, <code className="hero-inline">llms.txt</code>, RSL, and
-          Markdown from that single source, while browsers keep the same HTML.
-          Measured: 5.6× fewer tokens than raw HTML, and LLM fact-extraction
-          accuracy up from 91% to 100%.
-        </p>
-
-        <div className="hero-stack">
-          <div className="hero-stack-row">
-            <span className="hero-stack-num">9</span>
-            <span className="hero-stack-label">
-              packages under <code className="hero-inline">@ahtmljs/*</code>
-            </span>
-          </div>
-          <div className="hero-stack-row">
-            <span className="hero-stack-num">1</span>
-            <span className="hero-stack-label">
-              shared schema · server adapters · agent + RAG clients
-            </span>
-          </div>
-          <div className="hero-stack-row">
-            <span className="hero-stack-num">0</span>
-            <span className="hero-stack-label">
-              migration — your existing pages, routes, and APIs are untouched
-            </span>
-          </div>
-        </div>
-
-        <div className="hero-roles" role="navigation" aria-label="Pick your starting point">
-          <div className="hero-roles-label">Pick your starting point →</div>
-          <div className="hero-roles-grid">
-            {ROLES.map((r) => (
-              <a key={r.label} href={r.target} className="hero-role">
-                <span className="hero-role-label">{r.label}</span>
-                <span className="hero-role-sub">{r.sub}</span>
-                <span className="hero-role-hint">
-                  <code>@ahtmljs/{r.hint}</code>
-                </span>
-              </a>
-            ))}
+    <>
+      <section className="hero">
+        <div className="container wide">
+          <div className="hero-grid">
+            <div>
+              <h1 className="rise rise-1">
+                The HTML of <em>the agent web.</em>
+              </h1>
+              <p className="lede rise rise-2">
+                One typed snapshot per page. Agents get MCP, OpenAPI, llms.txt,
+                and safe priced actions. Browsers keep your HTML.
+              </p>
+              <div className="hero-cta rise rise-3">
+                <a className="btn btn-primary" href="#quickstart">
+                  <span>Get started</span>
+                  <span className="btn-arrow" aria-hidden>
+                    →
+                  </span>
+                </a>
+                <a className="btn btn-secondary" href="/tools/agent-readiness">
+                  Score your site
+                </a>
+              </div>
+            </div>
+            <div className="hero-artifact rise rise-4" aria-label="This page's live AHTML snapshot, abridged">
+              <div className="hero-artifact-bar">
+                <span>GET /ahtml</span>
+                <a href="/ahtml">live →</a>
+              </div>
+              <pre>
+                {SNAPSHOT_LINES.map(([key, rest], i) => (
+                  <span key={i}>
+                    {key ? <span className="tok-key">{key}</span> : null}
+                    <span className={key ? undefined : 'tok-dim'}>{rest}</span>
+                    {'\n'}
+                  </span>
+                ))}
+              </pre>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div className="hero-cta">
-          <a className="btn btn-primary" href="#packages">
-            <span>Browse the 9 packages</span>
-            <span className="btn-arrow" aria-hidden>→</span>
-          </a>
-          <a className="btn btn-secondary" href="#quickstart">
-            Quickstart flows
-          </a>
-          <a className="btn btn-secondary" href="/tools/agent-readiness">
-            Score your site <span className="muted">— free</span>
-          </a>
-          <div className="hero-cta-tertiary">
-            <a href="#benchmark">See the benchmark</a>
-            <span aria-hidden> · </span>
-            <a href="/ahtml" className="mono">View this page&apos;s AHTML →</a>
+      <section className="section tight" style={{ borderTop: '1px solid var(--rule)' }}>
+        <div className="container wide">
+          <div className="hero-roles" role="navigation" aria-label="Pick your starting point">
+            <div className="hero-roles-grid">
+              {ROLES.map((r) => (
+                <a key={r.label} href={r.target} className="hero-role">
+                  <span className="hero-role-label">{r.label}</span>
+                  <span className="hero-role-sub">{r.sub}</span>
+                  <span className="hero-role-hint">
+                    <code>{r.hint}</code>
+                  </span>
+                </a>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

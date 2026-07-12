@@ -15,7 +15,7 @@ export default function Fanout() {
         <figure className="fanout-figure">
           <Image
             src="/diagram.png"
-            alt="AHTML architecture: your page (Next.js, Vite, SvelteKit, Astro, Nuxt, Remix) compiles through the @ahtmljs/next plugin into five outputs — HTML for browsers, /ahtml/* compact + JSON for agents (~100× cheaper), /ahtml/mcp.json for Claude, ChatGPT, Gemini, Cursor, Copilot, /ahtml/openapi.json for REST clients and codegen, and /llms.txt for Cursor, Continue, Cline."
+            alt="AHTML architecture: your page (Next.js, Astro, SvelteKit, Vite, Hono) compiles through an @ahtmljs adapter into five outputs: HTML for browsers, /ahtml/* compact + JSON for agents (~100× cheaper), /ahtml/mcp.json for Claude, ChatGPT, Gemini, Cursor, Copilot, /ahtml/openapi.json for REST clients and codegen, and /llms.txt for Cursor, Continue, Cline."
             width={1672}
             height={941}
             sizes="(max-width: 800px) 100vw, 1080px"

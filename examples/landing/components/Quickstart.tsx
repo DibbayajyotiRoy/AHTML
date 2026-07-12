@@ -23,7 +23,7 @@ const FLOWS: Flow[] = [
     id: 'next',
     pkg: '@ahtmljs/next',
     role: 'emit',
-    tagline: 'Next.js sites — one route, every machine surface.',
+    tagline: 'Next.js sites: one route, every machine surface.',
     forWho: 'Next 14+ App Router or Pages Router projects.',
     endpoints: [
       { path: '/ahtml/*', note: 'typed snapshot per route (compact or JSON via Accept)' },
@@ -79,12 +79,12 @@ const FLOWS: Flow[] = [
     id: 'vite',
     pkg: '@ahtmljs/vite',
     role: 'emit',
-    tagline: 'SvelteKit, SolidStart, Astro, Remix, vanilla Vite — same bytes.',
+    tagline: 'SvelteKit, SolidStart, Astro, Remix, vanilla Vite: same bytes.',
     forWho: 'Anything on the Vite 5+ dev/build pipeline.',
     endpoints: [
       { path: '/ahtml/*', note: 'same snapshot routes as the Next adapter' },
       { path: '/ahtml/mcp.json', note: 'MCP manifest with raw $ref stripped' },
-      { path: '/ahtml/openapi.json', note: 'OpenAPI 3.1 — newly implemented in v0.4.0' },
+      { path: '/ahtml/openapi.json', note: 'OpenAPI 3.1' },
       { path: '/.well-known/ahtml.json', note: 'site-wide discovery manifest' },
     ],
     steps: [
@@ -143,7 +143,7 @@ const FLOWS: Flow[] = [
     pkg: '@ahtmljs/schema',
     role: 'author',
     tagline: 'The contract layer. Build, validate, lint, serialize, diff.',
-    forWho: 'Any code that authors or inspects an AHTML snapshot — direct dep of every other package.',
+    forWho: 'Any code that authors or inspects an AHTML snapshot. Direct dep of every other package.',
     steps: [
       {
         title: 'Install',
@@ -284,7 +284,7 @@ const FLOWS: Flow[] = [
           <code>
             <span className="comment">// docs[].metadata carries chunk_id,</span>
             {'\n'}
-            <span className="comment">// byte_range, source URL — citation-ready.</span>
+            <span className="comment">// byte_range, source URL: citation-ready.</span>
             {'\n'}
             <span className="keyword">await</span> vectorStore.<span className="at">addDocuments</span>(docs);
           </code>
@@ -345,7 +345,7 @@ export default function Quickstart() {
         <h2 style={{ marginTop: 12, marginBottom: 12 }}>Pick a package. Follow three steps.</h2>
         <p className="lede" style={{ marginBottom: 32 }}>
           Each package is additive. Your existing pages keep rendering, your existing
-          API keeps running — agents get an extra lane on the same origin.
+          API keeps running; agents get an extra lane on the same origin.
         </p>
 
         <div className="qs-tabs" role="tablist" aria-label="Choose a package">
@@ -413,7 +413,7 @@ export default function Quickstart() {
               >
                 {flow.endpoints.map((e) => (
                   <li key={e.path}>
-                    <code className="inline">{e.path}</code> — {e.note}
+                    <code className="inline">{e.path}</code>: {e.note}
                   </li>
                 ))}
               </ul>

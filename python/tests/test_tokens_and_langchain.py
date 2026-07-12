@@ -51,7 +51,9 @@ def test_count_tokens_matches_tiktoken_when_available() -> None:
     tiktoken = pytest.importorskip("tiktoken")
     enc = tiktoken.get_encoding("o200k_base")
     text = ahtml.to_compact(from_json(SNAP_JSON))
-    assert count_tokens(text, model="o200k_base") == len(enc.encode(text))
+    # o200k_base is an ENCODING name, so it goes in `encoding=` — tiktoken
+    # cannot map it as a model name.
+    assert count_tokens(text, encoding="o200k_base") == len(enc.encode(text))
 
 
 # --- LangChain loader ---------------------------------------------------------

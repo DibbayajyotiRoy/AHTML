@@ -22,7 +22,10 @@ import { classifyRequest } from '../classify.js';
 const AGENT_URL = 'https://shop.example.com/ahtml/store/products/widget';
 
 async function es256(): Promise<{ sign: SignKey; verify: VerifyKey }> {
-  const pair = (await globalThis.crypto.subtle.generateKey(
+  // Node 18 has no crypto global — same fallback the sign module uses.
+  const subtle =
+    globalThis.crypto?.subtle ?? ((await import('node:crypto')).webcrypto.subtle as unknown as SubtleCrypto);
+  const pair = (await subtle.generateKey(
     { name: 'ECDSA', namedCurve: 'P-256' },
     false,
     ['sign', 'verify'],

@@ -100,7 +100,7 @@ const softwareJsonLd = {
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'Cross-platform',
   description:
-    'AHTML is an open-source (MIT) snapshot format and TypeScript toolkit that lets any website publish an agent-readable, token-efficient view of each page — typed entities plus typed actions with explicit cost, reversibility, auth, and side-effects — and auto-emit MCP, OpenAPI 3.1, JSON-LD, llms.txt, RSL, and Markdown from that single source, while browsers keep the same HTML.',
+    'AHTML is an open-source (MIT) snapshot format with TypeScript and Python toolkits that lets any website publish an agent-readable, token-efficient view of each page — typed entities plus typed actions with explicit cost, reversibility, auth, and side-effects — and auto-emit MCP, OpenAPI 3.1, JSON-LD, llms.txt, RSL, and Markdown from that single source, while browsers keep the same HTML.',
   url: SITE_URL,
   downloadUrl: 'https://www.npmjs.com/package/@ahtmljs/next',
   softwareVersion: '1.0.0',

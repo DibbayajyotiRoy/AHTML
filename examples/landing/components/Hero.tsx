@@ -28,7 +28,7 @@ export default function Hero() {
           The HTML of <em>the agent web</em>.
         </h1>
         <p className="lede">
-          AHTML is an open-source (MIT) snapshot format and TypeScript toolkit
+          AHTML is an open-source (MIT) snapshot format with TypeScript and Python toolkits
           that lets any website publish an agent-readable, token-efficient view
           of each page — typed entities plus typed actions with explicit cost,
           reversibility, auth, and side-effects — and auto-emit MCP, OpenAPI 3.1,

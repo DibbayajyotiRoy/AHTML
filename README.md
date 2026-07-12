@@ -1,11 +1,12 @@
 # AHTML
 
-> **AHTML is an open-source (MIT) snapshot format and TypeScript toolkit
-> that lets any website publish an agent-readable, token-efficient view of
-> each page — typed entities plus typed actions with explicit cost,
-> reversibility, auth, and side-effects — and auto-emit MCP, OpenAPI 3.1,
-> JSON-LD, llms.txt, RSL, and Markdown from that single source, while
-> browsers keep the same HTML.**
+> **AHTML is an open-source (MIT) snapshot format with TypeScript and
+> Python toolkits that lets any website publish an agent-readable,
+> token-efficient view of each page — typed entities plus typed actions with
+> explicit cost, reversibility, auth, and side-effects — and auto-emit MCP,
+> OpenAPI 3.1, JSON-LD, llms.txt, RSL, and Markdown from that single source,
+> while browsers keep the same HTML. Agents can consume any site today, with
+> or without adoption, via its universal extractor.**
 >
 > The contract layer of the agent web. One config in, every agent-readable
 > protocol out — plus signed provenance, verified-agent auth, and priced
@@ -19,7 +20,7 @@
 [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-6ba539?style=flat-square)](https://spec.openapis.org/oas/v3.1.0)
 [![JSON Schema 2020-12](https://img.shields.io/badge/JSON%20Schema-2020--12-1b3a82?style=flat-square)](https://json-schema.org/draft/2020-12)
 [![Provenance](https://img.shields.io/badge/npm-provenance-2dba4e?style=flat-square&logo=github)](https://docs.npmjs.com/generating-provenance-statements)
-[![tests](https://img.shields.io/badge/tests-454%20passing-2dba4e?style=flat-square)](TESTING.md)
+[![tests](https://img.shields.io/badge/tests-700%2B%20passing-2dba4e?style=flat-square)](TESTING.md)
 
 **At a glance — every number below is measured in this repo, not estimated:**
 
@@ -35,8 +36,16 @@
   snapshot signed + verified, x402 `402` payment flow built, RFC 9421 agent
   request verified, RSL 1.0 license emitted, Markdown negotiation —
   [`WHY-AHTML.md`](WHY-AHTML.md)
-- **Nine npm packages** under [`@ahtmljs`](https://www.npmjs.com/org/ahtmljs),
-  all at **v1.0.0**, MIT, released with npm provenance, 454 tests passing
+- **Sixteen npm packages** under [`@ahtmljs`](https://www.npmjs.com/org/ahtmljs)
+  at **v1.1.0** plus the [`ahtml` Python SDK](python/) — MIT, released with
+  npm provenance, 700+ tests passing across both implementations
+- **Certifiable protocol** — a language-agnostic
+  [conformance corpus](packages/conformance/corpus/1.0/README.md) covering
+  every RFC-2119 MUST in the spec; TypeScript and Python both pass 100%
+  through the same runner
+- **Rehearse before you pay** — the SPEC §4.7 dry-run sandbox: agents
+  simulate priced/irreversible actions (signed `simulated: true` responses,
+  itemized cost, reversal path) before real money moves through x402
 
 **30-second quickstart:**
 
@@ -76,6 +85,53 @@ view over content negotiation, and a token-optimal agent snapshot at
 
 ---
 
+## Who is AHTML for? Two sides, two on-ramps
+
+### I'm a developer building an AI agent — do the sites I read need AHTML installed?
+
+**No.** The consumer side works on **any URL today**, adopted or not:
+
+```bash
+npx @ahtmljs/cli extract https://any-website.com     # typed entities from JSON-LD/OpenGraph/microdata — no adoption needed
+npx @ahtmljs/cli score https://any-website.com       # how agent-readable is this site? 0–100
+npx @ahtmljs/cli mcp https://any-website.com         # turn ANY site into MCP tools for Claude/ChatGPT/Cursor
+```
+
+```ts
+import { AHTMLClient } from '@ahtmljs/agent';
+const page = await new AHTMLClient().fetchPage('https://any-website.com');
+// AHTML snapshot when the site publishes one; extracted-from-HTML fallback when it doesn't.
+```
+
+```python
+pip install ahtml   # same consumer surface from Python — LangChain loader included
+```
+
+When the site *does* publish AHTML you additionally get: 5.6× fewer tokens,
+typed actions with cost/reversibility/auth contracts, signed snapshots you
+can verify, 304/diff refetches, and the dry-run sandbox before money moves.
+
+### I run a website (the supplier side) — what do I get for publishing AHTML?
+
+One command wires it, and every protocol falls out of a single source:
+
+```bash
+npx @ahtmljs/cli init     # detects Next/Astro/SvelteKit/Vite/Hono, wires everything
+npm run dev
+npx @ahtmljs/cli doctor http://localhost:3000   # green = agents can use your site
+```
+
+What you get: your site becomes an **MCP server** (`/ahtml/mcp.json`) that
+Claude, ChatGPT, and Cursor can call; an OpenAPI 3.1 surface; JSON-LD;
+llms.txt; a token-optimal snapshot that makes agent answers about your
+content **more accurate** (91%→100% in our benchmark); typed, priced,
+policy-gated actions agents can execute safely (x402 payments, RFC 9421
+verified agents); [traffic insights](packages/insights) showing which agents
+actually read you; a [score badge](packages/badge) for your README; and a
+listing in the [AHTML Index](packages/index) so agents can *find* you.
+
+---
+
 ## What is AHTML?
 
 AHTML is a web standard for AI agents: an **agent-readable web** layer that
@@ -108,10 +164,10 @@ AHTML yet.
 
 ---
 
-## The nine packages
+## The sixteen packages (plus Python)
 
-Nine npm packages under the `@ahtmljs` scope, all published at the same version
-and released together. Grouped by what you're building:
+Sixteen npm packages under the `@ahtmljs` scope, released together, plus the
+`ahtml` Python SDK. Grouped by what you're building:
 
 **Contract layer**
 
@@ -124,23 +180,31 @@ and released together. Grouped by what you're building:
 | Package | What it is | Install when |
 |---|---|---|
 | [`@ahtmljs/next`](packages/next) | Next.js 14+/15 App Router plugin. `createAHTMLRoute`, `createWellKnownRoute`, `createLlmsTxtRoute`, MCP + OpenAPI emitters, JSON-LD injector, policy block, `verifyAgents` config, `withPaymentGuard`. | You ship a Next.js app and want it to *be* an MCP server. |
-| [`@ahtmljs/vite`](packages/vite) | Vite plugin. Wires the same handler into SvelteKit, SolidStart, Astro, and vanilla Vite. Byte-identical output to the Next adapter. | You ship a Vite-based app and want the same emitters. |
+| [`@ahtmljs/astro`](packages/astro) | Astro integration — injects all five endpoints (`.well-known`, snapshot routes with negotiation/304/diff, MCP, OpenAPI, llms.txt). Zero `astro` dependency; passes the same adapter test matrix as Next. | You ship an Astro site. |
+| [`@ahtmljs/sveltekit`](packages/sveltekit) | SvelteKit server hook (`ahtmlHandle`) or per-endpoint `+server.ts` handlers, same five-endpoint surface. Zero `@sveltejs/kit` dependency. | You ship a SvelteKit app. |
+| [`@ahtmljs/vite`](packages/vite) | Vite plugin. Wires the same handler into SolidStart, vanilla Vite, and anything else on the Vite pipeline. Byte-identical output to the Next adapter. | You ship a Vite-based app without a dedicated adapter. |
 | [`@ahtmljs/hono`](packages/hono) | Hono adapter — one `mountAHTML(app, config)` call. Runs on Node, Bun, Deno, Cloudflare Workers, and AWS Lambda. Edge-first, no `node:*` in the hot path. | You ship a Hono app or want the same surface on the edge / Workers. |
+| [`@ahtmljs/extract`](packages/extract) | The framework-neutral extractor pipeline behind every adapter, with a plugin API: `definePlugin({ match, extract, priority })` over a neutral page model. A [<100-LOC community recipe plugin](examples/recipe-plugin) proves the contract. `@experimental` for one minor release. | You want a custom domain extractor (recipes, job posts, …) or a new framework adapter. |
 
 **Read the agent web (agent-side)**
 
 | Package | What it is | Install when |
 |---|---|---|
-| [`@ahtmljs/agent`](packages/agent) | Client SDK: typed-error fetcher, ETag-conditional GET, diff replay, request coalescing, retry with jittered backoff, timeout, dry-run, real `gpt-tokenizer` + `@anthropic-ai/tokenizer` cost estimation, streaming reader, `fetchPage()` universal read with HTML fallback, agent request signing. | You are building an AI agent that reads other people's sites. |
+| [`@ahtmljs/agent`](packages/agent) | Client SDK: typed-error fetcher, ETag-conditional GET, diff replay, request coalescing, retry with jittered backoff, timeout, real `gpt-tokenizer` + `@anthropic-ai/tokenizer` cost estimation, streaming reader, `fetchPage()` universal read with HTML fallback, agent request signing. Plus the SPEC §4.7 sandbox: `runAction(..., { dryRun: true })`, `POLICY_PRESETS.strict` (requires a same-parameters rehearsal within TTL before irreversible+priced actions), and anti-spoofing refusals in both directions. | You are building an AI agent that reads other people's sites. |
+| [`ahtml` (PyPI)](python/) | The Python consumer SDK — LangChain loader, ETag/TTL-cached client, detached-JWS + `did:web` verification, and `run_action` with the same safety gate and dry-run sandbox, 1:1 with the TS agent. Canonical JSON output is **byte-identical** to the TypeScript reference. | Your agent stack is Python (LangChain, LlamaIndex, CrewAI, raw SDKs). |
 | [`@ahtmljs/langchain`](packages/langchain) | LangChain.js document loader. Fetches any AHTML-emitting site and yields `Document`s with chunk boundaries, citation anchors, and metadata preserved. | You are building a RAG pipeline and want to **cite a web page in a RAG answer** without re-scraping HTML. |
 
 **Tooling & infrastructure**
 
 | Package | What it is | Install when |
 |---|---|---|
-| [`@ahtmljs/cli`](packages/cli) | The AHTML CLI — `analyze`, `score`, `doctor`, `extract`, `benchmark`, `mcp` (stdio MCP proxy), `llms` (site→llms.txt crawler). Works on **any URL**, adopter or not. | You want to audit, score, or turn any site into MCP tools from your terminal or agent. |
+| [`@ahtmljs/cli`](packages/cli) | The AHTML CLI — `init` (10-minute scaffolding for all 5 frameworks), `analyze`, `score`, `doctor`, `extract`, `benchmark`, `badge`, `submit` (to the AHTML Index), `conformance` (certify an implementation), `mcp` (stdio MCP proxy), `llms` (site→llms.txt crawler). Works on **any URL**, adopter or not. | You want to scaffold, audit, score, certify, or turn any site into MCP tools from your terminal or agent. |
 | [`@ahtmljs/kv`](packages/kv) | Pluggable KV / cache / rate-limit backends: in-memory, Upstash Redis, Cloudflare KV. Backend-agnostic token-bucket `RateLimiter`. | You need caching or per-agent rate limiting at the edge. |
 | [`@ahtmljs/webmcp`](packages/webmcp) | Registers AHTML page actions as native [WebMCP](https://github.com/WICG/webmcp) browser tools (Chrome 149+ origin trial), with AHTML's richer cost/reversibility/confirmation metadata as annotations. Plus a zero-install bookmarklet inspector. | You want browser-embedded AI assistants to call your page's actions safely. |
+| [`@ahtmljs/insights`](packages/insights) | Agent-traffic analytics for publishers: classifies verified agents (RFC 9421) vs declared bots vs humans, records fetches/formats/action outcomes behind `@ahtmljs/kv` with a tested zero-PII guarantee and ≤1 ms p95 overhead. `summarize()`, offline HTML dashboard, OTel export. | You publish AHTML and want to know which agents actually consume it. |
+| [`@ahtmljs/conformance`](packages/conformance) | The language-agnostic conformance corpus + runner. Certify any implementation (Go, Rust, PHP, …) against every RFC-2119 MUST in [SPEC.md](SPEC.md) and publish a signed attestation — see [docs/conformance.md](docs/conformance.md). | You reimplemented AHTML and want to *prove* it. |
+| [`@ahtmljs/index`](packages/index) | The AHTML Index — registry + crawler: opt-in submission with validate/score/signature checks, TTL/ETag-honoring re-crawl, opt-out delisting, MCP query surface ("find sites that sell X"). | You run (or want to query) the site registry. |
+| [`@ahtmljs/badge`](packages/badge) | Hosted score-badge service: README-embeddable SVG + linked report, score byte-identical to local `ahtml score`. | You want a public, self-updating proof your site is agent-ready. |
 
 Common install combos:
 
@@ -151,8 +215,14 @@ npm install @ahtmljs/next @ahtmljs/schema
 # same, on the edge / Cloudflare Workers
 npm install @ahtmljs/hono @ahtmljs/schema hono
 
+# scaffold ANY supported framework in one command (Next/Vite/Hono/Astro/SvelteKit)
+npx @ahtmljs/cli init
+
 # agent author — read the agent web (with HTML fallback for non-adopters)
 npm install @ahtmljs/agent @ahtmljs/schema
+
+# agent author in Python
+pip install ahtml
 
 # audit / score / proxy any URL — no install
 npx @ahtmljs/cli analyze https://example.com
@@ -449,8 +519,9 @@ actions (untrusted markup).
   (Howard, 2024)
 - License: **MIT**. Every release ships with **npm provenance** (sigstore
   attestation via GitHub Actions)
-- **454 tests passing** across the monorepo — all nine packages plus the UX,
-  conformance, and performance-budget suites, all green in CI
+- **700+ tests passing** across the monorepo — all sixteen packages, the
+  Python SDK, plus the UX, conformance, and performance-budget suites, all
+  green in CI
 
 Compatible MCP clients that can consume `/ahtml/mcp.json` directly: Claude
 Desktop, Claude on the web, ChatGPT (Apps SDK + Connectors), Cursor,
@@ -520,10 +591,12 @@ the HTML you serve to browsers is unchanged.
 
 ### Which frameworks does AHTML support?
 
-Next.js 14+/15 App Router (`@ahtmljs/next`), Vite-based apps including
-SvelteKit, SolidStart, and Astro (`@ahtmljs/vite`), and Hono on Node, Bun,
-Deno, Cloudflare Workers, and AWS Lambda (`@ahtmljs/hono`) — or use
-`@ahtmljs/schema` directly with hand-rolled routes in any framework.
+Next.js 14+/15 App Router (`@ahtmljs/next`), Astro (`@ahtmljs/astro`),
+SvelteKit (`@ahtmljs/sveltekit`), other Vite-based apps such as SolidStart
+(`@ahtmljs/vite`), and Hono on Node, Bun, Deno, Cloudflare Workers, and AWS
+Lambda (`@ahtmljs/hono`) — or use `@ahtmljs/schema` directly with
+hand-rolled routes in any framework. `npx @ahtmljs/cli init` detects your
+framework and wires everything for you.
 
 ### Does AHTML work on sites that haven't adopted it?
 
@@ -551,7 +624,7 @@ diff endpoint keep repeat fetches cheap.
 
 ### How much does AHTML cost?
 
-Nothing — all nine packages are MIT-licensed npm libraries that run inside
+Nothing — all sixteen packages (and the Python SDK) are MIT-licensed open-source libraries that run inside
 your own app. There is no SaaS, no per-request pricing, and no lock-in.
 
 ---
@@ -570,7 +643,8 @@ The 0.9.x series and the 1.0.0 cut are sequenced and dated in
 | **v0.9.3** | The agent loop — `ahtml mcp` stdio proxy + `ahtml llms` crawler | shipped |
 | **v0.9.4** | The browser — WebMCP + `Accept: text/markdown` negotiation + `@ahtmljs/kv` | shipped |
 | **v0.9.5** | Verified agents, priced actions — RFC 9421 signing + x402 + RSL 1.0 + Content Signals | shipped |
-| **v1.0.0** | Stability — API freeze + public benchmark + 2026 comparison | **current** |
+| **v1.0.0** | Stability — API freeze + public benchmark + 2026 comparison | shipped |
+| **v1.1.0** | The 10x series ([ROADMAP.md](ROADMAP.md)) — Python SDK, extract plugin API, Astro + SvelteKit adapters, `ahtml init` + score badge, agent-traffic insights, conformance certification, the AHTML Index, and the SPEC §4.7 dry-run sandbox | **current** |
 
 Performance budgets are enforced in CI per release — the benchmark is a
 failing test, not a paragraph. See [`PLAN-NEXT-6.md`](PLAN-NEXT-6.md) for
@@ -593,16 +667,27 @@ ahtml/
   benchmark-results-llm.md  real-LLM accuracy benchmark output
   WHY-AHTML.md              competitive benchmark — tokens + executed proofs
 
+  ROADMAP.md                the post-1.0 "10x" series (1.1–1.4)
+
   packages/
-    schema/                 @ahtmljs/schema     — the contract layer
+    schema/                 @ahtmljs/schema      — the contract layer
+    extract/                @ahtmljs/extract     — extractor pipeline + plugin API
     next/                   @ahtmljs/next        — Next.js adapter
+    astro/                  @ahtmljs/astro       — Astro adapter
+    sveltekit/              @ahtmljs/sveltekit   — SvelteKit adapter
     vite/                   @ahtmljs/vite        — Vite adapter
     hono/                   @ahtmljs/hono        — Hono / edge adapter
-    agent/                  @ahtmljs/agent       — agent client SDK
+    agent/                  @ahtmljs/agent       — agent client SDK (+ dry-run sandbox)
     langchain/              @ahtmljs/langchain   — LangChain.js loader
-    cli/                    @ahtmljs/cli         — analyze / score / doctor / mcp / llms
+    cli/                    @ahtmljs/cli         — init / analyze / score / doctor / badge / submit / conformance / mcp / llms
     kv/                     @ahtmljs/kv          — KV / cache / rate-limit backends
     webmcp/                 @ahtmljs/webmcp      — WebMCP browser tools
+    insights/               @ahtmljs/insights    — agent-traffic analytics
+    conformance/            @ahtmljs/conformance — corpus + certification runner
+    index/                  @ahtmljs/index       — the AHTML Index (registry + crawler)
+    badge/                  @ahtmljs/badge       — hosted score-badge service
+
+  python/                   ahtml (PyPI)         — Python consumer SDK
 
   examples/
     landing/                dogfood Next.js site
@@ -750,7 +835,7 @@ MIT. See [LICENSE](LICENSE). Built by
 
 ### Suggested `keywords` for publishers
 
-Current keyword arrays across the nine packages, with suggested additions
+Current keyword arrays across the packages, with suggested additions
 (each ships the cross-cutting ones plus its package-level keywords) — paste
 into `packages/<pkg>/package.json`:
 

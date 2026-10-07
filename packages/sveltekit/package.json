@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/sveltekit",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "AHTML adapter for SvelteKit — .well-known/ahtml.json, snapshot routes with content negotiation, MCP emission, and llms.txt for any SvelteKit app. Built on the @ahtmljs/extract plugin API.",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -55,8 +55,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@ahtmljs/schema": "1.1.0",
-    "@ahtmljs/extract": "0.1.0",
+    "@ahtmljs/schema": "1.1.1",
+    "@ahtmljs/extract": "0.1.1",
     "@scarf/scarf": "^1.4.0"
   }
 }

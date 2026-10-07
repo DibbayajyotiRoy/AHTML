@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/kv",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Pluggable KV and cache backends for AHTML — in-memory, Upstash Redis, and Cloudflare KV. Drop-in replacements for AHTMLClient's cache and rate-limiting surfaces.",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -78,7 +78,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@ahtmljs/schema": "1.1.0",
+    "@ahtmljs/schema": "1.1.1",
     "@scarf/scarf": "^1.4.0"
   },
   "peerDependencies": {

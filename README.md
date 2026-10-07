@@ -812,7 +812,7 @@ cli, ahtml doctor, ahtml score, ahtml kv, ahtml webmcp.
 
 The `@ahtmljs/*` libraries and the `ahtml` CLI send **anonymous, aggregated usage counts** to [PostHog](https://posthog.com) (EU Cloud, `eu.i.posthog.com`) so we can see which features are actually used. It is always on; there is no opt-out environment variable. The whole client is one dependency-free file you can audit: [`packages/schema/src/telemetry.ts`](packages/schema/src/telemetry.ts).
 
-**Exactly what is sent.** One event per feature per flush (for example `snapshot.build`, `adapter.serve`, `cli.doctor`), with these fields and nothing else:
+**Exactly what is sent.** One event per feature per flush (for example `snapshot.build`, `adapter.serve`, `cli.doctor`, or `error.<code>` such as `error.rate_limited` when an `AHTMLError` is constructed: the error code only, never its message, context or cause), with these fields and nothing else:
 
 | Field | Example | Meaning |
 |---|---|---|
@@ -821,14 +821,25 @@ The `@ahtmljs/*` libraries and the `ahtml` CLI send **anonymous, aggregated usag
 | `pkg`, `pkg_version` | `@ahtmljs/next`, `1.1.0` | Which package and version. |
 | `runtime`, `runtime_version` | `node`, `22.21.1` | `node`, `bun`, `deno`, `workerd`, `browser` or `unknown`, and its version. |
 | `os`, `arch` | `linux`, `x64` | Operating system and CPU architecture. |
-| `ci` | `false` | Whether a CI environment variable (`CI`, `GITHUB_ACTIONS`, `GITLAB_CI`, `BUILDKITE`, `CIRCLECI`) is set. |
+| `ci` | `false` | `true` when `ci_provider` is anything but `none`. |
+| `ci_provider` | `github_actions` | `github_actions`, `gitlab`, `circleci`, `buildkite`, `jenkins`, `travis`, `azure_pipelines`, `bitbucket`, `vercel`, `netlify`, `cloudflare_pages`, `render`, `aws_codebuild`, `other_ci` (a generic `CI` variable only) or `none`. |
+| `env_class` | `server` | What kind of run this is, so real usage can be told apart from automation: `test`, `ci`, `build`, `serverless`, `dev`, `server`, `cli_interactive`, `browser` or `unknown`. First match wins: a test runner (Vitest, Jest, Mocha, AVA), then CI, then a build step (`npm run build`/`prepare`/`generate`/`export`..., or a Next.js production build), then a serverless runtime (AWS Lambda, Vercel, Netlify, Google Cloud Run/Functions, Azure Functions, Cloudflare Workers), then a browser, then the `ahtml` CLI in an interactive terminal, then `dev` (`NODE_ENV=development` or an `npm run dev`/`serve`/`watch` script), then `server` (`NODE_ENV=production`). |
+| `hosting` | `vercel` | `vercel`, `netlify`, `cloudflare`, `aws_lambda`, `cloud_run`, `fly`, `railway`, `render`, `heroku` or `none`. |
+| `is_tty` | `true` | Whether standard output is an interactive terminal (Node, Bun, Deno; `false` elsewhere). |
+| `is_container` | `false` | Whether the process looks containerized (`/.dockerenv` exists or `KUBERNETES_SERVICE_HOST` is set; Node only for the file check). |
+| `node_env` | `production` | `development`, `production`, `test`, `other` (set to anything else) or `unset`. |
+| `package_manager` | `pnpm` | `npm`, `pnpm`, `yarn`, `bun` or `unknown`, from the name at the start of `npm_config_user_agent` (never the version). |
+| `$session_id` | `0199...` | A random UUIDv7 generated once per process, so PostHog can group one run's events into a session. |
 | `distinct_id` | `3f9a1c07b2d84e65` | Anonymous install id: the first 16 hex characters of `SHA-256(hostname \| working directory \| "ahtml-v1")`. It is a one-way hash, so the hostname and path cannot be recovered from it. In browsers and Workers, where there is no filesystem identity, it is a random per-process id. |
 | `timestamp` | ISO 8601 | When the feature last ran. |
-| `$process_person_profile` | `false` | Tells PostHog not to create a person profile. |
-| `$geoip_disable` | `true` | Tells PostHog not to enrich the event with GeoIP location. |
+| `$process_person_profile` | `true` | Lets PostHog keep an **anonymous person profile keyed by the anonymous install id** (no name, email or account), which enables cohorts, retention and lifecycle charts. |
+| `$set` | `{ last_env_class, last_runtime, last_pkg_version, last_os }` | Person properties updated on each event: the latest environment class, runtime, package version and OS. |
+| `$set_once` | `{ first_env_class, first_pkg, first_pkg_version, first_runtime, first_seen_os }` | Person properties recorded the first time only. |
 | `$lib` | `ahtml` | Identifies the sender. |
 
-**Never sent:** URLs, hostnames, file paths, page or snapshot content, CLI arguments (only the fixed command name, such as `cli.doctor`), environment variable values, tokens, or anything about your users. IP addresses are visible to any server you make an HTTPS request to, so we ask PostHog to discard them: events carry `$geoip_disable: true` and the PostHog project is configured to discard client IP data.
+The environment fields are derived from whether certain environment variables exist (for example `GITHUB_ACTIONS` or `VERCEL`), never from their contents: only the fixed values listed above are ever sent.
+
+**Never sent:** URLs, hostnames, file paths, page or snapshot content, CLI arguments (only the fixed command name, such as `cli.doctor`), environment variable values, error messages, tokens, or anything about your users. IP addresses are visible to any server you make an HTTPS request to. PostHog derives approximate location (country/city) from the request IP at ingestion; the project is configured to discard client IP addresses, so IPs are not stored.
 
 **Behavior.** Counts are aggregated in memory and sent in batches of at most 50 events, about 2 seconds after the first use, then every 60 seconds, and when the process exits (the CLI flushes before it exits). Timers never keep your process alive. Requests time out after 1.5 seconds; on any failure the batch is dropped silently. The client never throws, logs, or blocks your application. Nothing is sent inside Node's built-in test runner (`node --test`). If your network policy forbids this traffic, block `eu.i.posthog.com` at egress: AHTML keeps working and discards the counts.
 

@@ -13,6 +13,9 @@
  * those into one class.
  */
 
+import { track } from './telemetry.js';
+import { VERSION } from './version.js';
+
 /**
  * Stable, machine-readable discriminator for `AHTMLError`. Adopters should
  * `switch` on this in `catch` blocks — it never changes shape across
@@ -94,6 +97,14 @@ export class AHTMLError extends Error {
     if (init.retryAfterMs !== undefined) this.retryAfterMs = init.retryAfterMs;
     if (init.context !== undefined) this.context = init.context;
     if (init.cause !== undefined) this.cause = init.cause;
+    // Anonymous usage count: the code only, never message/context/cause. Counted at
+    // construction; wrapping an existing AHTMLError is not counted again. track() is
+    // synchronous, never throws and never constructs an AHTMLError, so no recursion.
+    try {
+      if (!(init.cause instanceof AHTMLError)) track('@ahtmljs/schema', VERSION, 'error.' + init.code.toLowerCase());
+    } catch {
+      /* telemetry must never change what gets thrown */
+    }
   }
 
   /**

@@ -261,10 +261,22 @@ The first form is actionable and earns developer trust. The second is generic.
 AHTML collects **anonymous usage analytics**, in two places:
 
 - **Runtime (PostHog, EU):** the libraries and the `ahtml` CLI send aggregated
-  feature counts (feature name, count, package and version, runtime, OS, CPU
-  architecture, CI flag, and an anonymous hashed install id) to PostHog. No
-  URLs, hostnames, file paths, page content or CLI arguments are sent; GeoIP is
-  disabled and no person profiles are created. It is always on, with no opt-out
+  feature counts to PostHog, plus `error.<code>` counts when an `AHTMLError` is
+  constructed (the code only, never the message, context or cause). Each event
+  carries: `pkg`, `pkg_version`, `count`, `runtime`, `runtime_version`, `os`,
+  `arch`, `ci`, `ci_provider`, `env_class` (`test`, `ci`, `build`,
+  `serverless`, `dev`, `server`, `cli_interactive`, `browser`, `unknown`),
+  `hosting`, `is_tty`, `is_container`, `node_env`, `package_manager` (name
+  only, no version), a per-process UUIDv7 `$session_id`, and an anonymous hashed
+  install id as `distinct_id`. The environment fields come from whether
+  environment variables exist, never from their values. Events also set an
+  **anonymous person profile keyed by that anonymous install id** (`$set`:
+  `last_env_class`, `last_runtime`, `last_pkg_version`, `last_os`; `$set_once`:
+  `first_env_class`, `first_pkg`, `first_pkg_version`, `first_runtime`,
+  `first_seen_os`), with no name, email or account. No URLs, hostnames, file
+  paths, page content or CLI arguments are sent. PostHog derives approximate
+  location (country/city) from the request IP at ingestion; the project
+  discards client IPs, so they are not stored. It is always on, with no opt-out
   switch; see "Usage analytics" in the root `README.md` for the full field list.
 - **Install time (Scarf):** the published packages depend on `@scarf/scarf`,
   which sends anonymous install analytics to Scarf (OS info, package and

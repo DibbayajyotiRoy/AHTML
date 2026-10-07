@@ -50,6 +50,23 @@ async function settle() {
   for (let i = 0; i < 5; i++) await new Promise((r) => setImmediate(r));
 }
 
+/**
+ * Node 18's `mock.timers.enable` takes an array (`['setTimeout']`);
+ * Node ≥20.4 takes `{ apis: [...] }`. Try the modern signature first,
+ * fall back to the legacy one so the suite passes on all CI matrix versions.
+ */
+function enableTimers(): void {
+  try {
+    (mock.timers.enable as unknown as (opts: { apis: string[] }) => void)({ apis: ['setTimeout'] });
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException)?.code === 'ERR_INVALID_ARG_TYPE') {
+      (mock.timers.enable as unknown as (apis: string[]) => void)(['setTimeout']);
+    } else {
+      throw e;
+    }
+  }
+}
+
 describe('AHTMLClient.changes()', () => {
   test('first fetch -> [], then price change -> price.changed, then unchanged -> []', async () => {
     const o = origin(snap(100));
@@ -95,7 +112,7 @@ describe('AHTMLClient.watch()', () => {
   afterEach(() => mock.timers.reset());
 
   test('first poll is a silent baseline; 304 stays silent; a change fires onChange once with (changes, next, prev)', async () => {
-    mock.timers.enable({ apis: ['setTimeout'] });
+    enableTimers();
     const o = origin(snap(100));
     const client = new AHTMLClient({ fetch: o.fetch });
     const seen: Array<{ changes: SemanticChange[]; next: Snapshot; prev: Snapshot }> = [];
@@ -127,7 +144,7 @@ describe('AHTMLClient.watch()', () => {
   });
 
   test('a 200 with identical content (origin without 304 support) is silent', async () => {
-    mock.timers.enable({ apis: ['setTimeout'] });
+    enableTimers();
     const s = snap(100);
     let calls = 0;
     const f = (async () => {
@@ -148,7 +165,7 @@ describe('AHTMLClient.watch()', () => {
   });
 
   test('interval defaults to 60s and is clamped to a 5s minimum', async () => {
-    mock.timers.enable({ apis: ['setTimeout'] });
+    enableTimers();
     const o = origin(snap(100));
     const fast = new AHTMLClient({ fetch: o.fetch });
     const stopFast = fast.watch(URL_, () => {}, { intervalMs: 10 });
@@ -176,7 +193,7 @@ describe('AHTMLClient.watch()', () => {
   });
 
   test('stop function ends polling', async () => {
-    mock.timers.enable({ apis: ['setTimeout'] });
+    enableTimers();
     const o = origin(snap(100));
     const client = new AHTMLClient({ fetch: o.fetch });
     const stop = client.watch(URL_, () => {}, { intervalMs: 5_000 });
@@ -188,7 +205,7 @@ describe('AHTMLClient.watch()', () => {
   });
 
   test('AbortSignal ends polling (and a pre-aborted signal never starts)', async () => {
-    mock.timers.enable({ apis: ['setTimeout'] });
+    enableTimers();
     const o = origin(snap(100));
     const client = new AHTMLClient({ fetch: o.fetch });
     const ctrl = new AbortController();
@@ -213,7 +230,7 @@ describe('AHTMLClient.watch()', () => {
   });
 
   test('errors and throwing callbacks do not stop the watcher', async () => {
-    mock.timers.enable({ apis: ['setTimeout'] });
+    enableTimers();
     const o = origin(snap(100));
     let failing = false;
     const f = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -250,20 +267,31 @@ describe('AHTMLClient.watch()', () => {
   });
 
   test('the poll timer is unref()ed so it cannot hold a Node process open', async () => {
-    mock.timers.enable({ apis: ['setTimeout'] });
+    // Intentionally mock-timer-free: Node 18's mocked setTimeout returns a
+    // number (no .unref), while Node 20+ returns a Timeout. Stubbing
+    // setTimeout with a fake handle tests the real contract — watch() must
+    // call .unref() on whatever handle it gets — on every Node version.
     const realSet = globalThis.setTimeout;
+    const realClear = globalThis.clearTimeout;
     let unrefs = 0;
+    const fakeHandle = {
+      unref() {
+        unrefs++;
+      },
+    };
     globalThis.setTimeout = ((fn: () => void, ms?: number, ...args: unknown[]) => {
-      const h = (realSet as unknown as (...a: unknown[]) => Record<string, unknown>)(fn, ms, ...args);
-      if (ms === 5_000 && typeof h.unref === 'function') {
-        const orig = h.unref as () => unknown;
-        h.unref = () => {
-          unrefs++;
-          return orig.call(h);
-        };
-      }
-      return h;
+      if (ms === 5_000) return fakeHandle as unknown as ReturnType<typeof setTimeout>;
+      return (realSet as (...a: never[]) => ReturnType<typeof setTimeout>)(
+        fn as never,
+        ms as never,
+        ...(args as never[]),
+      );
     }) as unknown as typeof setTimeout;
+    // clearTimeout(fakeHandle) must not throw when stop() runs.
+    globalThis.clearTimeout = ((h: unknown) => {
+      if (h === (fakeHandle as unknown)) return;
+      return (realClear as (h: unknown) => void)(h);
+    }) as unknown as typeof clearTimeout;
     try {
       const o = origin(snap(100));
       const stop = new AHTMLClient({ fetch: o.fetch }).watch(URL_, () => {}, { intervalMs: 5_000 });
@@ -272,6 +300,7 @@ describe('AHTMLClient.watch()', () => {
       stop();
     } finally {
       globalThis.setTimeout = realSet;
+      globalThis.clearTimeout = realClear;
     }
   });
 });

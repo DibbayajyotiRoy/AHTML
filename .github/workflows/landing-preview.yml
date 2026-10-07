@@ -9,6 +9,7 @@ on:
     paths:
       - 'examples/landing/**'
       - 'packages/schema/**'
+      - 'packages/extract/**'
       - 'packages/next/**'
       - '.github/workflows/landing-preview.yml'
 
@@ -37,8 +38,9 @@ jobs:
       - name: Build workspaces
         run: |
           npm run build -w @ahtmljs/schema
-          npm run build -w @ahtmljs/next
+          npm run build -w @ahtmljs/extract
           npm run build -w @ahtmljs/agent
+          npm run build -w @ahtmljs/next
 
       - name: Build the landing
         run: cd examples/landing && npx next build

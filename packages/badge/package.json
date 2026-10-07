@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/badge",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Hosted AHTML score badge service — re-runs the canonical ahtml score against any URL and serves a README-embeddable SVG badge with a linked score report. Deployable as a Cloudflare Worker or any fetch-handler runtime.",
   "type": "module",
   "main": "./dist/index.js",
@@ -51,9 +51,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@ahtmljs/cli": "1.1.1",
-    "@ahtmljs/extract": "0.1.1",
-    "@ahtmljs/schema": "1.1.1",
+    "@ahtmljs/cli": "1.1.2",
+    "@ahtmljs/extract": "0.1.2",
+    "@ahtmljs/schema": "1.1.2",
     "@scarf/scarf": "^1.4.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/extract",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Framework-neutral extractor pipeline with a stable plugin API — definePlugin over a neutral page model; powers the Next, Vite, Hono, Astro, and SvelteKit adapters and community domain extractors.",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -55,7 +55,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@ahtmljs/schema": "1.1.1",
+    "@ahtmljs/schema": "1.1.2",
     "@scarf/scarf": "^1.4.0"
   }
 }

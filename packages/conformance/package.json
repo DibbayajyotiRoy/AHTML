@@ -1,6 +1,6 @@
 {
   "name": "@ahtmljs/conformance",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Language-agnostic AHTML conformance corpus and runner — versioned fixtures covering every RFC-2119 MUST in SPEC.md, with signed result attestations for third-party implementations.",
   "type": "module",
   "main": "./dist/index.js",
@@ -54,8 +54,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@ahtmljs/schema": "1.1.1",
-    "@ahtmljs/agent": "1.1.1",
+    "@ahtmljs/schema": "1.1.2",
+    "@ahtmljs/agent": "1.1.2",
     "@scarf/scarf": "^1.4.0"
   }
 }

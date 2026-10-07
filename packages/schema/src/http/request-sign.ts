@@ -25,6 +25,22 @@ export interface RequestSignOptions {
   now?: Date;
 }
 
+let subtleCached: SubtleCrypto | null = null;
+
+async function subtle(): Promise<SubtleCrypto> {
+  if (subtleCached) return subtleCached;
+  const c = (globalThis as { crypto?: Crypto }).crypto;
+  if (c?.subtle) return (subtleCached = c.subtle);
+  // Bare Node 18 has no crypto global — same fallback sign.ts uses.
+  try {
+    const { webcrypto } = await import('node:crypto');
+    if (webcrypto?.subtle) return (subtleCached = webcrypto.subtle as unknown as SubtleCrypto);
+  } catch {
+    /* not Node — fall through to the throw below */
+  }
+  throw new Error('Web Crypto (globalThis.crypto.subtle) is not available in this runtime');
+}
+
 /**
  * Sign an HTTP Request with an AHTML agent signature.
  *
@@ -72,16 +88,17 @@ export async function signHttpRequest(
   const data = encoder.encode(signatureBase);
 
   let sigBytes: ArrayBuffer;
+  const s = await subtle();
   if (key.alg === 'ES256') {
-    sigBytes = await globalThis.crypto.subtle.sign(
+    sigBytes = await s.sign(
       { name: 'ECDSA', hash: 'SHA-256' },
       key.key,
       data,
     );
   } else if (key.alg === 'EdDSA') {
-    sigBytes = await globalThis.crypto.subtle.sign('Ed25519', key.key, data);
+    sigBytes = await s.sign('Ed25519', key.key, data);
   } else {
-    sigBytes = await globalThis.crypto.subtle.sign(
+    sigBytes = await s.sign(
       { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
       key.key,
       data,
@@ -188,6 +205,7 @@ export async function verifyHttpSignature(
   const data = encoder.encode(signatureBase);
 
   // Try each matching key
+  const vs = await subtle();
   for (const vk of keys) {
     if (kid && vk.kid && vk.kid !== kid) continue;
 
@@ -195,13 +213,13 @@ export async function verifyHttpSignature(
       let ok = false;
       const buf = sigBytes.buffer as ArrayBuffer;
       if (vk.alg === 'ES256') {
-        ok = await globalThis.crypto.subtle.verify(
+        ok = await vs.verify(
           { name: 'ECDSA', hash: 'SHA-256' }, vk.key, buf, data,
         );
       } else if (vk.alg === 'EdDSA') {
-        ok = await globalThis.crypto.subtle.verify('Ed25519', vk.key, buf, data);
+        ok = await vs.verify('Ed25519', vk.key, buf, data);
       } else {
-        ok = await globalThis.crypto.subtle.verify(
+        ok = await vs.verify(
           { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, vk.key, buf, data,
         );
       }

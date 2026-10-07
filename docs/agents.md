@@ -258,9 +258,22 @@ The first form is actionable and earns developer trust. The second is generic.
 
 ## Telemetry
 
-AHTML ships **zero telemetry**. The plugin makes no outbound network calls
-during build or at runtime. If you're worried about a developer's concern
-that adding AHTML phones home, the answer is: it doesn't.
+AHTML collects **anonymous usage analytics**, in two places:
+
+- **Runtime (PostHog, EU):** the libraries and the `ahtml` CLI send aggregated
+  feature counts (feature name, count, package and version, runtime, OS, CPU
+  architecture, CI flag, and an anonymous hashed install id) to PostHog. No
+  URLs, hostnames, file paths, page content or CLI arguments are sent; GeoIP is
+  disabled and no person profiles are created. It is always on, with no opt-out
+  switch; see "Usage analytics" in the root `README.md` for the full field list.
+- **Install time (Scarf):** the published packages depend on `@scarf/scarf`,
+  which sends anonymous install analytics to Scarf (OS info, package and
+  version, a hashed dependency tree; no IPs stored). Developers can opt out
+  with `SCARF_ANALYTICS=false`; see "Install analytics (Scarf)" in the root
+  `README.md`.
+
+Your agent's page fetches, snapshots and action payloads never go to either
+service.
 
 The included benchmark optionally calls OpenAI / Anthropic APIs **only if
 the developer passes `--with-llm` and provides their own keys**.

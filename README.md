@@ -22,6 +22,13 @@
 [![Provenance](https://img.shields.io/badge/npm-provenance-2dba4e?style=flat-square&logo=github)](https://docs.npmjs.com/generating-provenance-statements)
 [![tests](https://img.shields.io/badge/tests-700%2B%20passing-2dba4e?style=flat-square)](TESTING.md)
 
+[![@ahtmljs/schema](https://img.shields.io/npm/v/@ahtmljs/schema?style=flat-square&label=%40ahtmljs%2Fschema)](https://www.npmjs.com/package/@ahtmljs/schema)
+[![schema downloads](https://img.shields.io/npm/d18m/@ahtmljs/schema?style=flat-square&label=downloads)](https://www.npmjs.com/package/@ahtmljs/schema)
+[![@ahtmljs/agent](https://img.shields.io/npm/v/@ahtmljs/agent?style=flat-square&label=%40ahtmljs%2Fagent)](https://www.npmjs.com/package/@ahtmljs/agent)
+[![agent downloads](https://img.shields.io/npm/d18m/@ahtmljs/agent?style=flat-square&label=downloads)](https://www.npmjs.com/package/@ahtmljs/agent)
+[![@ahtmljs/cli](https://img.shields.io/npm/v/@ahtmljs/cli?style=flat-square&label=%40ahtmljs%2Fcli)](https://www.npmjs.com/package/@ahtmljs/cli)
+[![cli downloads](https://img.shields.io/npm/d18m/@ahtmljs/cli?style=flat-square&label=downloads)](https://www.npmjs.com/package/@ahtmljs/cli)
+
 **At a glance — every number below is measured in this repo, not estimated:**
 
 - **5.6× fewer tokens** than the HTML a browser loads on the flagship
@@ -173,38 +180,38 @@ Sixteen npm packages under the `@ahtmljs` scope, released together, plus the
 
 | Package | What it is | Install when |
 |---|---|---|
-| [`@ahtmljs/schema`](packages/schema) | Snapshot types, validator, dual-format serializers (canonical JSON + token-optimal compact), Markdown + RSL emitters, diff, builder, JSON Schema, HTTP Message Signatures, x402 helpers, policy presets. Pure ESM + CJS, edge-runtime safe. Houses the emitters for well-known, MCP, OpenAPI, and llms.txt (re-exported by adapters). | You want the contract without a framework adapter — Express, Bun, Deno, Workers, or hand-rolled routes. |
+| [`@ahtmljs/schema`](packages/schema)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/schema?label=npm)](https://www.npmjs.com/package/@ahtmljs/schema) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/schema?label=downloads)](https://www.npmjs.com/package/@ahtmljs/schema) | Snapshot types, validator, dual-format serializers (canonical JSON + token-optimal compact), Markdown + RSL emitters, structural **and semantic** diff (`semanticDiff`/`summarizeChanges`), builder, JSON Schema, HTTP Message Signatures, x402 helpers, policy presets. Pure ESM + CJS, edge-runtime safe. Houses the emitters for well-known, MCP, OpenAPI, llms.txt, and the Google A2A agent card (re-exported by adapters). | You want the contract without a framework adapter — Express, Bun, Deno, Workers, or hand-rolled routes. |
 
 **Make your site agent-readable (site adapters)**
 
 | Package | What it is | Install when |
 |---|---|---|
-| [`@ahtmljs/next`](packages/next) | Next.js 14+/15 App Router plugin. `createAHTMLRoute`, `createWellKnownRoute`, `createLlmsTxtRoute`, MCP + OpenAPI emitters, JSON-LD injector, policy block, `verifyAgents` config, `withPaymentGuard`. | You ship a Next.js app and want it to *be* an MCP server. |
-| [`@ahtmljs/astro`](packages/astro) | Astro integration — injects all five endpoints (`.well-known`, snapshot routes with negotiation/304/diff, MCP, OpenAPI, llms.txt). Zero `astro` dependency; passes the same adapter test matrix as Next. | You ship an Astro site. |
-| [`@ahtmljs/sveltekit`](packages/sveltekit) | SvelteKit server hook (`ahtmlHandle`) or per-endpoint `+server.ts` handlers, same five-endpoint surface. Zero `@sveltejs/kit` dependency. | You ship a SvelteKit app. |
-| [`@ahtmljs/vite`](packages/vite) | Vite plugin. Wires the same handler into SolidStart, vanilla Vite, and anything else on the Vite pipeline. Byte-identical output to the Next adapter. | You ship a Vite-based app without a dedicated adapter. |
-| [`@ahtmljs/hono`](packages/hono) | Hono adapter — one `mountAHTML(app, config)` call. Runs on Node, Bun, Deno, Cloudflare Workers, and AWS Lambda. Edge-first, no `node:*` in the hot path. | You ship a Hono app or want the same surface on the edge / Workers. |
-| [`@ahtmljs/extract`](packages/extract) | The framework-neutral extractor pipeline behind every adapter, with a plugin API: `definePlugin({ match, extract, priority })` over a neutral page model. A [<100-LOC community recipe plugin](examples/recipe-plugin) proves the contract. `@experimental` for one minor release. | You want a custom domain extractor (recipes, job posts, …) or a new framework adapter. |
+| [`@ahtmljs/next`](packages/next)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/next?label=npm)](https://www.npmjs.com/package/@ahtmljs/next) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/next?label=downloads)](https://www.npmjs.com/package/@ahtmljs/next) | Next.js 14+/15 App Router plugin. `createAHTMLRoute`, `createWellKnownRoute`, `createLlmsTxtRoute`, MCP + OpenAPI emitters, JSON-LD injector, policy block, `verifyAgents` config, `withPaymentGuard`. | You ship a Next.js app and want it to *be* an MCP server. |
+| [`@ahtmljs/astro`](packages/astro)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/astro?label=npm)](https://www.npmjs.com/package/@ahtmljs/astro) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/astro?label=downloads)](https://www.npmjs.com/package/@ahtmljs/astro) | Astro integration — injects all five endpoints (`.well-known`, snapshot routes with negotiation/304/diff, MCP, OpenAPI, llms.txt). Zero `astro` dependency; passes the same adapter test matrix as Next. | You ship an Astro site. |
+| [`@ahtmljs/sveltekit`](packages/sveltekit)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/sveltekit?label=npm)](https://www.npmjs.com/package/@ahtmljs/sveltekit) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/sveltekit?label=downloads)](https://www.npmjs.com/package/@ahtmljs/sveltekit) | SvelteKit server hook (`ahtmlHandle`) or per-endpoint `+server.ts` handlers, same five-endpoint surface. Zero `@sveltejs/kit` dependency. | You ship a SvelteKit app. |
+| [`@ahtmljs/vite`](packages/vite)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/vite?label=npm)](https://www.npmjs.com/package/@ahtmljs/vite) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/vite?label=downloads)](https://www.npmjs.com/package/@ahtmljs/vite) | Vite plugin. Wires the same handler into SolidStart, vanilla Vite, and anything else on the Vite pipeline. Byte-identical output to the Next adapter. | You ship a Vite-based app without a dedicated adapter. |
+| [`@ahtmljs/hono`](packages/hono)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/hono?label=npm)](https://www.npmjs.com/package/@ahtmljs/hono) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/hono?label=downloads)](https://www.npmjs.com/package/@ahtmljs/hono) | Hono adapter — one `mountAHTML(app, config)` call. Runs on Node, Bun, Deno, Cloudflare Workers, and AWS Lambda. Edge-first, no `node:*` in the hot path. | You ship a Hono app or want the same surface on the edge / Workers. |
+| [`@ahtmljs/extract`](packages/extract)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/extract?label=npm)](https://www.npmjs.com/package/@ahtmljs/extract) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/extract?label=downloads)](https://www.npmjs.com/package/@ahtmljs/extract) | The framework-neutral extractor pipeline behind every adapter, with a plugin API: `definePlugin({ match, extract, priority })` over a neutral page model. A [<100-LOC community recipe plugin](examples/recipe-plugin) proves the contract. `@experimental` for one minor release. | You want a custom domain extractor (recipes, job posts, …) or a new framework adapter. |
 
 **Read the agent web (agent-side)**
 
 | Package | What it is | Install when |
 |---|---|---|
-| [`@ahtmljs/agent`](packages/agent) | Client SDK: typed-error fetcher, ETag-conditional GET, diff replay, request coalescing, retry with jittered backoff, timeout, real `gpt-tokenizer` + `@anthropic-ai/tokenizer` cost estimation, streaming reader, `fetchPage()` universal read with HTML fallback, agent request signing. Plus the SPEC §4.7 sandbox: `runAction(..., { dryRun: true })`, `POLICY_PRESETS.strict` (requires a same-parameters rehearsal within TTL before irreversible+priced actions), and anti-spoofing refusals in both directions. | You are building an AI agent that reads other people's sites. |
+| [`@ahtmljs/agent`](packages/agent)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/agent?label=npm)](https://www.npmjs.com/package/@ahtmljs/agent) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/agent?label=downloads)](https://www.npmjs.com/package/@ahtmljs/agent) | Client SDK: typed-error fetcher, ETag-conditional GET, diff replay, request coalescing, retry with jittered backoff, timeout, real `gpt-tokenizer` + `@anthropic-ai/tokenizer` cost estimation, streaming reader, `fetchPage()` universal read with HTML fallback, agent request signing, and `watch()`/`changes()` for semantic change subscriptions (price/availability/action deltas, rated info→notable→breaking). Plus the SPEC §4.7 sandbox: `runAction(..., { dryRun: true })`, `POLICY_PRESETS.strict` (requires a same-parameters rehearsal within TTL before irreversible+priced actions), and anti-spoofing refusals in both directions. | You are building an AI agent that reads other people's sites. |
 | [`ahtml` (PyPI)](python/) | The Python consumer SDK — LangChain loader, ETag/TTL-cached client, detached-JWS + `did:web` verification, and `run_action` with the same safety gate and dry-run sandbox, 1:1 with the TS agent. Canonical JSON output is **byte-identical** to the TypeScript reference. | Your agent stack is Python (LangChain, LlamaIndex, CrewAI, raw SDKs). |
-| [`@ahtmljs/langchain`](packages/langchain) | LangChain.js document loader. Fetches any AHTML-emitting site and yields `Document`s with chunk boundaries, citation anchors, and metadata preserved. | You are building a RAG pipeline and want to **cite a web page in a RAG answer** without re-scraping HTML. |
+| [`@ahtmljs/langchain`](packages/langchain)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/langchain?label=npm)](https://www.npmjs.com/package/@ahtmljs/langchain) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/langchain?label=downloads)](https://www.npmjs.com/package/@ahtmljs/langchain) | LangChain.js document loader. Fetches any AHTML-emitting site and yields `Document`s with chunk boundaries, citation anchors, and metadata preserved. | You are building a RAG pipeline and want to **cite a web page in a RAG answer** without re-scraping HTML. |
 
 **Tooling & infrastructure**
 
 | Package | What it is | Install when |
 |---|---|---|
-| [`@ahtmljs/cli`](packages/cli) | The AHTML CLI — `init` (10-minute scaffolding for all 5 frameworks), `analyze`, `score`, `doctor`, `extract`, `benchmark`, `badge`, `submit` (to the AHTML Index), `conformance` (certify an implementation), `mcp` (stdio MCP proxy), `llms` (site→llms.txt crawler). Works on **any URL**, adopter or not. | You want to scaffold, audit, score, certify, or turn any site into MCP tools from your terminal or agent. |
-| [`@ahtmljs/kv`](packages/kv) | Pluggable KV / cache / rate-limit backends: in-memory, Upstash Redis, Cloudflare KV. Backend-agnostic token-bucket `RateLimiter`. | You need caching or per-agent rate limiting at the edge. |
-| [`@ahtmljs/webmcp`](packages/webmcp) | Registers AHTML page actions as native [WebMCP](https://github.com/WICG/webmcp) browser tools (Chrome 149+ origin trial), with AHTML's richer cost/reversibility/confirmation metadata as annotations. Plus a zero-install bookmarklet inspector. | You want browser-embedded AI assistants to call your page's actions safely. |
-| [`@ahtmljs/insights`](packages/insights) | Agent-traffic analytics for publishers: classifies verified agents (RFC 9421) vs declared bots vs humans, records fetches/formats/action outcomes behind `@ahtmljs/kv` with a tested zero-PII guarantee and ≤1 ms p95 overhead. `summarize()`, offline HTML dashboard, OTel export. | You publish AHTML and want to know which agents actually consume it. |
-| [`@ahtmljs/conformance`](packages/conformance) | The language-agnostic conformance corpus + runner. Certify any implementation (Go, Rust, PHP, …) against every RFC-2119 MUST in [SPEC.md](SPEC.md) and publish a signed attestation — see [docs/conformance.md](docs/conformance.md). | You reimplemented AHTML and want to *prove* it. |
-| [`@ahtmljs/index`](packages/index) | The AHTML Index — registry + crawler: opt-in submission with validate/score/signature checks, TTL/ETag-honoring re-crawl, opt-out delisting, MCP query surface ("find sites that sell X"). | You run (or want to query) the site registry. |
-| [`@ahtmljs/badge`](packages/badge) | Hosted score-badge service: README-embeddable SVG + linked report, score byte-identical to local `ahtml score`. | You want a public, self-updating proof your site is agent-ready. |
+| [`@ahtmljs/cli`](packages/cli)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/cli?label=npm)](https://www.npmjs.com/package/@ahtmljs/cli) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/cli?label=downloads)](https://www.npmjs.com/package/@ahtmljs/cli) | The AHTML CLI — `init` (10-minute scaffolding for all 5 frameworks), `analyze`, `score`, `doctor`, `extract`, `benchmark`, `badge`, `submit` (to the AHTML Index), `conformance` (certify an implementation), `mcp` (stdio MCP proxy), `llms` (site→llms.txt crawler), `diff` (semantic snapshot diff with CI `--fail-on`), `bridge` (A2A agent + HTTP MCP server for any URL). Works on **any URL**, adopter or not. | You want to scaffold, audit, score, certify, diff, bridge, or turn any site into MCP tools from your terminal or agent. |
+| [`@ahtmljs/kv`](packages/kv)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/kv?label=npm)](https://www.npmjs.com/package/@ahtmljs/kv) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/kv?label=downloads)](https://www.npmjs.com/package/@ahtmljs/kv) | Pluggable KV / cache / rate-limit backends: in-memory, Upstash Redis, Cloudflare KV. Backend-agnostic token-bucket `RateLimiter`. | You need caching or per-agent rate limiting at the edge. |
+| [`@ahtmljs/webmcp`](packages/webmcp)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/webmcp?label=npm)](https://www.npmjs.com/package/@ahtmljs/webmcp) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/webmcp?label=downloads)](https://www.npmjs.com/package/@ahtmljs/webmcp) | Registers AHTML page actions as native [WebMCP](https://github.com/WICG/webmcp) browser tools (Chrome 149+ origin trial), with AHTML's richer cost/reversibility/confirmation metadata as annotations. Plus a zero-install bookmarklet inspector. | You want browser-embedded AI assistants to call your page's actions safely. |
+| [`@ahtmljs/insights`](packages/insights)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/insights?label=npm)](https://www.npmjs.com/package/@ahtmljs/insights) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/insights?label=downloads)](https://www.npmjs.com/package/@ahtmljs/insights) | Agent-traffic analytics for publishers: classifies verified agents (RFC 9421) vs declared bots vs humans, records fetches/formats/action outcomes behind `@ahtmljs/kv` with a tested zero-PII guarantee and ≤1 ms p95 overhead. `summarize()`, offline HTML dashboard, OTel export. | You publish AHTML and want to know which agents actually consume it. |
+| [`@ahtmljs/conformance`](packages/conformance)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/conformance?label=npm)](https://www.npmjs.com/package/@ahtmljs/conformance) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/conformance?label=downloads)](https://www.npmjs.com/package/@ahtmljs/conformance) | The language-agnostic conformance corpus + runner. Certify any implementation (Go, Rust, PHP, …) against every RFC-2119 MUST in [SPEC.md](SPEC.md) and publish a signed attestation — see [docs/conformance.md](docs/conformance.md). | You reimplemented AHTML and want to *prove* it. |
+| [`@ahtmljs/index`](packages/index)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/index?label=npm)](https://www.npmjs.com/package/@ahtmljs/index) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/index?label=downloads)](https://www.npmjs.com/package/@ahtmljs/index) | The AHTML Index — registry + crawler: opt-in submission with validate/score/signature checks, TTL/ETag-honoring re-crawl, opt-out delisting, MCP query surface ("find sites that sell X"). | You run (or want to query) the site registry. |
+| [`@ahtmljs/badge`](packages/badge)<br>[![npm](https://img.shields.io/npm/v/@ahtmljs/badge?label=npm)](https://www.npmjs.com/package/@ahtmljs/badge) [![downloads](https://img.shields.io/npm/d18m/@ahtmljs/badge?label=downloads)](https://www.npmjs.com/package/@ahtmljs/badge) | Hosted score-badge service: README-embeddable SVG + linked report, score byte-identical to local `ahtml score`. | You want a public, self-updating proof your site is agent-ready. |
 
 Common install combos:
 
@@ -243,6 +250,8 @@ npx @ahtmljs/cli extract  https://example.com   # schema.org + OpenGraph + micro
 npx @ahtmljs/cli benchmark https://example.com  # HTML vs JSON-LD vs AHTML compact vs AHTML JSON table
 npx @ahtmljs/cli mcp      https://example.com   # stdio MCP proxy — any URL becomes typed MCP tools in Claude/Cursor
 npx @ahtmljs/cli llms     https://example.com   # crawl a site → spec-compliant llms.txt
+npx @ahtmljs/cli diff     a.json b.json         # semantic diff: what prices/actions changed, with --fail-on breaking for CI
+npx @ahtmljs/cli bridge   https://example.com   # serve the URL as a Google A2A agent + HTTP MCP server, zero config
 ```
 
 `ahtml mcp <url>` is `claude mcp add`-compatible: it probes
@@ -644,7 +653,8 @@ The 0.9.x series and the 1.0.0 cut are sequenced and dated in
 | **v0.9.4** | The browser — WebMCP + `Accept: text/markdown` negotiation + `@ahtmljs/kv` | shipped |
 | **v0.9.5** | Verified agents, priced actions — RFC 9421 signing + x402 + RSL 1.0 + Content Signals | shipped |
 | **v1.0.0** | Stability — API freeze + public benchmark + 2026 comparison | shipped |
-| **v1.1.0** | The 10x series ([ROADMAP.md](ROADMAP.md)) — Python SDK, extract plugin API, Astro + SvelteKit adapters, `ahtml init` + score badge, agent-traffic insights, conformance certification, the AHTML Index, and the SPEC §4.7 dry-run sandbox | **current** |
+| **v1.1.0** | The 10x series ([ROADMAP.md](ROADMAP.md)) — Python SDK, extract plugin API, Astro + SvelteKit adapters, `ahtml init` + score badge, agent-traffic insights, conformance certification, the AHTML Index, and the SPEC §4.7 dry-run sandbox | shipped |
+| **v1.2.0** | The feedback loop — **semantic snapshot diffing** (`semanticDiff` + `ahtml diff --fail-on` + agent `watch()`/`changes()` subscriptions) and the **zero-config A2A/MCP bridge** (`ahtml bridge` + Google A2A agent card, with dry-run gating on priced/irreversible actions) | **current** |
 
 Performance budgets are enforced in CI per release — the benchmark is a
 failing test, not a paragraph. See [`PLAN-NEXT-6.md`](PLAN-NEXT-6.md) for
@@ -797,6 +807,36 @@ plugin, createahtmlroute, ahtml next app router, hono mcp adapter, ahtml
 cli, ahtml doctor, ahtml score, ahtml kv, ahtml webmcp.
 
 ---
+
+## Usage analytics
+
+The `@ahtmljs/*` libraries and the `ahtml` CLI send **anonymous, aggregated usage counts** to [PostHog](https://posthog.com) (EU Cloud, `eu.i.posthog.com`) so we can see which features are actually used. It is always on; there is no opt-out environment variable. The whole client is one dependency-free file you can audit: [`packages/schema/src/telemetry.ts`](packages/schema/src/telemetry.ts).
+
+**Exactly what is sent.** One event per feature per flush (for example `snapshot.build`, `adapter.serve`, `cli.doctor`), with these fields and nothing else:
+
+| Field | Example | Meaning |
+|---|---|---|
+| `event` | `snapshot.build` | The feature name (a fixed string from our source, never user input). |
+| `count` | `42` | How many times the feature ran since the last flush. |
+| `pkg`, `pkg_version` | `@ahtmljs/next`, `1.1.0` | Which package and version. |
+| `runtime`, `runtime_version` | `node`, `22.21.1` | `node`, `bun`, `deno`, `workerd`, `browser` or `unknown`, and its version. |
+| `os`, `arch` | `linux`, `x64` | Operating system and CPU architecture. |
+| `ci` | `false` | Whether a CI environment variable (`CI`, `GITHUB_ACTIONS`, `GITLAB_CI`, `BUILDKITE`, `CIRCLECI`) is set. |
+| `distinct_id` | `3f9a1c07b2d84e65` | Anonymous install id: the first 16 hex characters of `SHA-256(hostname \| working directory \| "ahtml-v1")`. It is a one-way hash, so the hostname and path cannot be recovered from it. In browsers and Workers, where there is no filesystem identity, it is a random per-process id. |
+| `timestamp` | ISO 8601 | When the feature last ran. |
+| `$process_person_profile` | `false` | Tells PostHog not to create a person profile. |
+| `$geoip_disable` | `true` | Tells PostHog not to enrich the event with GeoIP location. |
+| `$lib` | `ahtml` | Identifies the sender. |
+
+**Never sent:** URLs, hostnames, file paths, page or snapshot content, CLI arguments (only the fixed command name, such as `cli.doctor`), environment variable values, tokens, or anything about your users. IP addresses are visible to any server you make an HTTPS request to, so we ask PostHog to discard them: events carry `$geoip_disable: true` and the PostHog project is configured to discard client IP data.
+
+**Behavior.** Counts are aggregated in memory and sent in batches of at most 50 events, about 2 seconds after the first use, then every 60 seconds, and when the process exits (the CLI flushes before it exits). Timers never keep your process alive. Requests time out after 1.5 seconds; on any failure the batch is dropped silently. The client never throws, logs, or blocks your application. Nothing is sent inside Node's built-in test runner (`node --test`). If your network policy forbids this traffic, block `eu.i.posthog.com` at egress: AHTML keeps working and discards the counts.
+
+## Install analytics (Scarf)
+
+The published `@ahtmljs/*` packages depend on [`@scarf/scarf`](https://www.npmjs.com/package/@scarf/scarf), which on install sends anonymous install analytics to Scarf: OS information, the package name and version, and a hashed dependency tree. Scarf does not store IP addresses. This is separate from the runtime usage analytics described above.
+
+To disable it, set `SCARF_ANALYTICS=false` in the environment, or add `"scarfSettings": { "enabled": false }` to the consuming project's `package.json`. Details: <https://docs.scarf.sh/package-analytics/>.
 
 ## Contributing
 

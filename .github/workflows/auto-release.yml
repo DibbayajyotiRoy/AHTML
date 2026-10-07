@@ -1,0 +1,100 @@
+name: Release on main
+
+# Push to main => bump every package a patch, publish to npm with provenance,
+# tag, and create a GitHub release. Zero manual steps.
+#
+# Skip a release for a given push with "[skip release]" in the commit message.
+# The bot's own "chore(release):" bump commit is skipped automatically.
+#
+# Required repo secret: NPM_TOKEN (automation token, publish scope).
+# Note: if `main` is protected, GITHUB_TOKEN generally cannot bypass it. Use a
+# PAT / GitHub App token as the checkout `token:` instead (its pushes retrigger
+# workflows, so the chore(release) guard below is what stops a loop).
+
+env:
+  SCARF_ANALYTICS: 'false'
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write # push the bump commit + tag, create the release
+  id-token: write # npm provenance (sigstore attestation)
+
+jobs:
+  release:
+    name: bump + publish + provenance
+    runs-on: ubuntu-latest
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      ( github.event_name == 'workflow_dispatch' ||
+        ( !startsWith(github.event.head_commit.message, 'chore(release):')
+          && !contains(github.event.head_commit.message, '[skip release]') ) )
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci --ignore-scripts
+
+      - name: Build
+        run: npm run build:packages
+
+      - name: Smoke imports + conformance
+        run: |
+          npm run smoke:imports
+          npm run test:conformance
+
+      - name: Test
+        run: npm test
+
+      - name: Bump versions (+ sync every package's version.ts + internal deps)
+        id: ver
+        run: |
+          NEW=$(node scripts/bump-version.mjs)
+          echo "v=$NEW" >> "$GITHUB_OUTPUT"
+
+      - name: Refresh lockfile for bumped versions
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Commit + tag the release
+        run: |
+          shopt -s nullglob
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add packages/*/package.json packages/*/src/version.ts package-lock.json
+          git commit -m "chore(release): v${{ steps.ver.outputs.v }}"
+          git tag "v${{ steps.ver.outputs.v }}"
+
+      - name: Rebuild with release versions
+        run: npm run build:packages
+
+      - name: Abort if main moved
+        run: |
+          git fetch --no-tags origin main && [ "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA" ] || { echo "::error::main moved; a newer run will release"; exit 1; }
+
+      - name: Publish to npm (dependency order, provenance, idempotent)
+        run: bash scripts/publish-all.sh
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Push bump commit + tag
+        run: git push --atomic origin HEAD:main "v${{ steps.ver.outputs.v }}"
+
+      - name: GitHub release
+        run: gh release create "v${{ steps.ver.outputs.v }}" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

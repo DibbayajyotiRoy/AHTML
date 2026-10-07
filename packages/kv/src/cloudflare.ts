@@ -8,7 +8,8 @@
  *   const client = new AHTMLClient({ cache: new CloudflareCacheStore(env.MY_KV) });
  */
 
-import type { KvStore, CacheStore } from '@ahtmljs/schema';
+import { track, type KvStore, type CacheStore } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 
 /**
  * Minimal interface matching Cloudflare's KVNamespace.
@@ -26,25 +27,31 @@ export class CloudflareKvStore implements KvStore {
   constructor(private kv: KVNamespace) {}
 
   get(key: string): Promise<string | null> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     return this.kv.get(key, { type: 'text' });
   }
 
   async set(key: string, value: string, ttlMs?: number): Promise<void> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     const expirationTtl = ttlMs && ttlMs > 0 ? Math.ceil(ttlMs / 1000) : undefined;
     await this.kv.put(key, value, expirationTtl !== undefined ? { expirationTtl } : undefined);
   }
 
   delete(key: string): Promise<void> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     return this.kv.delete(key);
   }
 
   async incr(key: string, ttlMs?: number): Promise<number> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     // Cloudflare KV is eventually consistent and doesn't have atomic incr.
     // Use a simple read-modify-write. For accurate rate limiting across
     // replicas, use UpstashKvStore + Durable Objects instead.
     const cur = await this.kv.get(key, { type: 'text' });
     const next = (cur ? parseInt(cur, 10) : 0) + 1;
-    await this.set(key, String(next), ttlMs);
+    // Direct put (not this.set) so one incr() counts as one kv.op.
+    const expirationTtl = ttlMs && ttlMs > 0 ? Math.ceil(ttlMs / 1000) : undefined;
+    await this.kv.put(key, String(next), expirationTtl !== undefined ? { expirationTtl } : undefined);
     return next;
   }
 }
@@ -60,18 +67,21 @@ export class CloudflareCacheStore<T> implements CacheStore<T> {
   ) {}
 
   async get(key: string): Promise<T | undefined> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     const raw = await this.kv.get(this.prefix + key, { type: 'text' });
     if (raw == null) return undefined;
     try { return JSON.parse(raw) as T; } catch { return undefined; }
   }
 
   async set(key: string, value: T, ttlMs?: number): Promise<void> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     const expirationTtl = ttlMs && ttlMs > 0 ? Math.ceil(ttlMs / 1000) : undefined;
     const serialized = JSON.stringify(value);
     await this.kv.put(this.prefix + key, serialized, expirationTtl !== undefined ? { expirationTtl } : undefined);
   }
 
   async delete(key: string): Promise<void> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     await this.kv.delete(this.prefix + key);
   }
 

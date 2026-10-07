@@ -25,10 +25,12 @@ import {
   verifySnapshot,
   snapshot as buildSnapshot,
   snapshotsToMcp,
+  track,
   type Snapshot,
   type KvStore,
   type VerifyKey,
 } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 
 export type SignatureStatus = 'verified_publisher' | 'unsigned' | 'invalid';
 
@@ -155,6 +157,7 @@ export function createIndex(options: IndexOptions) {
   return {
     /** T6.3 — opt-in submission with validate + score + signature check. */
     async submit(url: string): Promise<SubmitResult> {
+      track('@ahtmljs/index', VERSION, 'index.submit');
       const origin = new URL(url).origin;
       const wellKnown = await fetchImpl(`${origin}/.well-known/ahtml.json`);
       if (!wellKnown.ok) {
@@ -195,6 +198,7 @@ export function createIndex(options: IndexOptions) {
 
     /** T6.2/T6.4 — TTL/ETag-honoring re-crawl with opt-out delisting. */
     async recrawl(): Promise<{ crawled: number; unchanged: number; updated: number; delisted: number; skippedFresh: number }> {
+      track('@ahtmljs/index', VERSION, 'index.crawl');
       const stats = { crawled: 0, unchanged: 0, updated: 0, delisted: 0, skippedFresh: 0 };
       for (const origin of await origins()) {
         const entry = await getEntry(origin);

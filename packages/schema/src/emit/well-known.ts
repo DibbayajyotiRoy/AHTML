@@ -36,6 +36,11 @@ export interface WellKnownConfig {
   emit_mcp?: boolean;
   /** Whether to advertise an OpenAPI document endpoint. Default: true. */
   emit_openapi?: boolean;
+  /**
+   * Advertise the A2A agent card (`/.well-known/agent-card.json`) in
+   * `endpoints.a2a`. Default: false — adapters that actually serve the card opt in.
+   */
+  emit_a2a?: boolean;
 }
 
 /** The wire-shape served at `/.well-known/ahtml.json`. */
@@ -52,6 +57,8 @@ export interface WellKnownManifest {
     diff_param: string;
     mcp?: string;
     openapi?: string;
+    /** URL of the A2A Agent Card (present when `emit_a2a`). */
+    a2a?: string;
   };
   formats: Array<{ media_type: string; description: string }>;
   generated_at: string;
@@ -98,6 +105,7 @@ export function buildWellKnown(config: WellKnownConfig): WellKnownManifest {
       diff_param: 'since',
       mcp: config.emit_mcp !== false ? `${base}/ahtml/mcp.json` : undefined,
       openapi: config.emit_openapi !== false ? `${base}/ahtml/openapi.json` : undefined,
+      ...(config.emit_a2a ? { a2a: `${base}/.well-known/agent-card.json` } : {}),
     },
     formats: [
       { media_type: 'application/ahtml+text', description: 'Token-optimal compact text. Default for LLM agents.' },

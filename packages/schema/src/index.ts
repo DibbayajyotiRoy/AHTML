@@ -135,3 +135,20 @@ export {
 // v0.9.0 — optional OpenTelemetry tracing. `@opentelemetry/api` is a
 // soft peer dep; these helpers no-op when it isn't installed.
 export { trace, traceSync, addEvent, setStatus } from './otel.js';
+
+// Semantic diffing (additive): field-level, severity-graded changes between snapshots.
+export { semanticDiff, summarizeChanges, describeChange, type SemanticChange, type ChangeSeverity, type ActionChangeFlag, type FieldDelta } from './semantic-diff.js';
+
+// A2A (Agent2Agent) auto-bridge: Agent Card emitter + JSON-RPC handler (additive).
+export { toA2AAgentCard, type A2AAgentCard, type A2AAgentCardOptions, type A2ASkill, type A2AInterface } from './emit/a2a.js';
+export { createA2AHandler, type A2AHandlerOptions } from './http/a2a.js';
+
+// Anonymous usage analytics (PostHog). See README "Usage analytics".
+export {
+  track,
+  flushTelemetry,
+  _setTelemetryTransport,
+  type TelemetryTransport,
+  type TelemetryBatch,
+  type TelemetryEvent,
+} from './telemetry.js';

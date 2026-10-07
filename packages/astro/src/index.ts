@@ -42,9 +42,10 @@ import {
   snapshot, toJson, toCompact, toMarkdown, computeEtag, diff, toStreamResponse,
   chooseEncoding, compressStream, compressBuffer, STREAM_CONTENT_TYPE,
   buildWellKnown, snapshotsToMcp, snapshotsToOpenApi, buildLlmsTxt, chooseFormat,
-  trace, verifyHttpSignature,
+  trace, track, verifyHttpSignature,
   type Snapshot, type PageType, type Policy, type Encoding, type VerifyKey,
 } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 import { createExtractor, pageFromHtml } from '@ahtmljs/extract';
 
 // ---------------------------------------------------------------------------
@@ -284,6 +285,7 @@ function llmsTxtResponse(_req: Request, config: AHTMLAstroConfig): Response {
 const _cache = new Map<string, Snapshot>();
 
 async function serveSnapshot(req: Request, config: AHTMLAstroConfig): Promise<Response> {
+  track('@ahtmljs/astro', VERSION, 'adapter.serve');
   const url = new URL(req.url);
   // Same OTel span name as the Next.js/Hono adapters (no-op without OTel).
   return trace('ahtml.serve_snapshot', async () => {

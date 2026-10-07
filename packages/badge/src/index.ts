@@ -16,6 +16,8 @@
  * in-memory Maps so the worker stays dependency-free and testable.
  */
 import { computeScore, type ScoreResult } from '@ahtmljs/cli/score';
+import { track } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 
 export interface BadgeOptions {
   /** Injectable scorer (tests). Defaults to the canonical computeScore. */
@@ -145,6 +147,7 @@ export function createBadgeHandler(options: BadgeOptions = {}) {
         },
       });
     }
+    track('@ahtmljs/badge', VERSION, 'badge.render');
     return new Response(renderBadgeSvg(outcome.result), {
       headers: {
         'content-type': 'image/svg+xml; charset=utf-8',

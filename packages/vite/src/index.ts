@@ -29,6 +29,7 @@
  */
 
 import {
+  track,
   toJson,
   toCompact,
   toMarkdown,
@@ -42,6 +43,7 @@ import {
   type Snapshot,
   type Policy,
 } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 
 // Minimal Vite plugin type — we don't depend on Vite at runtime (peerDep).
 interface ViteServer {
@@ -130,6 +132,7 @@ async function ahtmlRoute(
   fullUrl: string,
   reqUrl: string,
 ) {
+  track('@ahtmljs/vite', VERSION, 'adapter.serve');
   // Strip /ahtml prefix + parse query
   const [pathPart, queryPart] = reqUrl.replace(/^\/ahtml\/?/, '').split('?');
   const segments = (pathPart ?? '').split('/').filter(Boolean);

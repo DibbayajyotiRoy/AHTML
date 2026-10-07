@@ -16,7 +16,8 @@
  */
 
 import type { KvStore } from '@ahtmljs/kv';
-import type { VerifyKey } from '@ahtmljs/schema';
+import { track, type VerifyKey } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 import {
   classifyRequest,
   type Classification,
@@ -190,6 +191,7 @@ export function createInsights(config: InsightsConfig): Insights {
     res?: ResponseLike,
     opts: RecordOptions = {},
   ): Promise<InsightEvent> {
+    track('@ahtmljs/insights', VERSION, 'insights.record');
     const norm = normalizeRequest(req);
 
     const classification =

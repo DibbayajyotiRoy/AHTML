@@ -23,7 +23,8 @@
  */
 
 import { AHTMLClient } from '@ahtmljs/agent';
-import type { Snapshot, Document as AHTMLDocument, Chunk } from '@ahtmljs/schema';
+import { track, type Snapshot, type Document as AHTMLDocument, type Chunk } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 
 /** Minimal Document shape compatible with @langchain/core's Document. */
 export interface LangChainDocument {
@@ -55,6 +56,7 @@ export class AHTMLLoader {
   }
 
   async load(): Promise<LangChainDocument[]> {
+    track('@ahtmljs/langchain', VERSION, 'langchain.load');
     const list = Array.isArray(this.urls) ? this.urls : [this.urls];
     const out: LangChainDocument[] = [];
     for (const url of list) {

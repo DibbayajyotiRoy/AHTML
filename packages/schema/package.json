@@ -179,5 +179,8 @@
     "@opentelemetry/api": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "@scarf/scarf": "^1.4.0"
   }
 }

@@ -11,7 +11,8 @@
  *   const client = new AHTMLClient({ cache: new UpstashCacheStore(redis) });
  */
 
-import type { KvStore, CacheStore } from '@ahtmljs/schema';
+import { track, type KvStore, type CacheStore } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 
 /** Minimal subset of the @upstash/redis API we use. */
 interface UpstashRedis {
@@ -27,11 +28,13 @@ export class UpstashKvStore implements KvStore {
   constructor(private redis: UpstashRedis) {}
 
   async get(key: string): Promise<string | null> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     const v = await this.redis.get(key);
     return v ?? null;
   }
 
   async set(key: string, value: string, ttlMs?: number): Promise<void> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     if (ttlMs && ttlMs > 0) {
       await this.redis.set(key, value, { px: ttlMs });
     } else {
@@ -40,10 +43,12 @@ export class UpstashKvStore implements KvStore {
   }
 
   async delete(key: string): Promise<void> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     await this.redis.del(key);
   }
 
   async incr(key: string, ttlMs?: number): Promise<number> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     const n = await this.redis.incr(key);
     if (ttlMs && ttlMs > 0 && n === 1) {
       // Set TTL only on first increment so it expires automatically.
@@ -64,12 +69,14 @@ export class UpstashCacheStore<T> implements CacheStore<T> {
   ) {}
 
   async get(key: string): Promise<T | undefined> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     const raw = await this.redis.get(this.prefix + key);
     if (raw == null) return undefined;
     try { return JSON.parse(raw) as T; } catch { return undefined; }
   }
 
   async set(key: string, value: T, ttlMs?: number): Promise<void> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     const serialized = JSON.stringify(value);
     if (ttlMs && ttlMs > 0) {
       await this.redis.set(this.prefix + key, serialized, { px: ttlMs });
@@ -79,6 +86,7 @@ export class UpstashCacheStore<T> implements CacheStore<T> {
   }
 
   async delete(key: string): Promise<void> {
+    track('@ahtmljs/kv', VERSION, 'kv.op');
     await this.redis.del(this.prefix + key);
   }
 

@@ -6,6 +6,33 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **A2A + MCP auto-bridge** (additive) — any snapshot becomes a Google A2A
+  agent (targets A2A v1.0.1, with the v0.3 wire format served on the same URL)
+  and an MCP server. `toA2AAgentCard()` and `createA2AHandler()` in
+  `@ahtmljs/schema` (one skill per action + `read_snapshot`; `SendMessage` /
+  `message/send`, `GetTask` / `tasks/get`); priced, irreversible or
+  confirmation-required actions return the `simulate()` dry-run as an
+  `input-required` task and execute only with `metadata.confirm=true` and an
+  `invoke` executor. `@ahtmljs/hono` serves `/.well-known/agent-card.json` +
+  `POST /ahtml/a2a` by default (`a2a: false` to opt out, `a2aInvoke` to opt in
+  to execution, `a2a: true` to also advertise it); `@ahtmljs/next/a2a` exports
+  `createA2ARoute`; `buildWellKnown({ emit_a2a })` adds `endpoints.a2a`. `ahtml bridge <url>
+  [--port 8787]` serves A2A and MCP (`/mcp`) over HTTP on localhost. See
+  `docs/a2a.md`.
+- **Semantic diffing** (additive; `diff()`/`applyDiff()` unchanged) —
+  `semanticDiff(prev, next)` and `summarizeChanges()` in `@ahtmljs/schema`:
+  field-level changes graded `info | notable | breaking` (price and
+  availability moves, action added/removed/priced/irreversible, required-input
+  changes, policy and envelope changes). `AHTMLClient.changes(url)` and
+  `AHTMLClient.watch(url, onChange, { intervalMs, signal })` in
+  `@ahtmljs/agent` (conditional polling, unref'd timer; new optional
+  `FetchOptions.revalidate`). `ahtml diff <a> <b> [--json] [--fail-on
+  breaking|notable]` in `@ahtmljs/cli` for CI gating. See `docs/diffing.md`.
+- **Anonymous runtime usage analytics (PostHog, EU)** — every `@ahtmljs/*` library and the `ahtml` CLI now send aggregated feature counts (feature name, count, package/version, runtime, OS, arch, CI flag, hashed anonymous install id; no URLs, hostnames, paths, content or CLI arguments; GeoIP disabled, no person profiles) via a dependency-free client, `track()` / `flushTelemetry()` in `@ahtmljs/schema` (`packages/schema/src/telemetry.ts`). Always on, no opt-out switch; skipped inside `node --test`. Every package gained a `src/version.ts` (kept in sync by `scripts/bump-version.mjs`). See README "Usage analytics".
+- **Install analytics via Scarf** — all 16 published packages now depend on `@scarf/scarf`, which sends anonymous install analytics on `npm install`; opt out with `SCARF_ANALYTICS=false` or `"scarfSettings": { "enabled": false }` (see README "Install analytics (Scarf)").
+
 Planned post-1.0:
 - OpenTelemetry metrics + logs (1.0 ships traces only)
 

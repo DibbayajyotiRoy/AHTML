@@ -25,6 +25,8 @@
  *     .build();
  */
 
+import { track } from './telemetry.js';
+import { VERSION } from './version.js';
 import { AHTML_VERSION } from './types.js';
 import type {
   Snapshot,
@@ -104,6 +106,7 @@ export class SnapshotBuilder {
   }
 
   build(): Snapshot {
+    track('@ahtmljs/schema', VERSION, 'snapshot.build');
     return structuredClone(this.snap);
   }
 }

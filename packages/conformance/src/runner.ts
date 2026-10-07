@@ -44,6 +44,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { webcrypto } from 'node:crypto';
+import { track } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 
 const execFileP = promisify(execFile);
 const CORPUS_DEFAULT = join(dirname(fileURLToPath(import.meta.url)), '..', 'corpus', '1.0');
@@ -112,6 +114,7 @@ export async function runConformance(
   manifestPath: string,
   opts: { corpusDir?: string } = {},
 ): Promise<Attestation> {
+  track('@ahtmljs/conformance', VERSION, 'conformance.run');
   const corpusDir = opts.corpusDir ?? CORPUS_DEFAULT;
   const manifest: RunnerManifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   const corpus = JSON.parse(readFileSync(join(corpusDir, 'manifest.json'), 'utf8')) as {

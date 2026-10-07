@@ -7,6 +7,9 @@
  *
  * Usage:
  *   claude mcp add ahtml -- npx @ahtmljs/cli mcp https://shop.example.com
+ *
+ * The tool logic lives in {@link createMcpHandler} (transport-free), so the
+ * stdio loop here and the HTTP endpoint of `ahtml bridge` share one implementation.
  */
 
 import {
@@ -52,11 +55,24 @@ interface McpTool {
   };
 }
 
-interface JsonRpcRequest {
+export interface JsonRpcRequest {
   jsonrpc: string;
   id?: unknown;
   method: string;
   params?: unknown;
+}
+
+/** Outcome of one request: a result, an error, or `undefined` for notifications. */
+export type McpReply =
+  | { result: unknown }
+  | { error: { code: number; message: string } }
+  | undefined;
+
+export interface McpHandler {
+  siteUrl: string;
+  /** True when `/.well-known/ahtml.json` answered (manifest-driven site). */
+  adopter: boolean;
+  handle(req: JsonRpcRequest): Promise<McpReply>;
 }
 
 // ── JSON-RPC helpers ─────────────────────────────────────────────────────────
@@ -98,7 +114,7 @@ async function fetchPageCompact(pageUrl: string): Promise<string> {
 
 // ── Main export ──────────────────────────────────────────────────────────────
 
-export async function runMcp(targetUrl: string): Promise<number> {
+export async function createMcpHandler(targetUrl: string): Promise<McpHandler> {
   // 1. Normalize URL
   const siteUrl = targetUrl.startsWith('http') ? targetUrl : `https://${targetUrl}`;
   const origin = new URL(siteUrl).origin;
@@ -116,11 +132,6 @@ export async function runMcp(targetUrl: string): Promise<number> {
   } catch {
     // Not an AHTML adopter — that's fine
   }
-
-  process.stderr.write(`[ahtml mcp] Starting proxy for ${siteUrl}\n`);
-  process.stderr.write(
-    `[ahtml mcp] Site type: ${manifest ? 'AHTML adopter' : 'HTML site (auto-extract)'}\n`,
-  );
 
   // 3. Cache sitemap URLs for non-adopters (lazy — fetched on first use)
   let sitemapUrls: string[] | null = null;
@@ -315,33 +326,25 @@ export async function runMcp(targetUrl: string): Promise<number> {
 
   // 6. Request dispatcher
 
-  async function handleRequest(line: string): Promise<void> {
-    let req: JsonRpcRequest;
-    try {
-      req = JSON.parse(line) as JsonRpcRequest;
-    } catch {
-      sendError(null, -32700, 'Parse error');
-      return;
-    }
-
-    const { id, method, params } = req;
+  async function handle(req: JsonRpcRequest): Promise<McpReply> {
+    const { method, params } = req;
 
     switch (method) {
       case 'initialize':
-        sendResponse(id, {
-          protocolVersion: '2024-11-05',
-          serverInfo: { name: 'ahtml-mcp', version: '0.9.3' },
-          capabilities: { tools: {} },
-        });
-        return;
+        return {
+          result: {
+            protocolVersion: '2024-11-05',
+            serverInfo: { name: 'ahtml-mcp', version: '0.9.3' },
+            capabilities: { tools: {} },
+          },
+        };
 
       case 'notifications/initialized':
         // One-way notification — no response
-        return;
+        return undefined;
 
       case 'tools/list':
-        sendResponse(id, { tools: buildTools() });
-        return;
+        return { result: { tools: buildTools() } };
 
       case 'tools/call': {
         const p = params as { name?: string; arguments?: Record<string, unknown> } | undefined;
@@ -367,17 +370,41 @@ export async function runMcp(targetUrl: string): Promise<number> {
             }
             break;
           default:
-            sendError(id, -32602, `Unknown tool: ${toolName}`);
-            return;
+            return { error: { code: -32602, message: `Unknown tool: ${toolName}` } };
         }
 
-        sendResponse(id, { content: [{ type: 'text', text: resultText }] });
-        return;
+        return { result: { content: [{ type: 'text', text: resultText }] } };
       }
 
       default:
-        sendError(id, -32601, 'Method not found');
+        return { error: { code: -32601, message: 'Method not found' } };
     }
+  }
+
+  return { siteUrl, adopter: manifest !== null, handle };
+}
+
+// ── stdio transport ──────────────────────────────────────────────────────────
+
+export async function runMcp(targetUrl: string): Promise<number> {
+  const mcp = await createMcpHandler(targetUrl);
+  process.stderr.write(`[ahtml mcp] Starting proxy for ${mcp.siteUrl}\n`);
+  process.stderr.write(
+    `[ahtml mcp] Site type: ${mcp.adopter ? 'AHTML adopter' : 'HTML site (auto-extract)'}\n`,
+  );
+
+  async function handleRequest(line: string): Promise<void> {
+    let req: JsonRpcRequest;
+    try {
+      req = JSON.parse(line) as JsonRpcRequest;
+    } catch {
+      sendError(null, -32700, 'Parse error');
+      return;
+    }
+    const reply = await mcp.handle(req);
+    if (!reply) return;
+    if ('error' in reply) sendError(req.id, reply.error.code, reply.error.message);
+    else sendResponse(req.id, reply.result);
   }
 
   // 7. stdin reading loop

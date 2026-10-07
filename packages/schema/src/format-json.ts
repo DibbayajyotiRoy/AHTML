@@ -10,6 +10,8 @@
  * stability and signing.
  */
 
+import { track } from './telemetry.js';
+import { VERSION } from './version.js';
 import type { Snapshot } from './types.js';
 import { AHTMLError, DEFAULT_HINTS } from './errors.js';
 
@@ -30,6 +32,12 @@ const KEY_ORDER = [
 ];
 
 export function toJson(s: Snapshot, opts: { pretty?: boolean } = {}): string {
+  track('@ahtmljs/schema', VERSION, 'format.json');
+  return serializeJson(s, opts);
+}
+
+/** Untracked core of `toJson`, for internal callers (sign/verify) so they don't count as format.json. */
+export function serializeJson(s: Snapshot, opts: { pretty?: boolean } = {}): string {
   const src = s as unknown as Record<string, unknown>;
   const ordered: Record<string, unknown> = {};
   for (const k of KEY_ORDER) {

@@ -7,6 +7,9 @@ on:
   pull_request:
     paths: ['python/**', 'tests/conformance/**', '.github/workflows/python.yml']
 
+env:
+  SCARF_ANALYTICS: 'false'
+
 jobs:
   test:
     runs-on: ubuntu-latest

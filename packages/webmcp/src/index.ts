@@ -11,7 +11,8 @@
  *   registerAhtmlTools(page.snapshot);
  */
 
-import type { Snapshot, Action } from '@ahtmljs/schema';
+import { track, type Snapshot, type Action } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 
 /** A registered WebMCP tool handle. Call `unregister()` to remove it. */
 export interface AhtmlTool {
@@ -33,6 +34,7 @@ export interface RegisterOptions {
  * populates `window.__AHTML_TOOLS__` as a stable fallback for the bookmarklet.
  */
 export function registerAhtmlTools(snap: Snapshot, opts: RegisterOptions = {}): AhtmlTool[] {
+  track('@ahtmljs/webmcp', VERSION, 'webmcp.register');
   const tools: AhtmlTool[] = [];
   const registry = getRegistry();
 

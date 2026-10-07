@@ -23,7 +23,9 @@
  */
 
 import type { Snapshot } from './types.js';
-import { toJson } from './format-json.js';
+import { serializeJson } from './format-json.js';
+import { track } from './telemetry.js';
+import { VERSION } from './version.js';
 import { AHTMLError, DEFAULT_HINTS } from './errors.js';
 import { trace } from './otel.js';
 
@@ -141,6 +143,7 @@ export async function signSnapshot(
   key: SignKey,
   opts: SignOptions = {},
 ): Promise<string> {
+  track('@ahtmljs/schema', VERSION, 'sign');
   const alg = opts.algorithm ?? key.alg;
   const kid = opts.kid ?? key.kid;
 
@@ -149,7 +152,7 @@ export async function signSnapshot(
   const headerJson = JSON.stringify(headerObj);
   const headerB64 = base64urlEncodeString(headerJson);
 
-  const payloadJson = toJson(snap);
+  const payloadJson = serializeJson(snap);
   const payloadB64 = base64urlEncodeString(payloadJson);
 
   const signingInput = TEXT_ENCODER.encode(`${headerB64}.${payloadB64}`);
@@ -167,6 +170,7 @@ export async function signSnapshot(
  * responses, conformance attestations). Additive export (1.1).
  */
 export async function signBytes(payload: Uint8Array, key: SignKey, opts: SignOptions = {}): Promise<string> {
+  track('@ahtmljs/schema', VERSION, 'sign');
   const alg = opts.algorithm ?? key.alg;
   const kid = opts.kid ?? key.kid;
   const headerObj: { alg: SignAlg; kid?: string } = { alg };
@@ -184,6 +188,7 @@ export async function verifyBytes(
   jws: string,
   keys: VerifyKey[],
 ): Promise<boolean> {
+  track('@ahtmljs/schema', VERSION, 'verify');
   const parsed = parseDetachedJws(jws);
   if ('error' in parsed) return false;
   const signingInput = TEXT_ENCODER.encode(`${parsed.headerB64}.${base64urlEncode(payload)}`);
@@ -239,6 +244,7 @@ export async function verifySnapshot(
   jws: string,
   opts: { trustedKeys: VerifyKey[] },
 ): Promise<VerifyResult> {
+  track('@ahtmljs/schema', VERSION, 'verify');
   // OTel span (no-op when @opentelemetry/api is absent). Also covers
   // verifySnapshotStrict, which delegates here.
   return trace('ahtml.verify_signature', () => verifySnapshotImpl(snap, jws, opts), {
@@ -262,7 +268,7 @@ async function verifySnapshotImpl(
     return { ok: false, reason: 'JWS header missing alg' };
   }
 
-  const payloadB64 = base64urlEncodeString(toJson(snap));
+  const payloadB64 = base64urlEncodeString(serializeJson(snap));
   const signingInput = TEXT_ENCODER.encode(`${headerB64}.${payloadB64}`);
   let signatureBytes: Uint8Array<ArrayBuffer>;
   try {

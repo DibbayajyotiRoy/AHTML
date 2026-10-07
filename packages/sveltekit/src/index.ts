@@ -44,11 +44,12 @@
 import {
   toJson, toCompact, toMarkdown, computeEtag, diff, toStreamResponse,
   chooseEncoding, compressStream, compressBuffer, STREAM_CONTENT_TYPE,
-  snapshot, trace, verifyHttpSignature,
+  snapshot, trace, track, verifyHttpSignature,
   buildWellKnown, snapshotsToMcp, snapshotsToOpenApi, buildLlmsTxt,
   chooseFormat, isNotModified, notModifiedResponse,
   type Snapshot, type Policy, type Encoding, type VerifyKey, type PageType,
 } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 import { createExtractor, pageFromHtml } from '@ahtmljs/extract';
 
 /**
@@ -237,6 +238,7 @@ async function serveSnapshot(
   config: AHTMLSvelteKitConfig,
   cache: Map<string, Snapshot>,
 ): Promise<Response> {
+  track('@ahtmljs/sveltekit', VERSION, 'adapter.serve');
   const url = new URL(req.url);
   return trace('ahtml.serve_snapshot', async () => {
     const decision = await trace('ahtml.enforce_policy', () => enforcePolicy(req, config), {

@@ -19,8 +19,13 @@ import {
   diff,
   validateStrict,
   verifySnapshot,
+  _setTelemetryTransport,
 } from '@ahtmljs/schema';
 import { runAction, ActionRefused } from '@ahtmljs/agent';
+
+// The shim is spawned once per fixture by the runner: it is a harness, not real usage,
+// so it must not emit analytics (one process per fixture would flood and slow the run).
+_setTelemetryTransport(() => {});
 
 const [op, ...files] = process.argv.slice(2);
 const read = (i: number) => readFileSync(files[i]!, 'utf8');

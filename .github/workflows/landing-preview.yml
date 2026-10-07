@@ -12,6 +12,9 @@ on:
       - 'packages/next/**'
       - '.github/workflows/landing-preview.yml'
 
+env:
+  SCARF_ANALYTICS: 'false'
+
 concurrency:
   group: landing-preview-${{ github.ref }}
   cancel-in-progress: true

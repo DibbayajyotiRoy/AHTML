@@ -57,6 +57,7 @@
   "dependencies": {
     "@ahtmljs/agent": "1.1.0",
     "@ahtmljs/kv": "1.1.0",
-    "@ahtmljs/schema": "1.1.0"
+    "@ahtmljs/schema": "1.1.0",
+    "@scarf/scarf": "^1.4.0"
   }
 }

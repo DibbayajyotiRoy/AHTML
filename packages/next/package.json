@@ -75,6 +75,16 @@
         "types": "./dist/cjs/openapi.d.ts",
         "default": "./dist/cjs/openapi.js"
       }
+    },
+    "./a2a": {
+      "import": {
+        "types": "./dist/a2a.d.ts",
+        "default": "./dist/a2a.js"
+      },
+      "require": {
+        "types": "./dist/cjs/a2a.d.ts",
+        "default": "./dist/cjs/a2a.js"
+      }
     }
   },
   "files": [
@@ -123,7 +133,8 @@
   ],
   "dependencies": {
     "@ahtmljs/schema": "1.1.0",
-    "@ahtmljs/extract": "0.1.0"
+    "@ahtmljs/extract": "0.1.0",
+    "@scarf/scarf": "^1.4.0"
   },
   "peerDependencies": {
     "next": ">=14"

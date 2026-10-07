@@ -11,6 +11,8 @@
  * trade-off is fine because individual entities are already tiny.
  */
 
+import { track } from './telemetry.js';
+import { VERSION } from './version.js';
 import type { Snapshot, SnapshotDiff, DiffChange, Entity, Action } from './types.js';
 import { computeEtag } from './snapshot.js';
 import { validateEntity, validateAction } from './validate.js';
@@ -46,6 +48,7 @@ export class InvalidDiffError extends AHTMLError {
 }
 
 export function diff(prev: Snapshot, next: Snapshot): SnapshotDiff {
+  track('@ahtmljs/schema', VERSION, 'diff.compute');
   const changes: DiffChange[] = [];
 
   const prevEntities = new Map<string, Entity>(prev.entities.map((e) => [e.id, e]));

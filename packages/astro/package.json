@@ -56,6 +56,7 @@
   "license": "MIT",
   "dependencies": {
     "@ahtmljs/schema": "1.1.0",
-    "@ahtmljs/extract": "0.1.0"
+    "@ahtmljs/extract": "0.1.0",
+    "@scarf/scarf": "^1.4.0"
   }
 }

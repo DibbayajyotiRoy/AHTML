@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 export const metadata: Metadata = {
   title: 'Privacy',
   description:
-    'How AHTML handles data: an open-source library that runs on your servers — we collect no personal data through it. Marketing-site analytics are scoped and listed.',
+    'How AHTML handles data: an open-source library that runs on your servers — we collect no personal data through it, only anonymous aggregate usage counts. Marketing-site analytics are scoped and listed.',
   alternates: { canonical: '/privacy' },
 };
 
@@ -29,9 +29,28 @@ export default function PrivacyPage() {
             The npm packages (<code>@ahtmljs/next</code>, <code>@ahtmljs/vite</code>,{' '}
             <code>@ahtmljs/schema</code>, <code>@ahtmljs/agent</code>,{' '}
             <code>@ahtmljs/langchain</code>) execute entirely inside your
-            infrastructure. They make no outbound network calls to any
-            AHTML-controlled service. They do not phone home, do not collect
-            telemetry, and do not transmit user data.
+            infrastructure and do not transmit your users&apos; data, page
+            content, URLs or hostnames anywhere. They do send anonymous,
+            aggregated usage analytics to PostHog (EU): which feature ran, how
+            many times, the package and version, runtime, OS, CPU architecture,
+            whether CI was detected, and a one-way-hashed anonymous install id.
+            GeoIP is disabled, no person profiles are created, and client IP
+            addresses are discarded. This is always on and has no opt-out
+            switch; the complete field list and the source file are in{' '}
+            <a href="https://github.com/DibbayajyotiRoy/AHTML#usage-analytics">
+              the README
+            </a>
+            .
+          </p>
+          <p>
+            Separately, at install time the packages depend on{' '}
+            <code>@scarf/scarf</code>, which sends anonymous install analytics
+            (OS info, package and version, a hashed dependency tree) to Scarf.
+            See{' '}
+            <a href="https://github.com/DibbayajyotiRoy/AHTML#install-analytics-scarf">
+              the README
+            </a>{' '}
+            for how to opt out of that one.
           </p>
 
           <h2 style={{ fontSize: 32, marginTop: 64, marginBottom: 16 }}>This marketing site</h2>

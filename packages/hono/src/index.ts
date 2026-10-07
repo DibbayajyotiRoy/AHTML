@@ -51,14 +51,17 @@ import {
   snapshotsToMcp,
   snapshotsToOpenApi,
   buildLlmsTxt,
+  createA2AHandler,
   chooseFormat,
   trace,
+  track,
   verifyHttpSignature,
   type Snapshot,
   type Policy,
   type Encoding,
   type VerifyKey,
 } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 
 /**
  * A structural subset of the Hono `Hono` app surface. We only need to
@@ -70,6 +73,8 @@ import {
 export interface HonoAppLike {
   get(path: string, handler: HonoHandler): unknown;
   all?(path: string, handler: HonoHandler): unknown;
+  /** Optional: used for `POST /ahtml/a2a`; falls back to `all` when absent. */
+  post?(path: string, handler: HonoHandler): unknown;
 }
 
 /**
@@ -137,6 +142,18 @@ export interface AHTMLHonoConfig {
   verifyAgents?: boolean;
   /** v0.9.5: keys used to verify incoming agent HTTP Message Signatures. */
   agentKeys?: VerifyKey[];
+  /**
+   * Serve the A2A (Agent2Agent) bridge: `GET /.well-known/agent-card.json` and
+   * `POST /ahtml/a2a`. Defaults to true; set it to `true` explicitly to also
+   * advertise the card as `endpoints.a2a` in `/.well-known/ahtml.json` (left off
+   * by default so the manifest stays byte-identical across adapters).
+   * Safe by default: without `a2aInvoke`
+   * every action is dry-run only; priced/irreversible ones always need
+   * `metadata.confirm=true` on top.
+   */
+  a2a?: boolean;
+  /** Executes confirmed/safe actions called over A2A. Omit to stay dry-run only. */
+  a2aInvoke?: (actionId: string, input: unknown) => Promise<unknown>;
 }
 
 /**
@@ -150,6 +167,8 @@ export interface AHTMLHonoConfig {
  *   GET  /ahtml/mcp.json       MCP tool catalog (when `emit_mcp !== false`)
  *   GET  /ahtml/openapi.json   OpenAPI document (when `emit_openapi !== false`)
  *   GET  /llms.txt             plaintext routes catalog
+ *   GET  /.well-known/agent-card.json   A2A Agent Card (when `a2a !== false`)
+ *   POST /ahtml/a2a            A2A JSON-RPC (SendMessage / message/send, GetTask / tasks/get)
  *
  * The same `app` instance is returned for chaining.
  */
@@ -192,6 +211,21 @@ export function mountAHTML(app: HonoAppLike, config: AHTMLHonoConfig): HonoAppLi
     });
   }
 
+  // A2A bridge — also before the wildcard so /ahtml/a2a isn't read as a snapshot path.
+  if (config.a2a !== false) {
+    const a2a = createA2AHandler((req) => a2aSnapshot(config, req), {
+      url: `${config.site.replace(/\/$/, '')}/ahtml/a2a`,
+      invoke: config.a2aInvoke,
+    });
+    const a2aRoute: HonoHandler = async (c) => {
+      const req = toRequest(c);
+      const decision = enforcePolicy(req, config);
+      return decision.deny ? decision.response : a2a(req);
+    };
+    app.get('/.well-known/agent-card.json', a2aRoute);
+    (app.post ?? app.all)?.call(app, '/ahtml/a2a', a2aRoute);
+  }
+
   app.get('/ahtml/*', snapshotHandler);
   // HEAD: Hono routes by method; `.all` covers HEAD when present. If the
   // host app doesn't expose `.all`, callers can register HEAD themselves
@@ -219,6 +253,7 @@ export function mountAHTML(app: HonoAppLike, config: AHTMLHonoConfig): HonoAppLi
       routes: config.routes,
       emit_mcp: config.emit_mcp,
       emit_openapi: config.emit_openapi,
+      emit_a2a: config.a2a === true, // default-on route is NOT advertised: keeps the manifest byte-equal across adapters
     });
     return jsonResponse(manifest, {
       'cache-control': 'public, max-age=300, must-revalidate',
@@ -257,6 +292,7 @@ const _cache = new Map<string, Snapshot>();
 
 function makeSnapshotHandler(config: AHTMLHonoConfig): HonoHandler {
   return async (c: HonoContextLike): Promise<Response> => {
+    track('@ahtmljs/hono', VERSION, 'adapter.serve');
     const req = toRequest(c);
     const url = new URL(req.url);
 
@@ -521,6 +557,22 @@ async function collectSnapshots(
     }
   }
   return out;
+}
+
+/**
+ * One snapshot for the A2A agent: the first catalog snapshot (home by
+ * convention) re-addressed to the site origin, carrying every distinct
+ * action id across all declared routes (first one wins on id clashes).
+ */
+async function a2aSnapshot(config: AHTMLHonoConfig, req: Request): Promise<Snapshot> {
+  const snaps = await collectSnapshots(config, req);
+  const root = snaps[0] ?? (await config.snapshotBuilder([], req));
+  if (!root) throw new Error('no snapshot available for the A2A agent card');
+  const seen = new Set<string>();
+  const actions = [root, ...snaps.slice(1)]
+    .flatMap((s) => s.actions)
+    .filter((a) => !seen.has(a.id) && seen.add(a.id));
+  return ensureDefaults({ ...root, url: config.site, actions }, config);
 }
 
 // ---------------------------------------------------------------------------

@@ -28,6 +28,8 @@
  *   nested_list  = "  " key ":" NL ("    - " value NL ("      " continuation NL)*)*
  */
 
+import { track } from './telemetry.js';
+import { VERSION } from './version.js';
 import type {
   Snapshot,
   Entity,
@@ -59,6 +61,7 @@ import { AHTMLError, DEFAULT_HINTS } from './errors.js';
 // =====================================================================
 
 export function toCompact(s: Snapshot): string {
+  track('@ahtmljs/schema', VERSION, 'format.compact');
   const L: string[] = [];
 
   L.push(`@ahtml ${s.ahtml}`);

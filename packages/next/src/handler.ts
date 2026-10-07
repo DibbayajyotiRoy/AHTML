@@ -30,11 +30,13 @@ import {
   compressStream,
   compressBuffer,
   trace,
+  track,
   verifyHttpSignature,
   STREAM_CONTENT_TYPE,
   type Snapshot,
   type Encoding,
 } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 import { getConfig, type AHTMLConfig } from './index.js';
 import { enforcePolicy } from './policy.js';
 
@@ -87,6 +89,7 @@ export function createAHTMLRoute(
   routeOpts: CreateRouteOptions = {},
 ) {
   async function GET(req: Request, ctx: { params: Promise<{ path?: string[] }> | { path?: string[] } }): Promise<Response> {
+    track('@ahtmljs/next', VERSION, 'adapter.serve');
     return trace(
       'ahtml.serve_snapshot',
       async () => {

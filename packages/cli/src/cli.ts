@@ -20,6 +20,8 @@
 import {
   validate,
   AHTMLError,
+  track,
+  flushTelemetry,
   type Snapshot,
 } from '@ahtmljs/schema';
 import { AHTMLClient } from '@ahtmljs/agent';
@@ -29,8 +31,12 @@ import { runAnalyze } from './commands/analyze.js';
 import { runScore } from './commands/score.js';
 import { runBenchmark } from './commands/benchmark.js';
 import { runMcp } from './commands/mcp.js';
+import { runBridge } from './commands/bridge.js';
 import { runLlms } from './commands/llms.js';
 import { runInit } from './commands/init.js';
+import { VERSION as PKG_VERSION } from './version.js';
+import { checkForUpdate } from './update-notifier.js';
+import { runDiff } from './commands/diff.js';
 
 /** Minimal ANSI palette — no chalk dependency by design. */
 const ANSI = {
@@ -64,7 +70,9 @@ ${paint('USAGE', ANSI.bold)}
   ahtml score <url>         Lighthouse-style grade (0-100) for agent-readiness.
   ahtml benchmark <url>     Format comparison: raw HTML vs JSON-LD vs AHTML.
   ahtml mcp <url>           Start a stdio MCP server exposing the site as tools.
+  ahtml bridge <url>        Serve the site as an A2A agent AND an MCP server over HTTP (--port 8787).
   ahtml llms <url>          Crawl a site and produce a valid llms.txt file.
+  ahtml diff <a> <b>        Semantic diff of two snapshots (URLs or .json files).
 
 ${paint('EXAMPLES', ANSI.bold)}
   npx @ahtmljs/cli doctor https://shop.example.com
@@ -82,9 +90,15 @@ ${paint('FLAGS', ANSI.bold)}
   --version, -v           Print version and exit.
   --json                  Machine-readable JSON output (extract, score).
   --out <file>            Write output to a file instead of stdout (llms).
+  --port <n>              Port for bridge (default 8787; 0 = any free port).
+  --fail-on <level>       Exit 1 if a change is at/above breaking|notable (diff).
 `;
 
-const VERSION = '0.9.5';
+/** Static allow-list: only these literal names are ever reported (never argv). */
+const COMMANDS = new Set([
+  'doctor', 'validate', 'extract', 'analyze', 'score', 'benchmark', 'mcp', 'bridge',
+  'llms', 'submit', 'conformance', 'badge', 'diff', 'init',
+]);
 
 /** Entrypoint — parses argv and dispatches to a subcommand. */
 async function main(argv: string[]): Promise<number> {
@@ -93,11 +107,12 @@ async function main(argv: string[]): Promise<number> {
     return 0;
   }
   if (argv.includes('--version') || argv.includes('-v')) {
-    process.stdout.write(VERSION + '\n');
+    process.stdout.write(PKG_VERSION + '\n');
     return 0;
   }
 
   const [cmd, ...rest] = argv;
+  track('@ahtmljs/cli', PKG_VERSION, `cli.${cmd && COMMANDS.has(cmd) ? cmd : 'unknown'}`);
 
   // Parse flags from the remaining args
   const flags = Object.fromEntries(
@@ -168,6 +183,23 @@ async function main(argv: string[]): Promise<number> {
         return 1;
       }
       return runMcp(url);
+    }
+    case 'bridge': {
+      // --port <n> takes a value — exclude it from the positional url lookup
+      const portIdx = rest.indexOf('--port');
+      const portArg = portIdx !== -1 ? rest[portIdx + 1] : undefined;
+      const url = positional.find((a) => a !== portArg);
+      if (!url) {
+        process.stderr.write(paint('error: bridge requires a <url> argument\n', ANSI.red));
+        process.stderr.write(HELP);
+        return 1;
+      }
+      const port = portArg === undefined ? 8787 : Number(portArg);
+      if (!Number.isInteger(port) || port < 0 || port > 65535) {
+        process.stderr.write(paint(`error: invalid --port "${portArg}"\n`, ANSI.red));
+        return 1;
+      }
+      return runBridge(url, { port });
     }
     case 'llms': {
       const url = positional[0];
@@ -251,6 +283,8 @@ async function main(argv: string[]): Promise<number> {
       );
       return 0;
     }
+    case 'diff':
+      return runDiff(rest);
     case 'init': {
       const dir = positional[0] ?? process.cwd();
       // --html <file> and --site <url> take values — extract from raw rest args
@@ -350,8 +384,16 @@ function handleFatal(err: unknown): number {
 // Top-level dispatch. We swallow the promise in the rejection handler so the
 // process never exits with an unhandled-rejection trace.
 main(process.argv.slice(2))
-  .then((code) => process.exit(code))
-  .catch((err) => {
+  .then(async (code) => {
+    // Update notice and telemetry flush run together; neither can throw or block past its own timeout.
+    await Promise.all([
+      checkForUpdate(PKG_VERSION, { paint: (text, style) => paint(text, ANSI[style]) }),
+      flushTelemetry(),
+    ]);
+    process.exit(code);
+  })
+  .catch(async (err) => {
     process.stderr.write(paint(`fatal: ${(err as Error)?.message ?? String(err)}\n`, ANSI.red));
+    await flushTelemetry();
     process.exit(1);
   });

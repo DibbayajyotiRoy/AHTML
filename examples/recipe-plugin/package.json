@@ -7,7 +7,7 @@
     "test": "tsx --test src/__tests__/*.test.ts"
   },
   "dependencies": {
-    "@ahtmljs/extract": "0.1.0"
+    "@ahtmljs/extract": "^0.1.0"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

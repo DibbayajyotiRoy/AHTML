@@ -32,6 +32,9 @@ import {
   InMemoryCacheStore,
   trace,
   snapshot as buildSnapshot,
+  semanticDiff,
+  track,
+  type SemanticChange,
   type AHTMLErrorCode,
   type CacheStore,
   type Entity,
@@ -48,6 +51,7 @@ import {
   mergeExtractions,
 } from '@ahtmljs/schema/extract';
 import { PageView } from './page-view.js';
+import { VERSION } from './version.js';
 
 /**
  * Retry policy governing transient-failure recovery for a single
@@ -79,6 +83,12 @@ export interface FetchOptions {
   format?: 'compact' | 'json';
   /** Bypass the local cache. */
   noCache?: boolean;
+  /**
+   * Skip the "cached snapshot is still within its TTL" short-circuit but keep
+   * conditional requests (`If-None-Match` / `?since=`), so a 304 stays cheap.
+   * Used by `watch()` and `changes()`.
+   */
+  revalidate?: boolean;
   /** Allow returning a stale-but-cached snapshot if the network fails. */
   allowStale?: boolean;
   /** Identity header. Set this when AHTML providers gate by agent identity. */
@@ -188,6 +198,7 @@ export class AHTMLClient {
    * future enhancement.
    */
   fetch(url: string, opts: FetchOptions = {}): Promise<Snapshot> {
+    track('@ahtmljs/agent', VERSION, 'agent.fetch');
     return trace(
       'ahtml.client.fetch',
       async () => {
@@ -222,6 +233,7 @@ export class AHTMLClient {
    * since the markup source is untrusted.
    */
   async fetchPage(url: string, opts: FetchOptions = {}): Promise<PageView> {
+    track('@ahtmljs/agent', VERSION, 'agent.fetch_page');
     const o = { ...this.defaults, ...opts };
     const fetcher = o.fetch ?? globalThis.fetch;
     const timeoutMs = o.timeout ?? this.defaults.timeout ?? DEFAULT_TIMEOUT_MS;
@@ -270,7 +282,7 @@ export class AHTMLClient {
     const timeoutMs = o.timeout ?? this.defaults.timeout ?? DEFAULT_TIMEOUT_MS;
 
     // 1) Fresh cache (within TTL) — skip the network entirely.
-    if (cached && !o.noCache && isFresh(cached)) {
+    if (cached && !o.noCache && !o.revalidate && isFresh(cached)) {
       this.emit({ type: 'cache_hit', url });
       return cached.snapshot;
     }
@@ -451,6 +463,77 @@ export class AHTMLClient {
   async invalidate(url?: string): Promise<void> {
     if (url) await this.cache.delete(url);
     else await this.cache.clear();
+  }
+
+  /**
+   * Fetch `url` and report what semantically changed since this client last
+   * cached it (see `semanticDiff` in `@ahtmljs/schema`). Always revalidates
+   * with the origin (conditional request), even when the cached copy is
+   * within its TTL. Resolves to `[]` on the first fetch — there is nothing to
+   * compare against yet — and when the origin answers 304.
+   */
+  async changes(url: string, opts: FetchOptions = {}): Promise<SemanticChange[]> {
+    const prev = (await this.cache.get(url))?.snapshot;
+    const next = await this.fetch(url, { ...opts, revalidate: true });
+    return prev ? semanticDiff(prev, next) : [];
+  }
+
+  /**
+   * Poll `url` and call `onChange(changes, next, prev)` whenever its content
+   * semantically changes. Each poll is a conditional request (304 -> no
+   * callback; a 200 whose content is unchanged, or differs only in volatile
+   * fields, is also silent). The first poll sets the baseline — the cached
+   * snapshot if this client already has one, otherwise the first response.
+   *
+   * Polling is sequential (never overlaps), `intervalMs` defaults to 60_000
+   * and is clamped to >= 5_000, and the timer is `unref`'d so a watcher never
+   * keeps a Node process alive. Fetch errors and exceptions thrown by
+   * `onChange` are swallowed and polling continues — observe failures via
+   * the client's `onEvent`. Returns a function that stops watching; aborting
+   * `opts.signal` does the same (a request already in flight finishes, but
+   * its result is discarded).
+   */
+  watch(
+    url: string,
+    onChange: (changes: SemanticChange[], next: Snapshot, prev: Snapshot) => void,
+    opts: { intervalMs?: number; signal?: AbortSignal } = {},
+  ): () => void {
+    track('@ahtmljs/agent', VERSION, 'agent.watch');
+    const interval = Math.max(5_000, opts.intervalMs ?? 60_000);
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let last: Snapshot | undefined;
+    let primed = false;
+
+    const stop = () => {
+      stopped = true;
+      if (timer !== undefined) clearTimeout(timer);
+    };
+    const poll = async () => {
+      try {
+        if (!primed) {
+          last = (await this.cache.get(url))?.snapshot;
+          primed = true;
+        }
+        const next = await this.fetch(url, { revalidate: true });
+        const prev = last;
+        last = next;
+        if (!stopped && prev) {
+          const changes = semanticDiff(prev, next);
+          if (changes.length) onChange(changes, next, prev);
+        }
+      } catch {
+        // Transient failure or a throwing callback: keep watching.
+      }
+      if (stopped) return;
+      timer = setTimeout(poll, interval);
+      (timer as { unref?: () => void }).unref?.();
+    };
+
+    if (opts.signal?.aborted) return stop;
+    opts.signal?.addEventListener('abort', stop, { once: true });
+    void poll();
+    return stop;
   }
 
   /**

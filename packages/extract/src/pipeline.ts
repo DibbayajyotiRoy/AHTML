@@ -1,4 +1,6 @@
 import { mergeExtractions } from '@ahtmljs/schema/extract';
+import { track } from '@ahtmljs/schema';
+import { VERSION } from './version.js';
 import type { Extraction } from '@ahtmljs/schema/extract';
 import type { PageModel } from './page-model.js';
 import type { ExtractorPlugin } from './plugin.js';
@@ -53,6 +55,7 @@ export function createExtractor(options: ExtractorOptions = {}): Extractor {
   return {
     plugins: ordered,
     extract(page: PageModel): Extraction {
+      track('@ahtmljs/extract', VERSION, 'extract.run');
       const extractions: Extraction[] = [];
       for (const plugin of ordered) {
         if (!plugin.match(page)) continue;
